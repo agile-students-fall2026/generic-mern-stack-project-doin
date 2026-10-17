@@ -6,3 +6,7 @@ Replace the contents of this file with the completed assignments, as described i
 
 - [app map & wireframe instructions](instructions-0a-app-map-wireframes.md).
 - [prototype instructions](instructions-0b-prototyping.md)
+
+---
+
+**Note for Elize:** I added the app map and wireframe files (the PNGs and the Figma source file) to the `ux-design/` directory. When you fill in this document, please mention where the files were added and who added them.
