@@ -22,11 +22,12 @@ Our initial audience is university students and young adults looking for people 
 
 Our first usable version aims to support:
 
-- **Accounts:** Sign up, log in, and log out.
-- **Profiles:** Create and edit a basic profile and short bio.
+- **Accounts:** Sign up, log in, and log out, (Account Creation requirements).
+- **Profiles:** Create and edit a basic profile and short bio, includes hobbies/interests as labels. Profiles would be shown as cards and there would be contact information provided within the Profile cards as labels.
 - **Interests:** Select hobbies from a list and update them later.
-- **Discovery:** Browse other users with overlapping interests.
-- **Compatibility:** Display shared interests and optionally a simple similarity score.
+- **Discovery:** Browse other users with overlapping interests. A "For You Page" type Discovery mechanic.
+- **Compatibility:** Display shared interests and optionally a simple similarity score. The score would be considered a "small" extra UI feature that would appear on profile cards during the "Discovery" process.
+- **Event Planner:** The Event Planner would consist of creating announced Events on the app focused on a shared hobby/interest with someone you connected with as the "Event Creators".
 
 **Under discussion:** A lightweight connection request and acceptance flow to allow users to express interest in connecting, without introducing full chat functionality.
 
@@ -40,7 +41,6 @@ Our first usable version aims to support:
 
 ## Future possibilities (not part of the initial MVP)
 
-- Creating and joining hobby-based activities and events
 - Messaging between connections
 - More sophisticated interest-based recommendations
 - Location and availability-based discovery with privacy safeguards
@@ -69,4 +69,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development conventions, branching, p
 
 ## Team
 
-Built by a four-person team for an Agile Software Development course. Team member names and roles will be added after everyone confirms them.
+Built by a 4 people team, each person has a different SCRUM role:
+
+-Full name: Elize Azzi, (Github: ea3682), Role: Stakeholder
+
+-Full name: Maurice Farfan, (Github: MSF841), Role: Developer
+
+-Full name: Alpartun Gunhan, (Github: AlpartunG), Role: Product Owner
+
+-Full name: Alp Ozbay, (Github: ozbayalp), Role: Scrum Master
