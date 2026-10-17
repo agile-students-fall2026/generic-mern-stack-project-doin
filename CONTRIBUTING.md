@@ -65,14 +65,28 @@ Replace `main` and the issue number with the actual repository default branch an
 
 ## Team decisions still needed
 
-- Team messaging channel and meeting cadence
-- Final technology stack and installation commands
-- Branch naming conventions, beyond the example above
-- Testing approach and definition of done
-- Review expectations and merge strategy consistent with the course rules
+(Empty for now)
 
 ## Reference
 
 Course conventions: https://knowledge.kitchen/content/courses/agile-development-and-devops/conventions/
 
 GitHub project management: https://knowledge.kitchen/content/courses/agile-development-and-devops/scrum/github-project-management/
+
+## Team Messaging Channel & Meeting Cadence
+
+-Whatsapp & Discord
+-Meeting Schedule:
+*Saturday: 12:00-12:15 (Might be longer),
+*Monday: 09:15-09:30 (--),
+*Wednesday: 13:00-13:15 (--)
+
+
+## Testing approach and definition of done
+
+-3 Requirements per backlog item, if all three requirements are met, task is done. Agreed upon by the whole team.
+
+
+## Review expectations and merge strategy
+
+Review strategy consists of assigned reviewer checking if all 3 done requirements are met.
