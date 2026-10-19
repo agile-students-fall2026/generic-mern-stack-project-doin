@@ -6,7 +6,10 @@ Doin is a social discovery application that helps people connect through shared 
 
 ## Interactive Prototype
 Our Figma prototype shows how someone can move through Doin and complete important tasks, such as creating an account, discovering people with similar interests, and joining or organizing events. The buttons, navigation links, and confirmation screens are intended to demonstrate the experience of using the app.
-View the Doin interactive prototype
+
+[View the Doin Interactive Prototype](https://www.figma.com/proto/HJfOjPhssFM3pGJFTmtXnC/Doin---App-Map-Wireframes?node-id=25-385&t=H9fvTGV6YYzhX6hX-1&scaling=min-zoom&content-scaling=fixed&page-id=1%3A6&starting-point-node-id=24%3A71)
+
+The prototype opens in presentation mode, allowing viewers to navigate the designed experience directly in Figma.
 
 ## App Map
 The app map organizes the major Doin sections and their parent–child relationships. It includes entry and onboarding screens, people discovery and profiles, event discovery and participation, event creation and management, and account/profile screens. The map focuses on the screen hierarchy rather than every possible navigation link.
