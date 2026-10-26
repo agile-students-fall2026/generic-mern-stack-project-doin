@@ -70,3 +70,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development conventions, branching, p
 ## Team
 
 Built by a four-person team for an Agile Software Development course. Team member names and roles will be added after everyone confirms them.
+
+## Sprint 1: Roles
+
+All team members contribute to design and development.
+
+### Sprint 1 Roles
+
+-Full name: Elize Azzi, (Github: ea3682), Role: SCRUM Master
+
+-Full name: Maurice Farfan, (Github: MSF841), Role: Product Owner
+
+-Full name: Alpartun Gunhan, (Github: AlpartunG), Role: Stakeholder
+
+-Full name: Alp Ozbay, (Github: ozbayalp), Role: Developer
