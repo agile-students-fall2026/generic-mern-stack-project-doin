@@ -9,7 +9,7 @@ Use **React Router in Declarative mode** — `BrowserRouter` + `Routes`/`Route` 
 ## Library, version, and mode
 
 - **Install:** `npm install react-router`. Since v7, `react-router-dom` is no longer a separate package — everything imports from `react-router`.
-- **Version:** v8 is the current line (8.3.1; v7.18 is also actively maintained). The Declarative-mode API used in this document (`BrowserRouter`, `Routes`, `Route`, `Outlet`, `Link`, `NavLink`, `useNavigate`, `useParams`, `Navigate`) is identical on v7 and v8, so the routing approach below does not change with either. Note for whoever scaffolds the app: v8's changelog lists Node 22+, React 19.2+, and Vite 7+ as requirements — a fresh `npm create vite@latest` scaffold satisfies these; if the scaffold pins older versions, install v7 instead.
+- **Version:** v8.5.0 (the current v8 release; v7 is also still maintained). The Declarative-mode API used in this document (`BrowserRouter`, `Routes`, `Route`, `Outlet`, `Link`, `NavLink`, `useNavigate`, `useParams`, `Navigate`) is identical on v7 and v8, so the routing approach below does not change with either. **Minimum versions for v8, confirmed against the official React Router v8 upgrade guide: Node 22.22+, React and React DOM 19.2.7+, and Vite 7+** (the Vite minimum is a Framework-mode requirement; our Declarative mode doesn't use the Vite plugin, but a fresh `npm create vite@latest` scaffold satisfies all three baselines anyway). If the scaffold ever has to pin older versions, install v7 instead.
 - **Mode: Declarative.** React Router offers three modes. Framework mode (the Remix-style Vite plugin, SSR/prerendering) is **not allowed** for this course (no SSR) and is unnecessary here. Data mode (`createBrowserRouter` with loaders/actions) is built for server data; Sprint 1 runs entirely on mock data and React state, so it adds machinery we don't need. Declarative mode is the v6-style component routing the whole team already knows.
 
 ## The routes (16)
@@ -29,7 +29,7 @@ Grounding: one route per full screen in UX-DESIGN.md. Component names and owners
 | `/events/new` | 12 Create event | CreateEvent.jsx | Maurice (#37) |
 | `/events/:eventId` | 09 Event details | EventDetails.jsx | Maurice (#35) |
 | `/events/:eventId/edit` | 21 Edit event | EditEvent.jsx | Alp (#39) |
-| `/events/:eventId/manage` | 18 Event management | (host view, from MyEvents) | Maurice (#38) |
+| `/events/:eventId/manage` | 18 Event management | EventManagement.jsx | Maurice (#38) |
 | `/my-events` | 14 My events | MyEvents.jsx | Maurice (#38) |
 | `/connections` | 13 Connections | Connections.jsx | Alpartun (#47) |
 | `/profile` | 15 My profile | Profile.jsx | Alp (#45) |
@@ -39,7 +39,7 @@ Grounding: one route per full screen in UX-DESIGN.md. Component names and owners
 Notes:
 - React Router ranks static segments above dynamic ones, so `/events/new` correctly wins over `/events/:eventId` regardless of declaration order.
 - Param names to agree on as a team: `:personId` and `:eventId`, read with `useParams()`.
-- `/events/:eventId/manage` is the host's Event Management screen (attendee list, Edit event / Cancel event actions). It is the entry point to Alp's #39 (edit) and #40 (cancel confirmation). If the team prefers, it can live as a view inside MyEvents instead of its own route — see open questions.
+- `/events/:eventId/manage` is the host's Event Management screen (attendee list, Edit event / Cancel event actions), with its own component, **EventManagement.jsx**. It is the entry point to Alp's #39 (edit) and #40 (cancel confirmation). (Decided: it is its own route and component, not a view inside MyEvents — consistent with the App.jsx skeleton below.)
 
 ## Not routes: dialogs, overlays, and success states (5)
 
@@ -59,13 +59,13 @@ UX-DESIGN.md states the pattern: *"Signed-in screens consistently show the botto
 - **Layout group B — main layout (Layout.jsx, Elize #50):** all other routes nested under one parent route whose element is the Layout. Layout renders the bottom tab bar (Navbar.jsx) plus `<Outlet />` for the current page, so the bar is written once and every signed-in screen gets it.
   - Tabs: **People → `/discover`**, **Events → `/events`**, **Connect → `/connections`**, **Profile → `/profile`**. Use `NavLink` so the active tab gets its active styling automatically.
   - My Events is not a tab in the design; it is reached from Profile ("My events"), from the Event Joined success state, and after publishing an event.
-- **Mock auth guard:** Sprint 1 has no real back-end auth. A small `ProtectedRoute` wrapper (mock signed-in state held in React state/Context — Context is allowed by the course rules) can redirect signed-out visitors from group B to `/`. This keeps the demo flow honest without building login logic twice. Team decision — see open questions.
+- **No auth guard in Sprint 1 (decided):** Sprint 1 has no real back-end auth, and the professor allows nonfunctional authentication for Sprint 1 — so we **skip `ProtectedRoute`**: every screen is directly reachable, which also makes testing easier. A mock guard (signed-in state in Context, redirecting group B to `/`) can be added later when real auth lands; it is deliberately not built now.
 
 ## Navigation patterns (how screens move)
 
 - **Tabs and in-content links:** `<Link>` / `<NavLink>` (person card → `/people/:personId`; event card → `/events/:eventId`; "View profile", "Create event" button → `/events/new`; Profile's "Edit profile" → `/profile/edit`).
 - **After actions, use `useNavigate()`:** log in → `/discover`; register → `/select-interests` → (Next) `/setup-profile` → (Finish setup) `/discover`; publish event → `/my-events`; RSVP confirmed → joined state → `/my-events`; save profile edit → `/profile`; save event edit → back to the event/manage view.
-- **Back behavior:** detail screens' back arrows use `navigate(-1)` so users return to whichever list they came from (Discover vs. My Events), instead of a hard-coded parent.
+- **Back behavior:** detail screens' back arrows use `navigate(-1)` so users return to whichever list they came from (Discover vs. My Events), instead of a hard-coded parent. **Fallback:** `navigate(-1)` only works when there is an in-app history entry. If a user lands directly on a detail screen (deep link, refresh, shared link), there may be nothing in-app to go back to and the browser can leave the app entirely. Guard the back action: when an in-app history entry exists, `navigate(-1)`; otherwise navigate to the screen's default parent (event details/manage → `/events` or `/my-events`, person profile → `/discover`).
 
 ## App.jsx skeleton (for Elize's #49)
 
@@ -110,10 +110,10 @@ Layout.jsx renders `<Navbar />` (bottom tab bar) + `<Outlet />`. main.jsx stays 
 
 ## Open questions for the team
 
-1. **Event Management:** its own route (`/events/:eventId/manage`, as above) or a view inside MyEvents? A route is deep-linkable and matches the app map hierarchy; either works.
-2. **ProtectedRoute:** include the mock auth guard in Sprint 1, or let all routes be directly reachable for demo simplicity?
-3. **Signed-in landing:** should `/` redirect a signed-in user to `/discover`, or always show Welcome?
-4. **Search/filters in the URL:** keep in page state for Sprint 1 (recommended), or use search params from the start?
+1. **Signed-in landing:** should `/` redirect a signed-in user to `/discover`, or always show Welcome?
+2. **Search/filters in the URL:** keep in page state for Sprint 1 (recommended), or use search params from the start?
+
+(Decided since the first draft, per team review: Event Management is its own route with its own EventManagement.jsx component, and Sprint 1 skips ProtectedRoute — all screens are directly reachable for testing.)
 
 ## Handoff
 
