@@ -67,9 +67,7 @@ Local installation and run instructions will be added after the application skel
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development conventions, branching, pull requests, and collaboration practices.
 
-## Team
-
-Built by a 4 people team, each person has a different SCRUM role:
+## Sprint 0: Roles
 
 -Full name: Elize Azzi, (Github: ea3682), Role: Stakeholder
 
@@ -78,3 +76,5 @@ Built by a 4 people team, each person has a different SCRUM role:
 -Full name: Alpartun Gunhan, (Github: AlpartunG), Role: Product Owner
 
 -Full name: Alp Ozbay, (Github: ozbayalp), Role: Scrum Master
+
+
