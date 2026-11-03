@@ -3,7 +3,7 @@ import EventDetails from "./pages/EventDetails";
 import { mockEvent } from "./mocks/events";
 import { mockUsers } from "./mocks/users";
 
-const App = (props) => {
+const App = () => {
   return (
     <div>
       <EventDetails event={mockEvent} users={mockUsers} />
