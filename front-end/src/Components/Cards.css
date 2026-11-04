@@ -1,0 +1,93 @@
+/* Person Card */
+.doin-person-card {
+  display: flex;
+  gap: 12px;
+  border: 1px solid lightgray;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 15px;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
+  background-color: white;
+}
+
+.doin-person-card img {
+  width: 70px;
+  height: 85px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.doin-person-info {
+  flex: 1;
+}
+
+.doin-person-info h3 {
+  font-size: 14px;
+  margin: 0;
+}
+
+.doin-person-info p {
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.doin-person-info a {
+  display: block;
+  background-color: #f0f0f0;
+  border: 1px solid lightgray;
+  border-radius: 5px;
+  padding: 5px;
+  color: black;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+
+
+/* Event Card */
+.doin-event-card {
+  display: flex;
+  gap: 12px;
+  border: 1px solid lightgray;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 15px;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
+  background-color: white;
+}
+
+.doin-event-card img {
+  width: 70px;
+  height: 85px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.doin-event-info {
+  flex: 1;
+}
+
+.doin-event-info h3 {
+  font-size: 14px;
+  margin: 0;
+}
+
+.doin-event-info p {
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.doin-event-info a {
+  display: block;
+  background-color: #f0f0f0;
+  border: 1px solid lightgray;
+  border-radius: 5px;
+  padding: 5px;
+  color: black;
+  text-decoration: none;
+  font-size: 12px;
+}
