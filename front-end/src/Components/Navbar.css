@@ -9,16 +9,26 @@
   flex: 1;
 }
 
+
 .navbar {
   display: flex;
   justify-content: space-around;
-  padding: 15px;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 15px 10px;
+  box-sizing: border-box;
   border-top: 1px solid lightgray;
   background-color: white;
+  position: sticky;
+  bottom: 0;
 }
 
 .navbar a {
-  color: black;
+  color: #687386;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13px;
+  text-align: center;
+  padding: 5px;
 }
