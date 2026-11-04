@@ -41,6 +41,30 @@
   box-sizing: border-box;
 }
 
+/* Profile pic */
+.edit-profile-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.edit-profile-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.edit-profile-photo label {
+  font-weight: 600;
+}
+
+.edit-profile-photo input {
+  max-width: 100%;
+}
+
 /* Interest toggle buttons */
 
 .edit-profile-interests {

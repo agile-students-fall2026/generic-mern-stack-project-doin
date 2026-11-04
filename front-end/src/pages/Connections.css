@@ -36,6 +36,30 @@
   margin-bottom: 12px;
 }
 
+.connection-request-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.connection-request-actions button {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.connection-request span:first-of-type {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connection-accept {
+  padding: 8px 12px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
 .connection-user img {
   width: 50px;
   height: 50px;

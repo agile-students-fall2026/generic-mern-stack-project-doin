@@ -1,10 +1,6 @@
-
-import { useState } from "react";
 import "./PersonDetails.css";
 
-function PersonDetails({ person, onBack }) {
-  const [requested, setRequested] = useState(false);
-
+function PersonDetails({ person, onBack, requested, onRequest }) {
   return (
     <main className="person-details-page">
       <div className="doin-card person-details-card">
@@ -28,15 +24,18 @@ function PersonDetails({ person, onBack }) {
         </div>
 
         <button
-          className="doin-button doin-button--primary"
-          onClick={() => setRequested(true)}
+          type="button"
+          className={
+            requested
+              ? "doin-button doin-button--secondary"
+              : "doin-button doin-button--primary"
+          }
+          onClick={onRequest}
         >
-          {requested ? "Request sent" : "Send connection request"}
+          {requested ? "Cancel request" : "Send connection request"}
         </button>
 
-        <button className="doin-button doin-button--secondary"
-          onClick={onBack}
-        >
+        <button className="doin-button doin-button--secondary" onClick={onBack}>
           Back to discovery
         </button>
       </div>

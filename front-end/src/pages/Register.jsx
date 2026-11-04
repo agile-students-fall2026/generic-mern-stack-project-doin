@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import mockProfile from "../mocks/mockProfile";
 import "./Auth.css";
 
 export default function Register() {
@@ -62,7 +63,7 @@ export default function Register() {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      // Sprint 1: simulate registration without a backend.
+      mockProfile.name = formData.fullName.trim();
       navigate("/select-interests");
     }
   }
