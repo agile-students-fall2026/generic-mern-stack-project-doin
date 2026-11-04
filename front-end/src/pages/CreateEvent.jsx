@@ -1,27 +1,29 @@
+import React, { useState } from "react";
+import "../styles/CreateEvent.css";
 
-import React, { useState } from 'react'
-import '../styles/CreateEvent.css'
+const CreateEvent = (props) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [location, setLocation] = useState("");
+  const [category, setCategory] = useState("");
+  const [capacity, setCapacity] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-const CreateEvent = props => {
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [date, setDate] = useState('')
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime] = useState('')
-  const [location, setLocation] = useState('')
-  const [category, setCategory] = useState('')
-  const [capacity, setCapacity] = useState('')
-  const [message, setMessage] = useState('')
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  const handleSubmit = e => {
-    e.preventDefault()
+    if (isSubmitted) return;
 
     if (endTime <= startTime) {
-      setMessage('End time must be after start time.')
-      return
+      setMessage("End time must be after start time.");
+      return;
     }
 
-    const id = crypto.randomUUID()
+    const id = crypto.randomUUID();
 
     const newEvent = {
       id: id,
@@ -34,15 +36,16 @@ const CreateEvent = props => {
       category: category,
       capacity: Number(capacity),
       attendeeIds: [],
-      imageUrl: `https://picsum.photos/seed/${id}/800/400`
-    }
+      imageUrl: `https://picsum.photos/seed/${id}/800/400`,
+    };
 
     if (props.onCreate) {
-      props.onCreate(newEvent)
+      props.onCreate(newEvent);
     }
 
-    setMessage('Event created successfully!')
-  }
+    setIsSubmitted(true);
+    setMessage("Event created successfully!");
+  };
 
   return (
     <main className="create-event-page">
@@ -60,7 +63,7 @@ const CreateEvent = props => {
               id="event-title"
               type="text"
               value={title}
-              onChange={e => setTitle(e.target.value)}
+              onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter event name"
               required
             />
@@ -72,7 +75,7 @@ const CreateEvent = props => {
               className="doin-input"
               id="event-description"
               value={description}
-              onChange={e => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your event"
               required
             />
@@ -85,7 +88,7 @@ const CreateEvent = props => {
               id="event-date"
               type="date"
               value={date}
-              onChange={e => setDate(e.target.value)}
+              onChange={(e) => setDate(e.target.value)}
               required
             />
           </div>
@@ -98,7 +101,7 @@ const CreateEvent = props => {
                 id="event-start"
                 type="time"
                 value={startTime}
-                onChange={e => setStartTime(e.target.value)}
+                onChange={(e) => setStartTime(e.target.value)}
                 required
               />
             </div>
@@ -110,7 +113,7 @@ const CreateEvent = props => {
                 id="event-end"
                 type="time"
                 value={endTime}
-                onChange={e => setEndTime(e.target.value)}
+                onChange={(e) => setEndTime(e.target.value)}
                 required
               />
             </div>
@@ -123,7 +126,7 @@ const CreateEvent = props => {
               id="event-location"
               type="text"
               value={location}
-              onChange={e => setLocation(e.target.value)}
+              onChange={(e) => setLocation(e.target.value)}
               placeholder="Enter event location"
               required
             />
@@ -135,7 +138,7 @@ const CreateEvent = props => {
               className="doin-input"
               id="event-category"
               value={category}
-              onChange={e => setCategory(e.target.value)}
+              onChange={(e) => setCategory(e.target.value)}
               required
             >
               <option value="">Select a category</option>
@@ -155,7 +158,7 @@ const CreateEvent = props => {
               type="number"
               min="1"
               value={capacity}
-              onChange={e => setCapacity(e.target.value)}
+              onChange={(e) => setCapacity(e.target.value)}
               placeholder="Enter maximum attendees"
               required
             />
@@ -164,15 +167,16 @@ const CreateEvent = props => {
           <button
             className="doin-button doin-button--primary create-event-submit"
             type="submit"
+            disabled={isSubmitted}
           >
-            Publish Event
+            {isSubmitted ? "Event Published" : "Publish Event"}
           </button>
 
           {message && <p role="status">{message}</p>}
         </form>
       </div>
     </main>
-  )
-}
+  );
+};
 
-export default CreateEvent
+export default CreateEvent;

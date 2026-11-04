@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../styles/EventDetails.css";
 import "../styles/EventRSVP.css";
 
@@ -6,11 +6,21 @@ const EventDetails = (props) => {
   const event = props.event;
   const users = props.users || [];
   const currentUser = props.currentUser;
-
+  const onBack = props.onBack;
   const [showAttendees, setShowAttendees] = useState(false);
-  const [attendeeIds, setAttendeeIds] = useState(event?.attendeeIds || []);
+  const attendeeIds = event?.attendeeIds ?? [];
   const [confirmation, setConfirmation] = useState("");
   const [message, setMessage] = useState("");
+  const confirmationRef = useRef(null);
+
+  useEffect(() => {
+    if (confirmation) {
+      confirmationRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [confirmation]);
 
   if (!event) {
     return <p>Event not found.</p>;
@@ -32,7 +42,7 @@ const EventDetails = (props) => {
       return;
     }
 
-    setAttendeeIds([...attendeeIds, currentUser.id]);
+    props.onAttendeeChange([...attendeeIds, currentUser.id]);
     setConfirmation("");
     setMessage("You have successfully joined this event!");
   };
@@ -43,13 +53,23 @@ const EventDetails = (props) => {
       return;
     }
 
-    setAttendeeIds(attendeeIds.filter((id) => id !== currentUser.id));
+    props.onAttendeeChange(attendeeIds.filter((id) => id !== currentUser.id));
     setConfirmation("");
     setMessage("You have left this event.");
   };
 
   return (
     <main className="event-details">
+      {onBack && (
+        <button
+          type="button"
+          className="doin-button doin-button--secondary event-back-button"
+          onClick={onBack}
+        >
+          ← Back to events
+        </button>
+      )}
+
       <div className="doin-card event-details-card">
         <img
           className="event-details-image"
@@ -177,7 +197,10 @@ const EventDetails = (props) => {
 
           {/* RSVP Confirmation */}
           {confirmation === "join" && (
-            <div className="event-section rsvp-confirmation">
+            <div
+              ref={confirmationRef}
+              className="event-section rsvp-confirmation"
+            >
               <h2>Confirm RSVP</h2>
 
               <p>Are you sure you want to join {event.title}?</p>
@@ -206,7 +229,10 @@ const EventDetails = (props) => {
 
           {/* Leave Confirmation */}
           {confirmation === "leave" && (
-            <div className="event-section rsvp-confirmation">
+            <div
+              ref={confirmationRef}
+              className="event-section rsvp-confirmation"
+            >
               <h2>Leave Event?</h2>
 
               <p>

@@ -182,3 +182,56 @@
   border-color: #635bff;
   color: #635bff;
 }
+
+/* Compact Event Details layout */
+
+.event-details {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.event-back-button {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.event-details-image {
+  height: 180px;
+}
+
+.event-details-content {
+  padding: 16px;
+}
+
+.event-details-content h1 {
+  font-size: 24px;
+  margin: 10px 0 6px;
+}
+
+.event-organizer {
+  margin: 0;
+}
+
+.event-section {
+  margin-top: 18px;
+}
+
+.event-section h2 {
+  margin-bottom: 10px;
+}
+
+.attendee-summary {
+  margin-bottom: 12px;
+}
+
+.attendee-toggle {
+  margin-bottom: 0;
+}
+
+.event-section.rsvp-actions {
+  margin-top: 12px;
+}

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import "./DiscoverPeople.css";
 import SearchBar from "./SearchBar";
@@ -8,10 +7,11 @@ function DiscoverPeople({ onViewProfile }) {
   const [search, setSearch] = useState("");
   const [interest, setInterest] = useState("All");
 
-  const filteredPeople = mockDiscoverPeople.filter((person) =>
-    (person.name.toLowerCase().includes(search.toLowerCase()) ||
-      person.hobbies.toLowerCase().includes(search.toLowerCase())) &&
-    (interest === "All" || person.hobbies.includes(interest))
+  const filteredPeople = mockDiscoverPeople.filter(
+    (person) =>
+      (person.name.toLowerCase().includes(search.toLowerCase()) ||
+        person.hobbies.toLowerCase().includes(search.toLowerCase())) &&
+      (interest === "All" || person.hobbies.includes(interest)),
   );
 
   return (
@@ -47,9 +47,7 @@ function DiscoverPeople({ onViewProfile }) {
           <div className="person-info">
             <h3>{person.name}</h3>
             <p>{person.hobbies}</p>
-            <button onClick={() => onViewProfile(person)}>
-              View profile
-            </button>
+            <button onClick={() => onViewProfile(person)}>View profile</button>
           </div>
         </div>
       ))}

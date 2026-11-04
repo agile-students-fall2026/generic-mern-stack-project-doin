@@ -1,10 +1,9 @@
-
 .explore {
   width: 100%;
   max-width: 390px;
   min-height: 100vh;
   margin: auto;
-  padding: 25px;
+  padding: 16px;
   box-sizing: border-box;
   background-color: white;
   color: #303640;
@@ -12,14 +11,14 @@
 }
 
 .explore h1 {
-  font-size: 28px;
-  margin-top: 30px;
+  font-size: 26px;
+  margin: 0 0 12px;
 }
 
 .explore hr {
   border: none;
   border-top: 1px solid lightgray;
-  margin-bottom: 25px;
+  margin-bottom: 16px;
 }
 
 .explore label {
@@ -54,28 +53,35 @@
   border-radius: 10px;
   margin-bottom: 18px;
   background-color: white;
+  align-items: stretch;
 }
 
 .explore .event-card img {
-  width: 80px;
-  height: 90px;
+  width: 105px;
+  height: 120px;
+  flex-shrink: 0;
   object-fit: cover;
   border-radius: 8px;
 }
 
-.explore .event-info{
+.explore .event-info {
   flex: 1;
   min-width: 0;
+  background-color: transparent;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .explore .event-info h3 {
-  font-size: 15px;
-  margin: 3px 0 8px;
+  font-size: 18px;
+  margin: 0 0 8px;
 }
 
 .explore .event-info p {
-  font-size: 12px;
-  margin-bottom: 16px;
+  font-size: 13px;
+  margin: 0 0 12px;
 }
 
 .explore .event-info button {
@@ -90,13 +96,26 @@
 
 .explore .create-event {
   display: block;
-  width: 105px;
-  margin: 20px 0 0 auto;
-  background-color: #635bff;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 12px;
-  cursor: pointer;
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 12px 18px;
+  border-radius: 8px;
 }
 
+.explore .event-filters select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid lightgray;
+  border-radius: 8px;
+  background-color: white;
+  color: #202638;
+  font-size: 16px;
+}
+
+.explore .event-filters select {
+  margin-bottom: 12px;
+}
+
+.explore .event-filters select:last-child {
+  margin-bottom: 0;
+}

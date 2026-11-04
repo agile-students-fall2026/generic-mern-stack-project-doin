@@ -1,8 +1,12 @@
+import { Link } from "react-router";
 import mockProfile from "../mocks/mockProfile";
 import "./Profile.css";
 
 // My Profile page (#45): shows the user's own profile information.
 export default function Profile() {
+  const details = [mockProfile.location, ...(mockProfile.interests ?? [])]
+    .filter(Boolean)
+    .join(" • ");
   return (
     <main className="profile-page">
       <div className="doin-card profile-card">
@@ -16,16 +20,22 @@ export default function Profile() {
 
         <h2 className="profile-name">{mockProfile.name}</h2>
 
-        <p className="profile-details">
-          {mockProfile.location} • {mockProfile.interests.join(" • ")}
-        </p>
+        {mockProfile.username && (
+          <p className="profile-username">@{mockProfile.username}</p>
+        )}
+
+        {details && <p className="profile-details">{details}</p>}
 
         <div className="profile-actions">
-          <button className="doin-button doin-button--primary">
+          <Link to="/edit-profile" className="doin-button doin-button--primary">
             Edit profile
+          </Link>
+          <Link to="/my-events" className="doin-button doin-button--secondary">
+            My events
+          </Link>
+          <button className="doin-button doin-button--secondary">
+            Settings
           </button>
-          <button className="doin-button doin-button--secondary">My events</button>
-          <button className="doin-button doin-button--secondary">Settings</button>
         </div>
 
         <h2 className="profile-section-title">
