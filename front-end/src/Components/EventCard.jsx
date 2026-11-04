@@ -4,10 +4,10 @@ import "./Cards.css";
 
 function EventCard({ id, title, date, location, image }) {
   return (
-    <div className="event-card">
+    <div className="doin-event-card">
       <img src={image} alt={title} />
 
-      <div className="event-info">
+      <div className="doin-event-info">
         <h3>{title}</h3>
         <p>{date} • {location}</p>
         <Link to={`/events/${id}`}>View event</Link>

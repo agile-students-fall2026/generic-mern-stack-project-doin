@@ -1,38 +1,39 @@
-
 /* Person Card */
-.person-card {
+.doin-person-card {
   display: flex;
   gap: 12px;
   border: 1px solid lightgray;
   border-radius: 8px;
   padding: 10px;
   margin-bottom: 15px;
-  width: 300px;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
   background-color: white;
 }
 
-.person-card img {
+.doin-person-card img {
   width: 70px;
   height: 85px;
   border-radius: 5px;
   object-fit: cover;
 }
 
-.person-info {
+.doin-person-info {
   flex: 1;
 }
 
-.person-info h3 {
+.doin-person-info h3 {
   font-size: 14px;
   margin: 0;
 }
 
-.person-info p {
+.doin-person-info p {
   font-size: 12px;
   margin-top: 8px;
 }
 
-.person-info a {
+.doin-person-info a {
   display: block;
   background-color: #f0f0f0;
   border: 1px solid lightgray;
@@ -46,39 +47,41 @@
 
 
 /* Event Card */
-.event-card {
+.doin-event-card {
   display: flex;
   gap: 12px;
   border: 1px solid lightgray;
   border-radius: 8px;
   padding: 10px;
   margin-bottom: 15px;
-  width: 300px;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
   background-color: white;
 }
 
-.event-card img {
+.doin-event-card img {
   width: 70px;
   height: 85px;
   border-radius: 5px;
   object-fit: cover;
 }
 
-.event-info {
+.doin-event-info {
   flex: 1;
 }
 
-.event-info h3 {
+.doin-event-info h3 {
   font-size: 14px;
   margin: 0;
 }
 
-.event-info p {
+.doin-event-info p {
   font-size: 12px;
   margin-top: 8px;
 }
 
-.event-info a {
+.doin-event-info a {
   display: block;
   background-color: #f0f0f0;
   border: 1px solid lightgray;
