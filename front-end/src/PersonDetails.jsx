@@ -1,28 +1,27 @@
-import "./PersonDetails.css";
+import UserProfile from "./Components/UserProfile";
 
-function PersonDetails({ person, onBack, requested, onRequest }) {
+export default function PersonDetails({
+  person,
+  onBack,
+  requested,
+  onRequest,
+  backAriaLabel = "Back to discovery",
+  children,
+}) {
   return (
-    <main className="person-details-page">
-      <div className="doin-card person-details-card">
-        <h1>{person.name}</h1>
-        <hr />
-
-        <img
-          className="person-details-photo"
-          src={person.image}
-          alt={person.name}
-        />
-
-        <h3>{person.hobbies.join(" • ")}</h3>
-
-        <h3>About {person.name.split(" ")[0]}</h3>
-        <p>{person.bio}</p>
-
-        <h3>Shared interests</h3>
-        <div className="person-details-interests">
-          {person.sharedInterests.join(" • ")}
-        </div>
-
+    <UserProfile
+      title="Profile"
+      name={person.name}
+      username={person.username}
+      location={person.location}
+      bio={person.bio}
+      interests={person.interests ?? []}
+      imageUrl={person.imageUrl}
+      sharedInterests={person.sharedInterests ?? []}
+      onBack={onBack}
+      backAriaLabel={backAriaLabel}
+    >
+      {children ?? (
         <button
           type="button"
           className={
@@ -34,13 +33,7 @@ function PersonDetails({ person, onBack, requested, onRequest }) {
         >
           {requested ? "Cancel request" : "Send connection request"}
         </button>
-
-        <button className="doin-button doin-button--secondary" onClick={onBack}>
-          Back to discovery
-        </button>
-      </div>
-    </main>
+      )}
+    </UserProfile>
   );
 }
-
-export default PersonDetails;

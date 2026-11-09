@@ -1,6 +1,5 @@
 /* Event Details Page */
 
-
 .event-details {
   max-width: 800px;
   margin: 30px auto;
@@ -189,14 +188,8 @@
   width: 100%;
   max-width: 440px;
   margin: 0 auto;
-  padding: 12px;
+  padding: 20px 16px 32px;
   box-sizing: border-box;
-}
-
-.event-back-button {
-  display: block;
-  width: 100%;
-  margin-bottom: 12px;
 }
 
 .event-details-image {

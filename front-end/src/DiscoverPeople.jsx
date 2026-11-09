@@ -15,9 +15,8 @@ function DiscoverPeople({ onViewProfile }) {
   );
 
   return (
-    <div className="discover">
-      <h1>Discover people</h1>
-      <hr />
+    <div className="discover doin-page">
+      <h1 className="doin-page-title">Discover people</h1>
 
       <SearchBar
         label="Search by interest or name"

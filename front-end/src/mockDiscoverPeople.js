@@ -1,22 +1,29 @@
-// Mock people, in the same shape as the Discover People page data.
-
 const mockDiscoverPeople = [
   {
     id: 1,
     name: "Alex Morgan",
-    hobbies: "Coffee • Hiking • NYC",
+    username: "alexmorgan",
+    location: "New York, NY",
+    hobbies: "Coffee • Hiking",
+    bio: "I love exploring coffee shops and going on weekend hikes.",
     image: "https://i.pravatar.cc/150?img=12",
   },
   {
     id: 2,
     name: "Jordan Lee",
-    hobbies: "Music • Movies • NYC",
+    username: "jordanlee",
+    location: "New York, NY",
+    hobbies: "Music • Movies",
+    bio: "Always looking for good music and people to watch movies with.",
     image: "https://i.pravatar.cc/150?img=47",
   },
   {
     id: 3,
     name: "Sam Rivera",
-    hobbies: "Sports • Art • NYC",
+    username: "samrivera",
+    location: "New York, NY",
+    hobbies: "Sports • Art",
+    bio: "Into sports, museums, and discovering new activities.",
     image: "https://i.pravatar.cc/150?img=33",
   },
 ];

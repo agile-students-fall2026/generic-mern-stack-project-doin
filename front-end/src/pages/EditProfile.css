@@ -57,6 +57,43 @@
   object-fit: cover;
 }
 
+/* Profile picture editing */
+
+.edit-profile-avatar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f1f3;
+  color: #687386;
+}
+
+.edit-profile-avatar-empty svg {
+  width: 60px;
+  height: 60px;
+}
+
+.edit-profile-photo-edit {
+  min-width: 150px;
+}
+
+.edit-profile-photo-menu {
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-profile-photo-menu .doin-button {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.edit-profile-photo-menu .doin-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .edit-profile-photo label {
   font-weight: 600;
 }

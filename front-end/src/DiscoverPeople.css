@@ -1,23 +1,4 @@
 /* Discover People Page */
-.discover {
-  max-width: 390px;
-  margin: 0 auto;
-  padding: 16px;
-  box-sizing: border-box;
-  background-color: white;
-}
-
-.discover h1 {
-  font-size: 28px;
-  margin: 0 0 12px;
-}
-
-.discover hr {
-  border: none;
-  border-top: 1px solid lightgray;
-  margin-bottom: 25px;
-}
-
 /* Search Bar */
 .discover label {
   display: block;

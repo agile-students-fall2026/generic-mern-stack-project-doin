@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../styles/MyEvents.css";
+import EventsTabs from "../Components/EventsTabs";
 
 const MyEvents = (props) => {
   const events = props.events || [];
@@ -10,9 +11,9 @@ const MyEvents = (props) => {
   // Find events the current user has joined
   const joinedEvents = currentUser
     ? events.filter((event) =>
-      (event.attendeeIds ?? []).includes(currentUser.id)
-    )
-  : [];
+        (event.attendeeIds ?? []).includes(currentUser.id),
+      )
+    : [];
 
   // Find events the current user created
   const hostingEvents = currentUser
@@ -23,9 +24,10 @@ const MyEvents = (props) => {
   const displayedEvents = activeTab === "joined" ? joinedEvents : hostingEvents;
 
   return (
-    <main className="my-events-page">
+    <main className="my-events-page doin-page">
       <div className="my-events-container">
-        <h1>My Events</h1>
+        <EventsTabs />
+        <h1 className="doin-page-title">My Events</h1>
         <p>View the events you're attending or hosting.</p>
 
         {/* Joined and Hosting Tabs */}

@@ -1,24 +1,7 @@
 .explore {
-  width: 100%;
-  max-width: 390px;
   min-height: 100vh;
-  margin: auto;
-  padding: 16px;
-  box-sizing: border-box;
-  background-color: white;
   color: #303640;
   font-family: Arial, sans-serif;
-}
-
-.explore h1 {
-  font-size: 26px;
-  margin: 0 0 12px;
-}
-
-.explore hr {
-  border: none;
-  border-top: 1px solid lightgray;
-  margin-bottom: 16px;
 }
 
 .explore label {
