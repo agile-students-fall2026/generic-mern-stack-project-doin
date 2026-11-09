@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router";
 import mockProfile from "../mocks/mockProfile";
 import { allInterests } from "../data/interests";
@@ -12,6 +12,8 @@ export default function EditProfile() {
   const [bio, setBio] = useState(mockProfile.bio);
   const [interests, setInterests] = useState(mockProfile.interests);
   const [saved, setSaved] = useState(false);
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
+  const photoInputRef = useRef(null);
 
   const toggleInterest = (interest) => {
     if (interests.includes(interest)) {
@@ -36,6 +38,7 @@ export default function EditProfile() {
     reader.onload = () => {
       if (typeof reader.result === "string") {
         setImageUrl(reader.result);
+        setPhotoMenuOpen(false);
         setSaved(false);
       }
     };
@@ -60,21 +63,72 @@ export default function EditProfile() {
     <main className="edit-profile-page">
       <div className="doin-card edit-profile-card">
         <h1 className="edit-profile-title">Edit profile</h1>
-        <div className="edit-profile-photo">
-          <img
-            src={imageUrl}
-            alt="Profile preview"
-            className="edit-profile-avatar"
-          />
 
-          <label htmlFor="edit-profile-photo-input">
-            Change profile picture
-          </label>
+        <div className="edit-profile-photo">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt="Profile preview"
+              className="edit-profile-avatar"
+            />
+          ) : (
+            <div className="edit-profile-avatar edit-profile-avatar-empty">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c0-5 3-8 8-8s8 3 8 8" />
+              </svg>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="doin-button doin-button--secondary edit-profile-photo-edit"
+            aria-expanded={photoMenuOpen}
+            aria-controls="edit-profile-photo-menu"
+            onClick={() => setPhotoMenuOpen((previous) => !previous)}
+          >
+            Edit picture
+          </button>
+
+          {photoMenuOpen && (
+            <div
+              id="edit-profile-photo-menu"
+              className="edit-profile-photo-menu"
+            >
+              <button
+                type="button"
+                className="doin-button doin-button--secondary"
+                onClick={() => photoInputRef.current?.click()}
+              >
+                Choose photo
+              </button>
+
+              <button
+                type="button"
+                className="doin-button doin-button--secondary"
+                disabled={!imageUrl}
+                onClick={() => {
+                  setImageUrl("");
+                  setPhotoMenuOpen(false);
+                  setSaved(false);
+                }}
+              >
+                Remove current picture
+              </button>
+            </div>
+          )}
 
           <input
-            id="edit-profile-photo-input"
+            ref={photoInputRef}
             type="file"
             accept="image/*"
+            hidden
             onChange={handlePhotoChange}
           />
         </div>

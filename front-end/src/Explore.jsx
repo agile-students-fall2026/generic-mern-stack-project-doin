@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./Explore.css";
 import mockEvents from "./mockEvents";
+import EventsTabs from "./Components/EventsTabs";
 
 function Explore({ onViewEvent, onCreateEvent, events = mockEvents }) {
   const [search, setSearch] = useState("");
@@ -32,9 +33,9 @@ function Explore({ onViewEvent, onCreateEvent, events = mockEvents }) {
   });
 
   return (
-    <div className="explore">
-      <h1>Discover events</h1>
-      <hr />
+    <div className="explore doin-page">
+      <EventsTabs />
+      <h1 className="doin-page-title">Discover events</h1>
 
       <button
         type="button"

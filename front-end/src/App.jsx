@@ -1,4 +1,11 @@
-import { BrowserRouter, Routes, Route, Outlet } from "react-router";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Outlet,
+  useNavigate,
+  useParams,
+} from "react-router";
 import Welcome from "./pages/Welcome";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -13,8 +20,10 @@ import { mockUsers } from "./mocks/users";
 import { useState } from "react";
 import DiscoverPeople from "./DiscoverPeople";
 import PersonDetails from "./PersonDetails";
+import BackButton from "./Components/BackButton";
+import mockDiscoverPeople from "./mockDiscoverPeople";
+import normalizePerson from "./normalizePerson";
 import mockProfile from "./mocks/mockProfile";
-import { useNavigate } from "react-router";
 import Explore from "./Explore";
 import EventDetails from "./pages/EventDetails";
 import Connections from "./pages/Connections";
@@ -52,18 +61,7 @@ function DiscoverPreview({ sentRequestIds, onSendRequest }) {
     return <DiscoverPeople onViewProfile={setSelectedPerson} />;
   }
 
-  const hobbies = selectedPerson.hobbies
-    .split(" • ")
-    .filter((hobby) => hobby !== "NYC");
-
-  const person = {
-    ...selectedPerson,
-    hobbies,
-    bio: "No bio available in the current mock data.",
-    sharedInterests: hobbies.filter((hobby) =>
-      mockProfile.interests.includes(hobby),
-    ),
-  };
+  const person = normalizePerson(selectedPerson, mockProfile.interests);
 
   return (
     <PersonDetails
@@ -75,23 +73,107 @@ function DiscoverPreview({ sentRequestIds, onSendRequest }) {
   );
 }
 
-function EventsPreview({ rsvps, onUpdateRsvp, events }) {
-  const [selectedEvent, setSelectedEvent] = useState(null);
+function ConnectionProfile({
+  sentRequestIds,
+  onSendRequest,
+  pendingRequests,
+  connectedUsers,
+  onAcceptRequest,
+  onDeclineRequest,
+}) {
+  const { personId } = useParams();
   const navigate = useNavigate();
+  const record = [
+    ...pendingRequests,
+    ...connectedUsers,
+    ...mockUsers,
+    ...mockDiscoverPeople,
+  ].find((person) => String(person.id) === personId);
+  const onBack = () => navigate("/connections");
 
-  // Show Explore Events when no event is selected
+  if (!record) {
+    return (
+      <main className="doin-page">
+        <BackButton onClick={onBack} ariaLabel="Back to connections" />
+        <h1 className="doin-page-title">Person not found</h1>
+        <p>
+          This profile is unavailable. Return to Connections to choose someone else.
+        </p>
+      </main>
+    );
+  }
 
-  if (!selectedEvent) {
+  const person = normalizePerson(record, mockProfile.interests);
+  const connected = connectedUsers.some((user) => user.id === person.id);
+  const pending = pendingRequests.some((user) => user.id === person.id);
+
+  return (
+    <PersonDetails
+      key={personId}
+      person={person}
+      onBack={onBack}
+      backAriaLabel="Back to connections"
+      requested={sentRequestIds.includes(person.id)}
+      onRequest={() => onSendRequest(person.id)}
+    >
+      {connected ? (
+        <p>You are connected.</p>
+      ) : pending ? (
+        <>
+          <button
+            type="button"
+            className="doin-button doin-button--primary"
+            onClick={() => onAcceptRequest(record)}
+          >
+            Accept
+          </button>
+          <button
+            type="button"
+            className="doin-button doin-button--secondary"
+            onClick={() => onDeclineRequest(record)}
+          >
+            Decline
+          </button>
+        </>
+      ) : null}
+    </PersonDetails>
+  );
+}
+
+function EventsPreview({ rsvps, onUpdateRsvp, events }) {
+  const navigate = useNavigate();
+  const { eventId } = useParams();
+
+  // No event ID: display the discovery page
+  if (!eventId) {
     return (
       <Explore
         events={events}
-        onViewEvent={setSelectedEvent}
+        onViewEvent={(event) => navigate(`/events/${event.id}`)}
         onCreateEvent={() => navigate("/create-event")}
       />
     );
   }
 
-  // Prepare the selected event for EventDetails
+  // Find the event matching the ID in the URL
+  const selectedEvent = events.find((event) => String(event.id) === eventId);
+
+  if (!selectedEvent) {
+    return (
+      <main className="event-details">
+        <p>Event not found.</p>
+        <button
+          type="button"
+          className="doin-button doin-button--secondary"
+          onClick={() => navigate("/events")}
+        >
+          Back to events
+        </button>
+      </main>
+    );
+  }
+
+  // Prepare the event for EventDetails
   const event = {
     ...selectedEvent,
     imageUrl: selectedEvent.imageUrl ?? selectedEvent.image,
@@ -110,7 +192,6 @@ function EventsPreview({ rsvps, onUpdateRsvp, events }) {
     imageUrl: mockProfile.imageUrl,
   };
 
-  // Display the selected event
   return (
     <EventDetails
       key={event.id}
@@ -119,7 +200,7 @@ function EventsPreview({ rsvps, onUpdateRsvp, events }) {
         user.id === currentUser.id ? profileUser : user,
       )}
       currentUser={profileUser}
-      onBack={() => setSelectedEvent(null)}
+      onBack={() => navigate("/events")}
       onAttendeeChange={(ids) => onUpdateRsvp(event.id, ids)}
     />
   );
@@ -129,6 +210,12 @@ export default function App() {
   const [rsvps, setRsvps] = useState({});
   const [sentRequestIds, setSentRequestIds] = useState([]);
   const [createdEvents, setCreatedEvents] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState(() =>
+    mockUsers.slice(0, 3),
+  );
+  const [connectedUsers, setConnectedUsers] = useState(() =>
+    mockUsers.slice(3, 9),
+  );
   const exploreEvents = [
     ...mockEvents,
     ...createdEvents.map((event) => ({
@@ -156,6 +243,25 @@ export default function App() {
     })),
   ];
 
+  const profileStats = [
+    {
+      label: "Connections",
+      value: connectedUsers.length,
+    },
+    {
+      label: "Hosted",
+      value: myEventsData.filter(
+        (event) => event.organizerId === currentUser.id,
+      ).length,
+    },
+    {
+      label: "Attended",
+      value: myEventsData.filter((event) =>
+        (event.attendeeIds ?? []).includes(currentUser.id),
+      ).length,
+    },
+  ];
+
   function handleSendRequest(personId) {
     setSentRequestIds((previous) =>
       previous.includes(personId)
@@ -172,6 +278,24 @@ export default function App() {
         organizerId: currentUser.id,
       },
     ]);
+  }
+
+  function handleAcceptRequest(user) {
+    setPendingRequests((previous) =>
+      previous.filter((person) => person.id !== user.id),
+    );
+
+    setConnectedUsers((previous) =>
+      previous.some((person) => person.id === user.id)
+        ? previous
+        : [...previous, user],
+    );
+  }
+
+  function handleDeclineRequest(user) {
+    setPendingRequests((previous) =>
+      previous.filter((person) => person.id !== user.id),
+    );
   }
 
   return (
@@ -192,7 +316,7 @@ export default function App() {
             </Layout>
           }
         >
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<Profile stats={profileStats} />} />
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route
             path="/create-event"
@@ -222,12 +346,41 @@ export default function App() {
               <Connections
                 sentRequestIds={sentRequestIds}
                 onSendRequest={handleSendRequest}
+                pendingRequests={pendingRequests}
+                connectedUsers={connectedUsers}
+                onAcceptRequest={handleAcceptRequest}
+                onDeclineRequest={handleDeclineRequest}
+              />
+            }
+          />
+
+          <Route
+            path="/connections/:personId"
+            element={
+              <ConnectionProfile
+                sentRequestIds={sentRequestIds}
+                onSendRequest={handleSendRequest}
+                pendingRequests={pendingRequests}
+                connectedUsers={connectedUsers}
+                onAcceptRequest={handleAcceptRequest}
+                onDeclineRequest={handleDeclineRequest}
               />
             }
           />
 
           <Route
             path="/events"
+            element={
+              <EventsPreview
+                events={exploreEvents}
+                rsvps={rsvps}
+                onUpdateRsvp={handleRsvpChange}
+              />
+            }
+          />
+
+          <Route
+            path="/events/:eventId"
             element={
               <EventsPreview
                 events={exploreEvents}

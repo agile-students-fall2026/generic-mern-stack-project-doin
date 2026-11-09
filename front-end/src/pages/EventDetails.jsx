@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../styles/EventDetails.css";
 import "../styles/EventRSVP.css";
+import BackButton from "../Components/BackButton";
 
 const EventDetails = (props) => {
   const event = props.event;
@@ -60,15 +61,7 @@ const EventDetails = (props) => {
 
   return (
     <main className="event-details">
-      {onBack && (
-        <button
-          type="button"
-          className="doin-button doin-button--secondary event-back-button"
-          onClick={onBack}
-        >
-          ← Back to events
-        </button>
-      )}
+      {onBack && <BackButton onClick={onBack} ariaLabel="Back to events" />}
 
       <div className="doin-card event-details-card">
         <img

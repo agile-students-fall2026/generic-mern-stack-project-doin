@@ -1,11 +1,29 @@
-import { useState } from "react";
+import { Link } from "react-router";
 import { mockUsers } from "../mocks/users";
 import mockDiscoverPeople from "../mockDiscoverPeople";
 import "./Connections.css";
 
-export default function Connections({ sentRequestIds, onSendRequest }) {
-  const [pendingRequests, setPendingRequests] = useState(mockUsers.slice(0, 3));
-  const [connectedUsers, setConnectedUsers] = useState(mockUsers.slice(3, 9));
+function PersonLink({ person }) {
+  return (
+    <Link
+      className="connection-profile-link"
+      to={`/connections/${encodeURIComponent(person.id)}`}
+      aria-label={`View ${person.name}'s profile`}
+    >
+      <img src={person.imageUrl} alt="" />
+      <span>{person.name}</span>
+    </Link>
+  );
+}
+
+export default function Connections({
+  sentRequestIds,
+  onSendRequest,
+  pendingRequests,
+  connectedUsers,
+  onAcceptRequest,
+  onDeclineRequest,
+}) {
   const suggestedUsers = mockUsers.slice(9, 12);
   const sentPeople = [
     ...mockDiscoverPeople.map((person) => ({
@@ -16,28 +34,14 @@ export default function Connections({ sentRequestIds, onSendRequest }) {
     ...suggestedUsers,
   ].filter((person) => sentRequestIds.includes(person.id));
 
-  function handleAccept(user) {
-    setPendingRequests((previous) =>
-      previous.filter((person) => person.id !== user.id),
-    );
-
-    setConnectedUsers((previous) => [...previous, user]);
-  }
-
-  function handleDecline(user) {
-    setPendingRequests((previous) =>
-      previous.filter((person) => person.id !== user.id),
-    );
-  }
-
   function handleSendRequest(user) {
     onSendRequest(user.id);
   }
 
   return (
-    <main className="connections-page">
+    <main className="connections-page doin-page">
       <div className="connections-container">
-        <h1>Connections</h1>
+        <h1 className="doin-page-title">Connections</h1>
 
         <section className="connections-section">
           <h2>Pending requests</h2>
@@ -47,13 +51,12 @@ export default function Connections({ sentRequestIds, onSendRequest }) {
               className="doin-card connection-user connection-request"
               key={user.id}
             >
-              <img src={user.imageUrl} alt={user.name} />
-              <span>{user.name}</span>
+              <PersonLink person={user} />
               <div className="connection-request-actions">
                 <button
                   type="button"
                   className="doin-button doin-button--primary connection-accept"
-                  onClick={() => handleAccept(user)}
+                  onClick={() => onAcceptRequest(user)}
                 >
                   Accept
                 </button>
@@ -61,7 +64,7 @@ export default function Connections({ sentRequestIds, onSendRequest }) {
                 <button
                   type="button"
                   className="doin-button doin-button--secondary connection-decline"
-                  onClick={() => handleDecline(user)}
+                  onClick={() => onDeclineRequest(user)}
                 >
                   Decline
                 </button>
@@ -75,8 +78,7 @@ export default function Connections({ sentRequestIds, onSendRequest }) {
 
           {connectedUsers.map((user) => (
             <div className="doin-card connection-user" key={user.id}>
-              <img src={user.imageUrl} alt={user.name} />
-              <span>{user.name}</span>
+              <PersonLink person={user} />
             </div>
           ))}
         </section>
@@ -89,8 +91,7 @@ export default function Connections({ sentRequestIds, onSendRequest }) {
           ) : (
             sentPeople.map((person) => (
               <div className="doin-card connection-user" key={person.id}>
-                <img src={person.imageUrl} alt={person.name} />
-                <span>{person.name}</span>
+                <PersonLink person={person} />
 
                 <div className="connection-request-actions">
                   <button
@@ -114,8 +115,7 @@ export default function Connections({ sentRequestIds, onSendRequest }) {
               className="doin-card connection-user connection-request"
               key={user.id}
             >
-              <img src={user.imageUrl} alt={user.name} />
-              <span>{user.name}</span>
+              <PersonLink person={user} />
 
               <div className="connection-request-actions">
                 <button
