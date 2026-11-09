@@ -1,19 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { allInterests } from "../data/interests";
 import "./SelectInterests.css";
-
-const interests = [
-  "Coffee",
-  "Running",
-  "Art",
-  "Movies",
-  "Food",
-  "Music",
-  "Study",
-  "Games",
-  "Sports",
-  "Hiking",
-];
 
 export default function SelectInterests() {
   const [selectedInterests, setSelectedInterests] = useState([]);
@@ -45,7 +33,7 @@ export default function SelectInterests() {
         <p className="interests-description">Select activities you enjoy</p>
 
         <div className="interests-grid">
-          {interests.map((interest) => (
+          {allInterests.map((interest) => (
             <button
               key={interest}
               type="button"

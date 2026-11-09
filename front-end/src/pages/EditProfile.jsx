@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import mockProfile, { allInterests } from "../mocks/mockProfile";
+import mockProfile from "../mocks/mockProfile";
+import { allInterests } from "../data/interests";
 import "./EditProfile.css";
 
 export default function EditProfile() {
-  // One state variable for each field, starting with the current profile.
   const [name, setName] = useState(mockProfile.name);
   const [imageUrl, setImageUrl] = useState(mockProfile.imageUrl);
   const [username, setUsername] = useState(mockProfile.username ?? "");
@@ -13,7 +13,6 @@ export default function EditProfile() {
   const [interests, setInterests] = useState(mockProfile.interests);
   const [saved, setSaved] = useState(false);
 
-  // Add the interest if it is not picked yet, remove it if it is.
   const toggleInterest = (interest) => {
     if (interests.includes(interest)) {
       setInterests(interests.filter((item) => item !== interest));
@@ -44,11 +43,9 @@ export default function EditProfile() {
     reader.readAsDataURL(file);
   }
 
-  // Runs when the user clicks Save.
   const handleSubmit = (e) => {
-    e.preventDefault(); // stop the browser from reloading the page
+    e.preventDefault();
 
-    // Write the changes back into the shared mock profile.
     mockProfile.name = name;
     mockProfile.username = username.trim();
     mockProfile.imageUrl = imageUrl;
