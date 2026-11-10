@@ -7,7 +7,6 @@ export default function SetupProfile() {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
-  const [availability, setAvailability] = useState("");
   const [photoPreview, setPhotoPreview] = useState("");
   const navigate = useNavigate();
   const routeLocation = useLocation();
@@ -38,7 +37,6 @@ export default function SetupProfile() {
     mockProfile.username = username.trim();
     mockProfile.bio = bio.trim();
     mockProfile.location = location.trim();
-    mockProfile.availability = availability.trim();
     mockProfile.interests = routeLocation.state?.interests ?? [];
 
     if (photoPreview) {
@@ -111,18 +109,6 @@ export default function SetupProfile() {
               placeholder="e.g. New York, NY"
               value={location}
               onChange={(event) => setLocation(event.target.value)}
-            />
-          </div>
-
-          <div className="setup-profile-field">
-            <label htmlFor="availability">Availability (optional)</label>
-            <input
-              id="availability"
-              type="text"
-              className="doin-input setup-profile-input"
-              placeholder="e.g. Weekends and weekday evenings"
-              value={availability}
-              onChange={(event) => setAvailability(event.target.value)}
             />
           </div>
 
