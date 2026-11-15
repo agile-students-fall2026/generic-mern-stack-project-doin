@@ -69,24 +69,21 @@ Replace `main` and the issue number with the actual repository default branch an
 
 ## Reference
 
-Course conventions: https://knowledge.kitchen/content/courses/agile-development-and-devops/conventions/
+- [Course conventions](https://knowledge.kitchen/content/courses/agile-development-and-devops/conventions/)
+- [GitHub project management](https://knowledge.kitchen/content/courses/agile-development-and-devops/scrum/github-project-management/)
 
-GitHub project management: https://knowledge.kitchen/content/courses/agile-development-and-devops/scrum/github-project-management/
+## Team messaging channels and meeting schedule
 
-## Team Messaging Channel & Meeting Cadence
-
--Whatsapp & Discord
--Meeting Schedule:
-*Saturday: 12:00-12:15 (Might be longer),
-*Monday: 09:15-09:30 (--),
-*Wednesday: 13:00-13:15 (--)
-
+- Messaging channels: WhatsApp and Discord.
+- Meeting schedule:
+  - Saturday: 12:00–12:15; meetings may run longer.
+  - Monday: 09:15–09:30.
+  - Wednesday: 13:00–13:15.
 
 ## Testing approach and definition of done
 
--3 Requirements per backlog item, if all three requirements are met, task is done. Agreed upon by the whole team.
-
+Each backlog item has three requirements. If all three requirements are met, the task is done. This definition was agreed upon by the whole team.
 
 ## Review expectations and merge strategy
 
-Review strategy consists of assigned reviewer checking if all 3 done requirements are met.
+The review strategy consists of an assigned reviewer checking whether all three requirements for completion are met.
