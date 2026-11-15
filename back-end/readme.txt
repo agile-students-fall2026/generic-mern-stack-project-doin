@@ -1,3 +1,2 @@
-The back-end of your project will live in this directory.
-
-You will most likely initiate the back-end Node.js/Express.js server by running the "npm init" command from within this directory.
+The Express application lives in src/app.js; src/server.js starts its HTTP server.
+See ../README.md for installation, startup, static serving, and shared-store notes.

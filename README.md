@@ -87,9 +87,50 @@ Additional notes are available in [front-end/README.md](front-end/README.md).
 
 ## Back-end development (Sprint 2)
 
-The Express.js back end is being developed during Sprint 2. Its goal is to provide JSON API routes for the existing front-end features and replace front-end-only mock interactions with API requests. Mock or in-memory server data is sufficient for this sprint; MongoDB integration is planned for Sprint 3.
+The Express.js foundation provides the health endpoint, JSON parsing, development CORS, static serving, and consistent JSON errors. Feature APIs and React integration are separate Sprint 2 tasks. The existing front end continues to use its prototype mocks. MongoDB integration is planned for Sprint 3.
 
-**Back-end installation, server startup, API routes, environment configuration, automated tests, and code coverage commands will be documented here after they are implemented and verified.** They are not yet available as confirmed setup instructions.
+### Install and start
+
+Use **Node.js 22.22 or newer**. From the repository root:
+
+```bash
+cd back-end
+npm install
+npm start
+```
+
+The server listens on **http://localhost:5000** by default. For automatic restarts when imported server files change, use `npm run dev` instead of `npm start`. Both commands read `PORT`; for example:
+
+```bash
+PORT=5001 npm run dev
+```
+
+No `.env` file or database is required. Stop the server with **Ctrl+C**. Check it from another terminal:
+
+```bash
+curl -i http://localhost:5000/api/health
+```
+
+The response is HTTP **200** with `{"status":"ok"}`. Unimplemented API routes return HTTP **404** JSON. Errors use `{"error":{"code":"...","message":"..."}}`; malformed JSON returns **400** with code `INVALID_JSON`. JSON bodies use Express's default **100 KB** limit; oversized bodies return **413**. Unexpected errors return **500** without exposing internal details.
+
+Development CORS allows `http://localhost:5173` and `http://127.0.0.1:5173`, including JSON and the agreed `Mock-User-Id` header. It is disabled when `NODE_ENV=production`. The header is only permitted here; mock identity handling belongs to the authentication task. Vite proxy/API integration remains part of the front-end integration tasks.
+
+### Application and static files
+
+- `back-end/src/app.js` configures and exports the application **without opening a port**. It also exports `createApp({ publicDirectory, clientDirectory })` so tests can use isolated file fixtures.
+- `back-end/src/server.js` imports that application and starts the HTTP listener.
+- `back-end/src/routes/index.js` contains the health route and is the place to mount later feature routers. Mount paths omit `/api` because `app.js` adds that prefix.
+- `back-end/src/middleware/errorHandler.js` supplies the JSON 404 and final error handlers.
+- Files in `back-end/public/` are served under `/static`, so `public/images/example.svg` becomes `/static/images/example.svg`. The initial directory has no demo images; feature owners can add their assets there.
+- If `front-end/dist/index.html` exists **when Express starts**, Express serves the built React app and its assets. Build it with `npm run build` in `front-end/`, then start or restart Express. HTML page navigation falls back to that index for React Router. Missing API routes, static files, and asset files retain 404 responses. Without a build, the API and `/static` still work.
+
+### Shared mock data and testing handoff
+
+All later feature routers should import the **same** `store` from `back-end/src/data/store.js`. It contains `users`, `events`, `interests`, `categories`, and `connectionRequests`. These collections are initially empty so this foundation does not duplicate feature-owned fixtures. Feature owners should add deterministic canonical records to `back-end/src/data/seeds.js`, rather than copying React mocks into separate route-local stores.
+
+Runtime mutations persist while Express runs. Restarting Express recreates the store from the seeds. The exported `resetStore()` restores deep copies of those seeds for test isolation, preserving the shared store object's identity. It replaces the collection arrays, so handlers should read `store.users` or `store.events` when handling a request instead of retaining an old array reference.
+
+Issue [#109](https://github.com/agile-students-fall2026/generic-mern-stack-project-doin/issues/109) owns the shared `test/` setup, Mocha/Chai, HTTP test tooling, c8, test/coverage scripts, and individual coverage verification. Tests can import the default app without starting `server.js` and call `resetStore()` before each test. Those packages and npm scripts have **not** been added by the server-foundation task; there is no back-end `npm test` command yet.
 
 ## Project management and contributions
 
