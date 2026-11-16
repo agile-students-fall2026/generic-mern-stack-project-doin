@@ -97,7 +97,7 @@ Use **Node.js 22.22 or newer**. From the repository root:
 cd back-end
 npm install
 npm start
-```
+``` 
 
 The server listens on **http://localhost:5000** by default. For automatic restarts when imported server files change, use `npm run dev` instead of `npm start`. Both commands read `PORT`; for example:
 
@@ -114,6 +114,31 @@ curl -i http://localhost:5000/api/health
 The response is HTTP **200** with `{"status":"ok"}`. Unimplemented API routes return HTTP **404** JSON. Errors use `{"error":{"code":"...","message":"..."}}`; malformed JSON returns **400** with code `INVALID_JSON`. JSON bodies use Express's default **100 KB** limit; oversized bodies return **413**. Unexpected errors return **500** without exposing internal details.
 
 Development CORS allows `http://localhost:5173` and `http://127.0.0.1:5173`, including JSON and the agreed `Mock-User-Id` header. It is disabled when `NODE_ENV=production`. The header is only permitted here; mock identity handling belongs to the authentication task. Vite proxy/API integration remains part of the front-end integration tasks.
+### Back-end testing
+
+The back end uses Mocha, Chai, Supertest, and c8 for automated testing. Mocha runs the tests, Chai checks the expected results, Supertest sends HTTP requests to Express endpoints, and c8 measures code coverage.
+
+All test files are stored in back-end/test/ and use the .test.js extension. Tests can import the Express application directly from src/app.js without starting the server on port 5000.
+
+From the back-end directory, run:
+
+```bash
+npm test
+```
+
+To run tests and generate a code coverage report:
+```bash
+npm run test:coverage
+```
+
+
+Coverage results are displayed in the terminal, and an HTML report is generated in the back-end/coverage/ directory. Test files and the server entry point are excluded from coverage measurements.
+
+Since Sprint 2 uses a shared in-memory store, tests use resetStore() from src/data/store.js before each test to restore the original mock data. This prevents changes made during one test from affecting other tests.
+
+
+Additional testing conventions, examples, and instructions for contributing new tests are documented in 
+[back-end/TESTING.md](back-end/TESTING.md).
 
 ### Application and static files
 
@@ -130,7 +155,7 @@ All later feature routers should import the **same** `store` from `back-end/src/
 
 Runtime mutations persist while Express runs. Restarting Express recreates the store from the seeds. The exported `resetStore()` restores deep copies of those seeds for test isolation, preserving the shared store object's identity. It replaces the collection arrays, so handlers should read `store.users` or `store.events` when handling a request instead of retaining an old array reference.
 
-Issue [#109](https://github.com/agile-students-fall2026/generic-mern-stack-project-doin/issues/109) owns the shared `test/` setup, Mocha/Chai, HTTP test tooling, c8, test/coverage scripts, and individual coverage verification. Tests can import the default app without starting `server.js` and call `resetStore()` before each test. Those packages and npm scripts have **not** been added by the server-foundation task; there is no back-end `npm test` command yet.
+Issue [#109](https://github.com/agile-students-fall2026/generic-mern-stack-project-doin/issues/109) owns the shared `test/` setup, Mocha/Chai, HTTP test tooling, c8, test/coverage scripts, and individual coverage verification. Tests can import the default app without starting `server.js` and call `resetStore()` before each test. Those packages and npm scripts have **not** been added by the server-foundation task; there is no back-end `npm test` command yet.   
 
 ## Project management and contributions
 
