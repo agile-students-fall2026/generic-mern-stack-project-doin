@@ -1,4 +1,6 @@
 import { Router } from "express";
+import authRouter from "./auth.js";
+import usersRouter from "./users.js";
 
 const router = Router();
 
@@ -7,4 +9,7 @@ router.get("/health", (_req, res) => {
 });
 
 // Mount feature routers here as their tasks are implemented (paths omit /api).
+router.use("/auth", authRouter);
+router.use("/users", usersRouter);
+
 export default router;
