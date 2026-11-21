@@ -5,7 +5,18 @@
 export const seeds = {
   users: [],
   events: [],
-  interests: [],
+  interests: [
+    "Coffee",
+    "Running",
+    "Art",
+    "Movies",
+    "Food",
+    "Music",
+    "Study",
+    "Games",
+    "Sports",
+    "Hiking",
+  ],
   categories: [],
   connectionRequests: [],
 };
