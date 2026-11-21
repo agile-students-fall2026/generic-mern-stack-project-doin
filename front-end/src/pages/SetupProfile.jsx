@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
-import mockProfile from "../mocks/mockProfile";
+import { setupProfile } from "../api";
 import "./SetupProfile.css";
 
 export default function SetupProfile() {
@@ -8,6 +8,7 @@ export default function SetupProfile() {
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [photoPreview, setPhotoPreview] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const routeLocation = useLocation();
 
@@ -27,23 +28,30 @@ export default function SetupProfile() {
     reader.readAsDataURL(file);
   }
 
-  function handleFinish(event) {
+  // Finish sends the form to the profile setup endpoint (#98), which
+  // fills in the record that registration created for the signed in
+  // user. The interests come from the interests page before this one.
+  async function handleFinish(event) {
     event.preventDefault();
 
     if (!username.trim()) {
       return;
     }
 
-    mockProfile.username = username.trim();
-    mockProfile.bio = bio.trim();
-    mockProfile.location = location.trim();
-    mockProfile.interests = routeLocation.state?.interests ?? [];
+    setError("");
 
-    if (photoPreview) {
-      mockProfile.imageUrl = photoPreview;
+    try {
+      await setupProfile({
+        username: username.trim(),
+        bio: bio.trim(),
+        location: location.trim(),
+        imageUrl: photoPreview,
+        interests: routeLocation.state?.interests ?? [],
+      });
+      navigate("/profile");
+    } catch (err) {
+      setError(err.message);
     }
-
-    navigate("/profile");
   }
 
   return (
@@ -111,6 +119,8 @@ export default function SetupProfile() {
               onChange={(event) => setLocation(event.target.value)}
             />
           </div>
+
+          {error && <p>{error}</p>}
 
           <button
             type="submit"

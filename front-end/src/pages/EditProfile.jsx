@@ -1,17 +1,40 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router";
-import mockProfile from "../mocks/mockProfile";
 import { allInterests } from "../data/interests";
+import { currentUserId, getPerson, updateProfile } from "../api";
 import "./EditProfile.css";
 
 export default function EditProfile() {
-  const [name, setName] = useState(mockProfile.name);
-  const [imageUrl, setImageUrl] = useState(mockProfile.imageUrl);
-  const [username, setUsername] = useState(mockProfile.username ?? "");
-  const [location, setLocation] = useState(mockProfile.location);
-  const [bio, setBio] = useState(mockProfile.bio);
-  const [interests, setInterests] = useState(mockProfile.interests);
+  const [name, setName] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [username, setUsername] = useState("");
+  const [location, setLocation] = useState("");
+  const [bio, setBio] = useState("");
+  const [interests, setInterests] = useState([]);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+  const [userId, setUserId] = useState(null);
+
+  // The form starts from the profile the back end returns (#101), using
+  // the shared profile endpoint from #98.
+  useEffect(() => {
+    const id = currentUserId();
+    if (!id) {
+      setError("Please log in to edit your profile.");
+      return;
+    }
+    setUserId(id);
+    getPerson(id)
+      .then((profile) => {
+        setName(profile.name ?? "");
+        setUsername(profile.username ?? "");
+        setImageUrl(profile.imageUrl ?? "");
+        setLocation(profile.location ?? "");
+        setBio(profile.bio ?? "");
+        setInterests(profile.interests ?? []);
+      })
+      .catch(() => setError("Your profile could not be loaded. Please try again."));
+  }, []);
   const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
   const photoInputRef = useRef(null);
 
@@ -46,17 +69,32 @@ export default function EditProfile() {
     reader.readAsDataURL(file);
   }
 
-  const handleSubmit = (e) => {
+  // Save sends the form to the profile update endpoint (#98) and only
+  // shows Saved when the server accepts it. A server error, such as a
+  // username that is already taken, is shown on the page instead.
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
-    mockProfile.name = name;
-    mockProfile.username = username.trim();
-    mockProfile.imageUrl = imageUrl;
-    mockProfile.location = location;
-    mockProfile.bio = bio;
-    mockProfile.interests = interests;
+    if (!userId) {
+      setError("Please log in to edit your profile.");
+      return;
+    }
 
-    setSaved(true);
+    try {
+      await updateProfile(userId, {
+        name,
+        username: username.trim(),
+        imageUrl,
+        location,
+        bio,
+        interests,
+      });
+      setSaved(true);
+    } catch (err) {
+      setSaved(false);
+      setError(err.message);
+    }
   };
 
   return (
@@ -207,6 +245,8 @@ export default function EditProfile() {
               </button>
             ))}
           </div>
+
+          {error && <p>{error}</p>}
 
           {saved && <p className="edit-profile-saved">Saved!</p>}
 
