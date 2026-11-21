@@ -2,25 +2,9 @@ import { Router } from "express";
 import { store } from "../data/store.js";
 import { requireMockUser } from "../middleware/mockIdentity.js";
 import { serializePublicUser } from "../shared/serializers.js";
+import { normalizeInterests } from "../shared/validation.js";
 
 const router = Router();
-
-// The shared interest list agreed in #91. Two older spellings are accepted
-// and saved in the canonical form. #94 owns the interests endpoints, so
-// this list lives here only to check profile input.
-const canonicalInterests = [
-  "Coffee",
-  "Running",
-  "Art",
-  "Movies",
-  "Food",
-  "Music",
-  "Study",
-  "Games",
-  "Sports",
-  "Hiking",
-];
-const interestAliases = { Arts: "Art", Gaming: "Games" };
 
 function invalidInput(res, message) {
   return res.status(400).json({ error: { code: "VALIDATION_ERROR", message } });
@@ -31,7 +15,10 @@ function userNotFound(res) {
 }
 
 function usernameTaken(res, username, ownId) {
-  const taken = store.users.some((user) => user.id !== ownId && user.username === username);
+  const wanted = username.toLowerCase();
+  const taken = store.users.some(
+    (user) => user.id !== ownId && (user.username ?? "").toLowerCase() === wanted,
+  );
   if (!taken) return false;
   res.status(409).json({
     error: { code: "DUPLICATE_USERNAME", message: "That username is already taken." },
@@ -43,26 +30,16 @@ function findUser(userId) {
   return store.users.find(({ id }) => id === userId);
 }
 
-// Checks an interests value from a request body. Returns the list in
-// canonical form, or null when any entry is not on the shared list.
-function cleanInterests(interests) {
-  if (!Array.isArray(interests)) return null;
-  const cleaned = [];
-  for (const value of interests) {
-    if (typeof value !== "string") return null;
-    const trimmed = value.trim();
-    const interest = interestAliases[trimmed] ?? trimmed;
-    if (!canonicalInterests.includes(interest)) return null;
-    if (!cleaned.includes(interest)) cleaned.push(interest);
-  }
-  return cleaned;
-}
-
 // Reads the profile fields a request may set. Returns an object with the
 // fields to save, or null after sending a 400 response. Setup requires a
 // username, editing does not.
 function readProfileFields(req, res, { usernameRequired }) {
-  const { username, name, bio, location, imageUrl, interests } = req.body ?? {};
+  const body = req.body ?? {};
+  if (typeof body !== "object" || Array.isArray(body)) {
+    invalidInput(res, "Please send the profile fields as an object.");
+    return null;
+  }
+  const { username, name, bio, location, imageUrl, interests } = body;
   const fields = {};
 
   if (username !== undefined || usernameRequired) {
@@ -103,7 +80,9 @@ function readProfileFields(req, res, { usernameRequired }) {
     fields.imageUrl = imageUrl.trim();
   }
   if (interests !== undefined) {
-    const cleaned = cleanInterests(interests);
+    // The shared helper from #94 checks the value against the shared
+    // catalog in the store and returns the canonical list, or null.
+    const cleaned = normalizeInterests(interests);
     if (!cleaned) {
       invalidInput(res, "Please choose interests from the shared list.");
       return null;
