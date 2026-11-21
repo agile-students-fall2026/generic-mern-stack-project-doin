@@ -1,8 +1,10 @@
 // Simple helpers for talking to the back end.
-// The back end runs on port 5000 and the front end on port 5173, and the
-// server already allows requests from the front end address.
+// The back end serves this front end once it is built, so a relative
+// address works from whatever host serves the page. In development the
+// Vite server sends these requests on to the back end, as set up in
+// vite.config.js, so no host is written into the app code.
 
-const apiUrl = "http://localhost:5000/api";
+const apiUrl = "/api";
 
 // The signed in user id is kept in session storage under this key, as
 // agreed in #91. The server reads it from the Mock-User-Id header.
