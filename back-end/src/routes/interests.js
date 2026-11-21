@@ -2,6 +2,7 @@ import { Router } from "express";
 import { store } from "../data/store.js";
 import { requireMockUser } from "../middleware/mockIdentity.js";
 import { serializePublicUser } from "../shared/serializers.js";
+import { normalizeInterests } from "../shared/validation.js";
 
 const router = Router();
 
@@ -18,13 +19,14 @@ router.post("/users/:userId/interests", requireMockUser, (req, res) => {
   }
 
   const { interests } = req.body ?? {};
-  if (!Array.isArray(interests) || !interests.every((interest) => store.interests.includes(interest))) {
+  const normalizedInterests = normalizeInterests(interests);
+  if (normalizedInterests === null) {
     return res.status(400).json({
       error: { code: "VALIDATION_ERROR", message: "Interests must be an array of options from the interest catalog." },
     });
   }
 
-  currentUser.interests = interests;
+  currentUser.interests = normalizedInterests;
   return res.json(serializePublicUser(currentUser));
 });
 
