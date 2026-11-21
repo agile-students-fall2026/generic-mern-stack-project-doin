@@ -117,14 +117,67 @@ router.get("/me", requireMockUser, (req, res) => {
   res.set("Cache-Control", "no-store").json(serializePublicUser(req.currentUser));
 });
 
-// Discover people (#99). Only complete profiles can be discovered, and a
-// signed in user never sees their own profile in the list.
+// Finds the canonical form of one interest value, matching without
+// worrying about capital letters and accepting the two older spellings
+// from #91. Returns null when the value is not on the shared list.
+function matchInterest(value) {
+  const lowered = value.trim().toLowerCase();
+  for (const interest of canonicalInterests) {
+    if (interest.toLowerCase() === lowered) return interest;
+  }
+  for (const [alias, interest] of Object.entries(interestAliases)) {
+    if (alias.toLowerCase() === lowered) return interest;
+  }
+  return null;
+}
+
+// Reads the interest filter from the query string. The filter may be
+// given once, repeated, or separated by commas, and a person must have
+// every selected interest to match. Returns the canonical list, or null
+// when any value is not on the shared list.
+function readInterestFilter(query) {
+  if (query === undefined) return [];
+  const values = Array.isArray(query) ? query : [query];
+  const selected = [];
+  for (const value of values) {
+    if (typeof value !== "string") return null;
+    for (const part of value.split(",")) {
+      if (!part.trim()) continue;
+      const interest = matchInterest(part);
+      if (!interest) return null;
+      if (!selected.includes(interest)) selected.push(interest);
+    }
+  }
+  return selected;
+}
+
+// Discover people (#99), with search and interest filtering (#100). Only
+// complete profiles can be discovered, and a signed in user never sees
+// their own profile in the list. The search text matches part of a name
+// or username without worrying about capital letters, and no match
+// simply returns an empty list.
 router.get("/", (req, res) => {
+  const { search, interest } = req.query;
+  if (search !== undefined && typeof search !== "string") {
+    return invalidInput(res, "Search must be text.");
+  }
+  const selected = readInterestFilter(interest);
+  if (!selected) {
+    return invalidInput(res, "Please choose interests from the shared list.");
+  }
+  const text = typeof search === "string" ? search.trim().toLowerCase() : "";
   const currentUserId = req.get("Mock-User-Id");
   const people = store.users
     .filter((user) => user.profileComplete && user.id !== currentUserId)
+    .filter(
+      (user) =>
+        !text ||
+        user.name.toLowerCase().includes(text) ||
+        (user.username ?? "").toLowerCase().includes(text),
+    )
+    .filter((user) => selected.every((name) => user.interests.includes(name)))
     .map(serializePublicUser);
-  res.json(people);
+  return res.json(people);
 });
 
 // Profile retrieval (#98), shared with person details (#99).
