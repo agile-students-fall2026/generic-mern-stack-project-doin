@@ -1,41 +1,84 @@
-// Simple helpers for talking to the back end.
-// The back end serves this front end once it is built, so a relative
-// address works from whatever host serves the page. In development the
-// Vite server sends these requests on to the back end, as set up in
-// vite.config.js, so no host is written into the app code.
-
 const apiUrl = "/api";
+const currentUserKey = "doin.currentUserId";
 
-// The signed in user id is kept in session storage under this key, as
-// agreed in #91. The server reads it from the Mock-User-Id header.
 export function currentUserId() {
-  return sessionStorage.getItem("doin.currentUserId");
+  return sessionStorage.getItem(currentUserKey);
 }
 
-function headers() {
-  const result = { "Content-Type": "application/json" };
-  const userId = currentUserId();
-  if (userId) {
-    result["Mock-User-Id"] = userId;
+export function setCurrentUserId(userId) {
+  if (userId === null) {
+    sessionStorage.removeItem(currentUserKey);
+  } else {
+    sessionStorage.setItem(currentUserKey, userId);
   }
-  return result;
 }
 
-// Sends one request and returns the answer as an object. When the server
-// answers with an error, this throws an Error with the server message so
-// the page can show it.
-async function request(path, options = {}) {
-  const response = await fetch(apiUrl + path, {
-    ...options,
-    headers: headers(),
-  });
+async function request(path, { useMockUser = true, ...options } = {}) {
+  const headers = new Headers(options.headers);
+  if (options.body !== undefined) {
+    headers.set("Content-Type", "application/json");
+  }
+  const userId = useMockUser ? currentUserId() : null;
+  if (userId) headers.set("Mock-User-Id", userId);
+
+  let response;
+  try {
+    response = await fetch(apiUrl + path, { ...options, headers });
+  } catch (error) {
+    if (options.signal?.aborted) throw error;
+    throw new Error("Couldn't reach Doin. Check your connection and try again.", { cause: error });
+  }
+
   const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(
-      data?.error?.message ?? "Something went wrong. Please try again.",
-    );
+  if (!response.ok || data === null) {
+    const error = new Error(data?.error?.message ?? "Something went wrong. Please try again.");
+    error.status = response.status;
+    error.code = data?.error?.code;
+    throw error;
   }
   return data;
+}
+
+export function registerAccount(fields, signal) {
+  return request("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(fields),
+    signal,
+    useMockUser: false,
+  });
+}
+
+export function logIn(credentials, signal) {
+  return request("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+    signal,
+    useMockUser: false,
+  });
+}
+
+export function getMyUser(signal) {
+  return request("/users/me", { signal });
+}
+
+export function getInterests(signal) {
+  return request("/interests", { signal, useMockUser: false });
+}
+
+export function saveInterests(userId, interests, signal) {
+  return request(`/users/${encodeURIComponent(userId)}/interests`, {
+    method: "POST",
+    body: JSON.stringify({ interests }),
+    signal,
+  });
+}
+
+export function setupProfile(fields, signal) {
+  return request("/profiles", {
+    method: "POST",
+    body: JSON.stringify(fields),
+    signal,
+  });
 }
 
 // Discover people (#99), with search and interest filtering (#100). The
@@ -57,19 +100,6 @@ export function getPeople(search, interest) {
 // Details (#99).
 export function getPerson(userId) {
   return request(`/users/${userId}`);
-}
-
-// The signed in user, for the pages that need their own interests.
-export function getMyUser() {
-  return request("/users/me");
-}
-
-// Profile setup (#98) fills in the record that registration created.
-export function setupProfile(fields) {
-  return request("/profiles", {
-    method: "POST",
-    body: JSON.stringify(fields),
-  });
 }
 
 // Profile update (#98). Only the owner can update their own profile.

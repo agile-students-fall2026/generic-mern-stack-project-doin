@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate } from "react-router";
 import { setupProfile } from "../api";
+import useSubmission from "../useSubmission";
+import "./Auth.css";
 import "./SetupProfile.css";
 
-export default function SetupProfile() {
+export default function SetupProfile({ onUserChange }) {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [photoPreview, setPhotoPreview] = useState("");
-  const [error, setError] = useState("");
+  const { pending, error, setError, submit } = useSubmission();
   const navigate = useNavigate();
-  const routeLocation = useLocation();
 
   function handlePhotoChange(event) {
     const file = event.target.files[0];
@@ -19,14 +20,11 @@ export default function SetupProfile() {
       return;
     }
 
-    // The server only accepts request bodies up to a fixed size, so a
-    // large photo would fail with a 413 error when the form is saved.
-    // Refuse it here with a clear message instead.
-    if (file.size > 70000) {
+    // Leave room for base64 encoding and profile fields in Express's JSON body limit.
+    if (file.size > 70_000) {
       setError("That photo is too large. Please choose a smaller photo.");
       return;
     }
-
     setError("");
 
     const reader = new FileReader();
@@ -38,40 +36,27 @@ export default function SetupProfile() {
     reader.readAsDataURL(file);
   }
 
-  // Finish sends the form to the profile setup endpoint (#98), which
-  // fills in the record that registration created for the signed in
-  // user. The interests come from the interests page before this one.
-  async function handleFinish(event) {
+  function handleFinish(event) {
     event.preventDefault();
 
     if (!username.trim()) {
       return;
     }
 
-    setError("");
-
+    // Interests are already on the registered user's record.
     const fields = {
       username: username.trim(),
       bio: bio.trim(),
       location: location.trim(),
       imageUrl: photoPreview,
     };
-
-    // The interests only go out when the user actually picked some on
-    // the interests page. Leaving the field out keeps the interests
-    // already saved on the record instead of replacing them with an
-    // empty list.
-    const chosenInterests = routeLocation.state?.interests;
-    if (Array.isArray(chosenInterests) && chosenInterests.length > 0) {
-      fields.interests = chosenInterests;
-    }
-
-    try {
-      await setupProfile(fields);
-      navigate("/profile");
-    } catch (err) {
-      setError(err.message);
-    }
+    submit(
+      (signal) => setupProfile(fields, signal),
+      (user) => {
+        onUserChange(user);
+        navigate("/profile");
+      },
+    );
   }
 
   return (
@@ -81,7 +66,12 @@ export default function SetupProfile() {
           <h1>Set up your profile</h1>
         </header>
 
-        <form onSubmit={handleFinish} className="setup-profile-form">
+        <form
+          action="/api/profiles"
+          method="post"
+          onSubmit={handleFinish}
+          className="setup-profile-form"
+        >
           <div className="setup-profile-photo">
             {photoPreview ? (
               <img
@@ -97,6 +87,7 @@ export default function SetupProfile() {
 
             <input
               id="profile-photo"
+              name="photo"
               type="file"
               accept="image/*"
               onChange={handlePhotoChange}
@@ -107,6 +98,7 @@ export default function SetupProfile() {
             <label htmlFor="username">Username</label>
             <input
               id="username"
+              name="username"
               type="text"
               className="doin-input setup-profile-input"
               placeholder="Choose a username"
@@ -120,6 +112,7 @@ export default function SetupProfile() {
             <label htmlFor="bio">Short bio</label>
             <textarea
               id="bio"
+              name="bio"
               className="doin-input setup-profile-input"
               placeholder="Tell us a little about yourself"
               rows="3"
@@ -132,6 +125,7 @@ export default function SetupProfile() {
             <label htmlFor="location">Location</label>
             <input
               id="location"
+              name="location"
               type="text"
               className="doin-input setup-profile-input"
               placeholder="e.g. New York, NY"
@@ -140,13 +134,14 @@ export default function SetupProfile() {
             />
           </div>
 
-          {error && <p>{error}</p>}
+          {error && <p className="auth-error" role="alert">{error}</p>}
 
           <button
             type="submit"
             className="doin-button doin-button--primary setup-profile-finish"
+            disabled={pending}
           >
-            Finish setup
+            {pending ? "Saving profile…" : "Finish setup"}
           </button>
         </form>
       </div>

@@ -1,5 +1,6 @@
 import {
   BrowserRouter,
+  Navigate,
   Routes,
   Route,
   Outlet,
@@ -30,6 +31,8 @@ import EventDetails from "./pages/EventDetails";
 import Connections from "./pages/Connections";
 import Layout from "./Components/Layout";
 import CreateEvent from "./pages/CreateEvent";
+import SessionBoundary from "./Components/SessionBoundary";
+import { signedInPath, useSession } from "./useSession";
 
 const currentUser = mockUsers[0];
 
@@ -254,6 +257,9 @@ function EventsPreview({ rsvps, onUpdateRsvp, events }) {
 }
 
 export default function App() {
+  const { session, restoreSession, saveSession } = useSession();
+  const { user } = session;
+  const sessionDestination = user ? signedInPath(user) : "/login";
   const [rsvps, setRsvps] = useState({});
   const [sentRequestIds, setSentRequestIds] = useState([]);
   const [createdEvents, setCreatedEvents] = useState([]);
@@ -349,18 +355,49 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Pages without the navigation bar */}
-        <Route path="/" element={<Welcome />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/select-interests" element={<SelectInterests />} />
-        <Route path="/setup-profile" element={<SetupProfile />} />
+        <Route
+          path="/"
+          element={
+            <SessionBoundary session={session} onRetry={restoreSession}>
+              {user ? <Navigate to={sessionDestination} replace /> : <Welcome />}
+            </SessionBoundary>
+          }
+        />
+        <Route path="/login" element={<Login onUserChange={saveSession} />} />
+        <Route path="/register" element={<Register onUserChange={saveSession} />} />
+        <Route
+          element={
+            <SessionBoundary session={session} onRetry={restoreSession}>
+              {user && !user.profileComplete ? (
+                <Outlet />
+              ) : (
+                <Navigate to={sessionDestination} replace />
+              )}
+            </SessionBoundary>
+          }
+        >
+          <Route
+            path="/select-interests"
+            element={<SelectInterests user={user} onUserChange={saveSession} />}
+          />
+          <Route
+            path="/setup-profile"
+            element={<SetupProfile onUserChange={saveSession} />}
+          />
+        </Route>
 
         {/* Main app pages with the navigation bar */}
         <Route
           element={
-            <Layout>
-              <Outlet />
-            </Layout>
+            <SessionBoundary session={session} onRetry={restoreSession}>
+              {user?.profileComplete ? (
+                <Layout>
+                  <Outlet />
+                </Layout>
+              ) : (
+                <Navigate to={sessionDestination} replace />
+              )}
+            </SessionBoundary>
           }
         >
           <Route path="/profile" element={<Profile stats={profileStats} />} />
