@@ -155,7 +155,8 @@ All later feature routers should import the **same** `store` from `back-end/src/
 
 Runtime mutations persist while Express runs. Restarting Express recreates the store from the seeds. The exported `resetStore()` restores deep copies of those seeds for test isolation, preserving the shared store object's identity. It replaces the collection arrays, so handlers should read `store.users` or `store.events` when handling a request instead of retaining an old array reference.
 
-Issue [#109](https://github.com/agile-students-fall2026/generic-mern-stack-project-doin/issues/109) owns the shared `test/` setup, Mocha/Chai, HTTP test tooling, c8, test/coverage scripts, and individual coverage verification. Tests can import the default app without starting `server.js` and call `resetStore()` before each test. Those packages and npm scripts have **not** been added by the server-foundation task; there is no back-end `npm test` command yet.   
+Issue [#109](https://github.com/agile-students-fall2026/generic-mern-stack-project-doin/issues/109) establishes the shared testing infrastructure using Mocha, Chai, Supertest, and c8. Tests can import the Express application without starting `server.js` and use `resetStore()` before each test. The available testing commands and conventions are documented in the Back-end testing section below and in [back-end/TESTING.md](back-end/TESTING.md).
+
 
 ## Project management and contributions
 
