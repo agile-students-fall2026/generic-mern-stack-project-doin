@@ -19,6 +19,16 @@ export default function SetupProfile() {
       return;
     }
 
+    // The server only accepts request bodies up to a fixed size, so a
+    // large photo would fail with a 413 error when the form is saved.
+    // Refuse it here with a clear message instead.
+    if (file.size > 70000) {
+      setError("That photo is too large. Please choose a smaller photo.");
+      return;
+    }
+
+    setError("");
+
     const reader = new FileReader();
 
     reader.onload = () => {
@@ -40,14 +50,24 @@ export default function SetupProfile() {
 
     setError("");
 
+    const fields = {
+      username: username.trim(),
+      bio: bio.trim(),
+      location: location.trim(),
+      imageUrl: photoPreview,
+    };
+
+    // The interests only go out when the user actually picked some on
+    // the interests page. Leaving the field out keeps the interests
+    // already saved on the record instead of replacing them with an
+    // empty list.
+    const chosenInterests = routeLocation.state?.interests;
+    if (Array.isArray(chosenInterests) && chosenInterests.length > 0) {
+      fields.interests = chosenInterests;
+    }
+
     try {
-      await setupProfile({
-        username: username.trim(),
-        bio: bio.trim(),
-        location: location.trim(),
-        imageUrl: photoPreview,
-        interests: routeLocation.state?.interests ?? [],
-      });
+      await setupProfile(fields);
       navigate("/profile");
     } catch (err) {
       setError(err.message);

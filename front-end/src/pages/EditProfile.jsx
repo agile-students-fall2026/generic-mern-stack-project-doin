@@ -14,6 +14,7 @@ export default function EditProfile() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // The form starts from the profile the back end returns (#101), using
   // the shared profile endpoint from #98.
@@ -32,6 +33,7 @@ export default function EditProfile() {
         setLocation(profile.location ?? "");
         setBio(profile.bio ?? "");
         setInterests(profile.interests ?? []);
+        setProfileLoaded(true);
       })
       .catch(() => setError("Your profile could not be loaded. Please try again."));
   }, []);
@@ -53,6 +55,15 @@ export default function EditProfile() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
+      return;
+    }
+
+    // The server only accepts request bodies up to a fixed size, so a
+    // large photo would fail with a 413 error when the form is saved.
+    // Refuse it here with a clear message instead.
+    if (file.size > 70000) {
+      setError("That photo is too large. Please choose a smaller photo.");
+      setSaved(false);
       return;
     }
 
@@ -78,6 +89,14 @@ export default function EditProfile() {
 
     if (!userId) {
       setError("Please log in to edit your profile.");
+      return;
+    }
+
+    // Saving is blocked until the saved profile has loaded into the
+    // form. Otherwise a failed load would leave the fields empty and
+    // saving would clear what is already on the record.
+    if (!profileLoaded) {
+      setError("Your profile could not be loaded. Please try again.");
       return;
     }
 
@@ -251,7 +270,11 @@ export default function EditProfile() {
           {saved && <p className="edit-profile-saved">Saved!</p>}
 
           <div className="edit-profile-actions">
-            <button type="submit" className="doin-button doin-button--primary">
+            <button
+              type="submit"
+              className="doin-button doin-button--primary"
+              disabled={!profileLoaded}
+            >
               Save
             </button>
             <Link to="/profile" className="doin-button doin-button--secondary">
