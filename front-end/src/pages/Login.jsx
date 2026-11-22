@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { logIn } from "../api";
+import { signedInPath } from "../useSession";
+import useSubmission from "../useSubmission";
 import "./Auth.css";
 
-export default function Login() {
+export default function Login({ onUserChange }) {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -12,6 +15,7 @@ export default function Login() {
 
   const [errors, setErrors] = useState({});
   const [resetMessage, setResetMessage] = useState("");
+  const { pending, error, setError, submit } = useSubmission();
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -25,6 +29,7 @@ export default function Login() {
       ...previous,
       [name]: "",
     }));
+    setError("");
   }
 
   function handleSubmit(event) {
@@ -42,10 +47,21 @@ export default function Login() {
 
     setErrors(newErrors);
 
-    if (Object.keys(newErrors).length === 0) {
-      // Sprint 1: mock login, without backend authentication.
-      navigate("/discover");
+    const firstInvalid = Object.keys(newErrors)[0];
+    if (firstInvalid) {
+      const input = event.currentTarget.elements.namedItem(firstInvalid);
+      requestAnimationFrame(() => input?.focus());
+      return;
     }
+
+    const credentials = { email: formData.email.trim(), password: formData.password };
+    submit(
+      (signal) => logIn(credentials, signal),
+      (user) => {
+        onUserChange(user);
+        navigate(signedInPath(user));
+      },
+    );
   }
 
   function handleForgotPassword() {
@@ -63,6 +79,8 @@ export default function Login() {
 
         <form
           className="auth-form"
+          action="/api/auth/login"
+          method="post"
           onSubmit={handleSubmit}
           noValidate
         >
@@ -78,10 +96,11 @@ export default function Login() {
               value={formData.email}
               onChange={handleChange}
               aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? "login-email-error" : undefined}
             />
 
             {errors.email && (
-              <p className="auth-error" role="alert">
+              <p id="login-email-error" className="auth-error" role="alert">
                 {errors.email}
               </p>
             )}
@@ -99,10 +118,11 @@ export default function Login() {
               value={formData.password}
               onChange={handleChange}
               aria-invalid={Boolean(errors.password)}
+              aria-describedby={errors.password ? "login-password-error" : undefined}
             />
 
             {errors.password && (
-              <p className="auth-error" role="alert">
+              <p id="login-password-error" className="auth-error" role="alert">
                 {errors.password}
               </p>
             )}
@@ -120,12 +140,15 @@ export default function Login() {
             </p>
           )}
 
+          {error && <p className="auth-error" role="alert">{error}</p>}
+
           <div className="auth-actions">
             <button
               type="submit"
               className="doin-button doin-button--primary auth-primary-button"
+              disabled={pending}
             >
-              Log in
+              {pending ? "Logging in…" : "Log in"}
             </button>
 
             <p className="auth-switch">
