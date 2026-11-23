@@ -96,38 +96,23 @@ router.get("/me", requireMockUser, (req, res) => {
   res.set("Cache-Control", "no-store").json(serializePublicUser(req.currentUser));
 });
 
-// Finds the canonical form of one interest value, matching without
-// worrying about capital letters and accepting the two older spellings
-// from #91. Returns null when the value is not on the shared list.
-function matchInterest(value) {
-  const lowered = value.trim().toLowerCase();
-  for (const interest of canonicalInterests) {
-    if (interest.toLowerCase() === lowered) return interest;
-  }
-  for (const [alias, interest] of Object.entries(interestAliases)) {
-    if (alias.toLowerCase() === lowered) return interest;
-  }
-  return null;
-}
-
 // Reads the interest filter from the query string. The filter may be
 // given once, repeated, or separated by commas, and a person must have
-// every selected interest to match. Returns the canonical list, or null
+// every selected interest to match. The values are checked against the
+// shared interest list by normalizeInterests, which also accepts the
+// two older spellings from #91. Returns the canonical list, or null
 // when any value is not on the shared list.
 function readInterestFilter(query) {
   if (query === undefined) return [];
   const values = Array.isArray(query) ? query : [query];
-  const selected = [];
+  const parts = [];
   for (const value of values) {
     if (typeof value !== "string") return null;
     for (const part of value.split(",")) {
-      if (!part.trim()) continue;
-      const interest = matchInterest(part);
-      if (!interest) return null;
-      if (!selected.includes(interest)) selected.push(interest);
+      if (part.trim()) parts.push(part);
     }
   }
-  return selected;
+  return normalizeInterests(parts);
 }
 
 // Discover people (#99), with search and interest filtering (#100). Only
