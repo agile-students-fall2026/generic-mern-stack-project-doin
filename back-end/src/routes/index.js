@@ -1,4 +1,6 @@
+
 import { Router } from "express";
+import eventsRouter from "./events.js";
 
 const router = Router();
 
@@ -6,5 +8,7 @@ router.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Mount feature routers here as their tasks are implemented (paths omit /api).
+// Event discovery and event details.
+router.use("/events", eventsRouter);
+
 export default router;
