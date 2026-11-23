@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import mockProfile from "../mocks/mockProfile";
+import { registerAccount } from "../api";
+import useSubmission from "../useSubmission";
 import "./Auth.css";
 
-export default function Register() {
+export default function Register({ onUserChange }) {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ export default function Register() {
   });
 
   const [errors, setErrors] = useState({});
+  const { pending, error, setError, submit } = useSubmission();
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -27,6 +29,7 @@ export default function Register() {
       ...previous,
       [name]: "",
     }));
+    setError("");
   }
 
   function handleSubmit(event) {
@@ -62,10 +65,25 @@ export default function Register() {
 
     setErrors(newErrors);
 
-    if (Object.keys(newErrors).length === 0) {
-      mockProfile.name = formData.fullName.trim();
-      navigate("/select-interests");
+    const firstInvalid = Object.keys(newErrors)[0];
+    if (firstInvalid) {
+      const input = event.currentTarget.elements.namedItem(firstInvalid);
+      requestAnimationFrame(() => input?.focus());
+      return;
     }
+
+    const fields = {
+      name: formData.fullName.trim(),
+      email: formData.email.trim(),
+      password,
+    };
+    submit(
+      (signal) => registerAccount(fields, signal),
+      (user) => {
+        onUserChange(user);
+        navigate("/select-interests");
+      },
+    );
   }
 
   return (
@@ -75,7 +93,13 @@ export default function Register() {
           <h1>Create an account</h1>
         </header>
 
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+        <form
+          className="auth-form"
+          action="/api/auth/register"
+          method="post"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <div className="auth-field">
             <label htmlFor="fullName">Full name</label>
             <input
@@ -88,9 +112,10 @@ export default function Register() {
               value={formData.fullName}
               onChange={handleChange}
               aria-invalid={Boolean(errors.fullName)}
+              aria-describedby={errors.fullName ? "register-name-error" : undefined}
             />
             {errors.fullName && (
-              <p className="auth-error" role="alert">
+              <p id="register-name-error" className="auth-error" role="alert">
                 {errors.fullName}
               </p>
             )}
@@ -108,9 +133,10 @@ export default function Register() {
               value={formData.email}
               onChange={handleChange}
               aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? "register-email-error" : undefined}
             />
             {errors.email && (
-              <p className="auth-error" role="alert">
+              <p id="register-email-error" className="auth-error" role="alert">
                 {errors.email}
               </p>
             )}
@@ -128,9 +154,10 @@ export default function Register() {
               value={formData.password}
               onChange={handleChange}
               aria-invalid={Boolean(errors.password)}
+              aria-describedby={errors.password ? "register-password-error" : undefined}
             />
             {errors.password && (
-              <p className="auth-error" role="alert">
+              <p id="register-password-error" className="auth-error" role="alert">
                 {errors.password}
               </p>
             )}
@@ -148,20 +175,24 @@ export default function Register() {
               value={formData.confirmPassword}
               onChange={handleChange}
               aria-invalid={Boolean(errors.confirmPassword)}
+              aria-describedby={errors.confirmPassword ? "register-confirm-error" : undefined}
             />
             {errors.confirmPassword && (
-              <p className="auth-error" role="alert">
+              <p id="register-confirm-error" className="auth-error" role="alert">
                 {errors.confirmPassword}
               </p>
             )}
           </div>
 
+          {error && <p className="auth-error" role="alert">{error}</p>}
+
           <div className="auth-actions">
             <button
               type="submit"
               className="doin-button doin-button--primary auth-primary-button"
+              disabled={pending}
             >
-              Continue
+              {pending ? "Creating account…" : "Continue"}
             </button>
 
             <p className="auth-switch">
