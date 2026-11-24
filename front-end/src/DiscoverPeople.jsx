@@ -1,13 +1,12 @@
 import { useState } from "react";
 import "./DiscoverPeople.css";
 import SearchBar from "./SearchBar";
-import mockDiscoverPeople from "./mockDiscoverPeople";
 
-function DiscoverPeople({ onViewProfile }) {
+function DiscoverPeople({ onViewProfile,people = [] }) {
   const [search, setSearch] = useState("");
   const [interest, setInterest] = useState("All");
-
-  const filteredPeople = mockDiscoverPeople.filter(
+    
+  const filteredPeople = people.filter(
     (person) =>
       (person.name.toLowerCase().includes(search.toLowerCase()) ||
         person.hobbies.toLowerCase().includes(search.toLowerCase())) &&

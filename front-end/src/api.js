@@ -80,3 +80,84 @@ export function setupProfile(fields, signal) {
     signal,
   });
 }
+
+//
+// EVENTS API
+//
+
+export function getEvents(signal) {
+  return request("/events", { signal });
+}
+
+export function joinEvent(eventId, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}/rsvp`, {
+    method: "POST",
+    signal,
+  });
+}
+
+export function leaveEvent(eventId, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}/rsvp`, {
+    method: "DELETE",
+    signal,
+  });
+}
+
+export function getUserEvents(userId, type, signal) {
+  const filter = type ? `?type=${encodeURIComponent(type)}` : "";
+
+  return request(
+    `/users/${encodeURIComponent(userId)}/events${filter}`,
+    { signal },
+  );
+}
+
+//
+// CONNECTIONS API
+//
+
+export function sendConnectionRequest(recipientId, signal) {
+  return request("/connections/requests", {
+    method: "POST",
+    body: JSON.stringify({ recipientId }),
+    signal,
+  });
+}
+
+export function getConnectionRequests(userId, signal) {
+  return request(
+    `/users/${encodeURIComponent(userId)}/connection-requests`,
+    { signal },
+  );
+}
+
+export function updateConnectionRequest(requestId, status, signal) {
+  return request(
+    `/connections/requests/${encodeURIComponent(requestId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+      signal,
+    },
+  );
+}
+
+export function getConnections(userId, signal) {
+  return request(
+    `/users/${encodeURIComponent(userId)}/connections`,
+    { signal },
+  );
+
+}
+
+export function getUserById(userId, signal) {
+  return request(`/users/${encodeURIComponent(userId)}`, {
+    signal,
+  });
+
+}
+
+export function getUsers(signal) {
+  return request("/users", { signal });
+}
+

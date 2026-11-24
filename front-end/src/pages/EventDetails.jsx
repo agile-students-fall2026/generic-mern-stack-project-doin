@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import "../styles/EventDetails.css";
 import "../styles/EventRSVP.css";
 import BackButton from "../Components/BackButton";
+import { joinEvent, leaveEvent } from "../api";
 
 const EventDetails = (props) => {
   const event = props.event;
@@ -13,6 +14,7 @@ const EventDetails = (props) => {
   const [confirmation, setConfirmation] = useState("");
   const [message, setMessage] = useState("");
   const confirmationRef = useRef(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (confirmation) {
@@ -38,27 +40,50 @@ const EventDetails = (props) => {
   const isFull = attendeeIds.length >= event.capacity;
 
   // Join the event
-  const handleJoin = () => {
-    if (!currentUser || isAttending || isFull) {
-      return;
-    }
+  const handleJoin = async() => {
+   if (!currentUser || isAttending || isFull || isSubmitting) {
+    return;
+  }
 
-    props.onAttendeeChange([...attendeeIds, currentUser.id]);
+  setIsSubmitting(true);
+  setMessage("");
+
+  try {
+    const updatedEvent = await joinEvent(event.id);
+
+    props.onAttendeeChange(updatedEvent.attendeeIds);
+
     setConfirmation("");
     setMessage("You have successfully joined this event!");
-  };
+  } catch (error) {
+    setMessage(error.message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Leave the event
-  const handleLeave = () => {
-    if (!currentUser || !isAttending) {
-      return;
-    }
+  const handleLeave = async() => {
+      if (!currentUser || !isAttending || isSubmitting) {
+    return;
+  }
 
-    props.onAttendeeChange(attendeeIds.filter((id) => id !== currentUser.id));
+  setIsSubmitting(true);
+  setMessage("");
+
+  try {
+    const updatedEvent = await leaveEvent(event.id);
+
+    props.onAttendeeChange(updatedEvent.attendeeIds);
+
     setConfirmation("");
     setMessage("You have left this event.");
-  };
-
+  } catch (error) {
+    setMessage(error.message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   return (
     <main className="event-details">
       {onBack && <BackButton onClick={onBack} ariaLabel="Back to events" />}
@@ -177,13 +202,10 @@ const EventDetails = (props) => {
               ) : (
                 <button
                   className="doin-button doin-button--primary"
-                  disabled={isFull}
-                  onClick={() => {
-                    setMessage("");
-                    setConfirmation("join");
-                  }}
-                >
-                  {isFull ? "Event Full" : "Join Event"}
+                  onClick={handleLeave}
+                  disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Leaving..." : "Confirm Leave"}
                 </button>
               ))}
           </div>
