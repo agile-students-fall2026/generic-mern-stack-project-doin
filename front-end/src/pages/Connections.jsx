@@ -1,6 +1,4 @@
 import { Link } from "react-router";
-import { mockUsers } from "../mocks/users";
-import mockDiscoverPeople from "../mockDiscoverPeople";
 import "./Connections.css";
 
 function PersonLink({ person }) {
@@ -19,7 +17,6 @@ function PersonLink({ person }) {
 export default function Connections({
   sentRequestIds,
   onSendRequest,
-  pendingRequests,
   connectedUsers,
   onAcceptRequest,
   onDeclineRequest,
@@ -48,13 +45,13 @@ const sentPeople = outgoingRequests.map((request) => ({
 
   function handleSuggestedRequest(user) {
     const existingRequest = outgoingRequests.find(
-    (request) => request.recipientId === person.id
+    (request) => request.recipientId === user.id
     );
 
     if (existingRequest) {
       onCancelRequest({ requestId: existingRequest.id });
     } else {
-      onSendRequest(person.id);
+      onSendRequest(user.id);
     }
   }
 

@@ -1,17 +1,16 @@
 import { Link } from "react-router";
-import mockProfile from "../mocks/mockProfile";
 import UserProfile from "../Components/UserProfile";
 
-export default function Profile({ stats = [] }) {
+export default function Profile({ user, stats = [] }) {
   return (
     <UserProfile
       title="My profile"
-      name={mockProfile.name}
-      username={mockProfile.username}
-      location={mockProfile.location}
-      bio={mockProfile.bio}
-      interests={mockProfile.interests ?? []}
-      imageUrl={mockProfile.imageUrl}
+      name={user.name}
+      username={user.username}
+      location={user.location}
+      bio={user.bio}
+      interests={user.interests ?? []}
+      imageUrl={user.imageUrl}
       stats={stats}
     >
       <Link to="/edit-profile" className="doin-button doin-button--primary">

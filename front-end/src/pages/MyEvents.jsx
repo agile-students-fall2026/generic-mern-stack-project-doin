@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import "../styles/MyEvents.css";
 import EventsTabs from "../Components/EventsTabs";
-const loading = props.loading;
-const error = props.error;
+
 
 const MyEvents = (props) => {
   const events = props.events || [];
   const currentUser = props.currentUser;
+  const loading = props.loading;
+  const error = props.error;
 
   const [activeTab, setActiveTab] = useState("joined");
 

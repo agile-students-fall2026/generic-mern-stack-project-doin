@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./Explore.css";
-import mockEvents from "./mockEvents";
 import EventsTabs from "./Components/EventsTabs";
+
 
 function Explore({ onViewEvent, onCreateEvent, events = mockEvents }) {
   const [search, setSearch] = useState("");

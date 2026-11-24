@@ -16,16 +16,11 @@
   import Profile from "./pages/Profile";
   import EditProfile from "./pages/EditProfile";
   import MyEvents from "./pages/MyEvents";
-  import { mockEvent } from "./mocks/events";
-  import mockEvents from "./mockEvents";
-  import { mockUsers } from "./mocks/users";
   import { useState,useEffect } from "react";
   import DiscoverPeople from "./DiscoverPeople";
   import PersonDetails from "./PersonDetails";  
   import BackButton from "./Components/BackButton";
-  import mockDiscoverPeople from "./mockDiscoverPeople";
   import normalizePerson from "./normalizePerson";
-  import mockProfile from "./mocks/mockProfile";
   import Explore from "./Explore";
   import EventDetails from "./pages/EventDetails";
   import Connections from "./pages/Connections";
@@ -42,30 +37,6 @@
     sendConnectionRequest,
     getUsers } 
     from "./api";
-
-  const currentUser = mockUsers[0];
-
-  const demoEvents = [
-    {
-      ...mockEvent,
-      id: "demo-joined",
-      title: "Weekend Hiking Meetup",
-      category: "Sports",
-      imageUrl: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800",
-      organizerId: mockUsers[1].id,
-      attendeeIds: [currentUser.id],
-    },
-    {
-      ...mockEvent,
-      id: "demo-hosting",
-      title: "Board Game Night",
-      category: "Gaming",
-      imageUrl:
-        "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=800",
-      organizerId: currentUser.id,
-      attendeeIds: [],
-    },
-  ];
 
   
 function DiscoverPreview({
@@ -224,20 +195,28 @@ function ConnectionProfile({
 }
 
 
-  function EventsPreview({ rsvps, onUpdateRsvp, events, currentUser }) {
+  function EventsPreview({ rsvps, onUpdateRsvp, events, currentUser,eventsLoading, eventsError }) {
     const navigate = useNavigate();
     const { eventId } = useParams();
 
     // No event ID: display the discovery page
     if (!eventId) {
       return (
+        <>
+          {eventsLoading && <p role="status">Loading events...</p>}
+
+          {eventsError && (
+        <p role="alert">Unable to load events: {eventsError}</p>
+      )}
+
         <Explore
           events={events}
           onViewEvent={(event) => navigate(`/events/${event.id}`)}
           onCreateEvent={() => navigate("/create-event")}
         />
+        </>
       );
-    }
+  }
 
     // Find the event matching the ID in the URL
     const selectedEvent = events.find((event) => String(event.id) === eventId);
@@ -298,22 +277,14 @@ function ConnectionProfile({
     const sessionDestination = user ? signedInPath(user) : "/login";
     const [rsvps, setRsvps] = useState({});
     const [createdEvents, setCreatedEvents] = useState([]);
-    const [pendingRequests, setPendingRequests] = useState(() =>
-      mockUsers.slice(0, 3),
-    );
     const [connectedUsers, setConnectedUsers] = useState([]);
     const [connectionsLoading, setConnectionsLoading] = useState(false);
     const [connectionsError, setConnectionsError] = useState("");
-
-
     const [serverConnectionRequests, setServerConnectionRequests] = useState([]);
     const [requestsLoading, setRequestsLoading] = useState(false);
     const [requestsError, setRequestsError] = useState("");
-
     const [requestUsers, setRequestUsers] = useState({});
-
     const [updatingRequestId, setUpdatingRequestId] = useState(null);
-
     const [availableUsers, setAvailableUsers] = useState([]);
     const [suggestionsLoading, setSuggestionsLoading] = useState(false);
     const [suggestionsError, setSuggestionsError] = useState("");
@@ -740,7 +711,7 @@ async function handleSendRequest(personId) {
               </SessionBoundary>
             }
           >
-            <Route path="/profile" element={<Profile stats={profileStats} />} />
+            <Route path="/profile" element={<Profile user ={user} Profile stats={profileStats} />} />
             <Route path="/edit-profile" element={<EditProfile />} />
             <Route
               path="/create-event"
@@ -779,7 +750,6 @@ async function handleSendRequest(personId) {
                 <Connections
                   sentRequestIds={sentRequestIds}
                   onSendRequest={handleSendRequest}
-                  pendingRequests={pendingRequests}
                   connectedUsers={connectedUsers}
                   onAcceptRequest={handleAcceptRequest}
                   onDeclineRequest={handleDeclineRequest}
@@ -822,6 +792,8 @@ async function handleSendRequest(personId) {
                   rsvps={rsvps}
                   onUpdateRsvp={handleRsvpChange}
                   currentUser={user}
+                  eventsLoading={eventsLoading}
+                  eventsError={eventsError}
                 />
               }
             />
@@ -834,6 +806,8 @@ async function handleSendRequest(personId) {
                   rsvps={rsvps}
                   onUpdateRsvp={handleRsvpChange}
                   currentUser={user}
+                  eventsLoading={eventsLoading}
+                  eventsError={eventsError}
                 />
               }
             />
