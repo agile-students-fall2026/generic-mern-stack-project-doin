@@ -110,12 +110,9 @@ router.patch("/connections/requests/:requestId", requireMockUser, (req, res) => 
     return sendError(res, 404, "NOT_FOUND", "Connection request not found.");
   }
 
-  if (connectionRequest.status !== "pending") {
-    return sendError(res, 409, "INVALID_TRANSITION", "This request is no longer pending.");
-  }
-
   const currentUserId = req.currentUser.id;
 
+  // Check permissions FIRST.
   if (status === "cancelled") {
     if (currentUserId !== connectionRequest.senderId) {
       return sendError(res, 403, "FORBIDDEN", "Only the sender can cancel this request.");
@@ -126,9 +123,15 @@ router.patch("/connections/requests/:requestId", requireMockUser, (req, res) => 
     }
   }
 
+  // Then check whether the request can still be updated.
+  if (connectionRequest.status !== "pending") {
+    return sendError(res, 409, "INVALID_TRANSITION", "This request is no longer pending.");
+  }
+
   connectionRequest.status = status;
 
   return res.status(200).json(connectionRequest);
+
 });
 
 // GET /api/users/:userId/connections
