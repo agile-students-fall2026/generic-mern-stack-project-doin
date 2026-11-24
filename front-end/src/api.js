@@ -109,3 +109,14 @@ export function updateProfile(userId, fields) {
     body: JSON.stringify(fields),
   });
 }
+
+export function getEvents(signal) {
+  return request("/events", { signal });
+}
+
+export function getEvent(eventId, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}`, { signal });
+}
+
+export function getEventCategories(signal) {
+  return request("/events/categories", { signal });

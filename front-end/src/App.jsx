@@ -1,39 +1,37 @@
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Navigate,
-  Routes,
-  Route,
   Outlet,
+  Route,
+  Routes,
   useNavigate,
   useParams,
 } from "react-router";
-import Welcome from "./pages/Welcome";
+import { getEvent, getEvents } from "./api";
+import BackButton from "./Components/BackButton";
+import Layout from "./Components/Layout";
+import SessionBoundary from "./Components/SessionBoundary";
+import DiscoverPeople from "./DiscoverPeople";
+import Explore from "./Explore";
+import mockDiscoverPeople from "./mockDiscoverPeople";
+import { mockEvent } from "./mocks/events";
+import mockProfile from "./mocks/mockProfile";
+import { mockUsers } from "./mocks/users";
+import normalizePerson from "./normalizePerson";
+import Connections from "./pages/Connections";
+import CreateEvent from "./pages/CreateEvent";
+import EditProfile from "./pages/EditProfile";
+import EventDetails from "./pages/EventDetails";
 import Login from "./pages/Login";
+import MyEvents from "./pages/MyEvents";
+import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 import SelectInterests from "./pages/SelectInterests";
 import SetupProfile from "./pages/SetupProfile";
-import Profile from "./pages/Profile";
-import EditProfile from "./pages/EditProfile";
-import MyEvents from "./pages/MyEvents";
-import { mockEvent } from "./mocks/events";
-import mockEvents from "./mockEvents";
-import { mockUsers } from "./mocks/users";
-import { useEffect, useState } from "react";
-import { currentUserId, getMyUser, getPerson } from "./api";
-import DiscoverPeople from "./DiscoverPeople";
+import Welcome from "./pages/Welcome";
 import PersonDetails from "./PersonDetails";
-import BackButton from "./Components/BackButton";
-import mockDiscoverPeople from "./mockDiscoverPeople";
-import normalizePerson from "./normalizePerson";
-import mockProfile from "./mocks/mockProfile";
-import Explore from "./Explore";
-import EventDetails from "./pages/EventDetails";
-import Connections from "./pages/Connections";
-import Layout from "./Components/Layout";
-import CreateEvent from "./pages/CreateEvent";
-import SessionBoundary from "./Components/SessionBoundary";
 import { signedInPath, useSession } from "./useSession";
-
 const currentUser = mockUsers[0];
 
 const demoEvents = [
@@ -216,9 +214,60 @@ function ConnectionProfile({
   );
 }
 
-function EventsPreview({ rsvps, onUpdateRsvp, events }) {
+function EventsPreview({
+  rsvps,
+  onUpdateRsvp,
+  events,
+  eventsLoading,
+  eventsError,
+}) {
   const navigate = useNavigate();
   const { eventId } = useParams();
+
+const [eventDetails, setEventDetails] = useState(null);
+const [detailsLoading, setDetailsLoading] = useState(false);
+const [detailsError, setDetailsError] = useState("");
+
+useEffect(() => {
+  if (!eventId) return;
+
+  const controller = new AbortController();
+
+  async function loadEvent() {
+    setDetailsLoading(true);
+    setDetailsError("");
+    setEventDetails(null);
+
+    try {
+      const event = await getEvent(eventId, controller.signal);
+
+      if (!controller.signal.aborted) {
+        setEventDetails(event);
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setDetailsError(
+          error.status === 404 ? "Event not found." : "Could not load event.",
+        );
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setDetailsLoading(false);
+      }
+    }
+  }
+
+  loadEvent();
+  return () => controller.abort();
+}, [eventId]);
+
+  if (eventsLoading) {
+  return <p>Loading events...</p>;
+}
+
+if (eventsError) {
+  return <p role="alert">{eventsError}</p>;
+}
 
   // No event ID: display the discovery page
   if (!eventId) {
@@ -232,8 +281,7 @@ function EventsPreview({ rsvps, onUpdateRsvp, events }) {
   }
 
   // Find the event matching the ID in the URL
-  const selectedEvent = events.find((event) => String(event.id) === eventId);
-
+  const selectedEvent = eventDetails;
   if (!selectedEvent) {
     return (
       <main className="event-details">
@@ -289,20 +337,46 @@ export default function App() {
   const [rsvps, setRsvps] = useState({});
   const [sentRequestIds, setSentRequestIds] = useState([]);
   const [createdEvents, setCreatedEvents] = useState([]);
+  const [apiEvents, setApiEvents] = useState([]);
+const [eventsLoading, setEventsLoading] = useState(true);
+const [eventsError, setEventsError] = useState("");
+
+useEffect(() => {
+  const controller = new AbortController();
+
+  async function loadEvents() {
+    try {
+      const events = await getEvents(controller.signal);
+
+      if (!controller.signal.aborted) {
+        setApiEvents(events);
+        setEventsError("");
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setEventsError("Could not load events.");
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setEventsLoading(false);
+      }
+    }
+  }
+
+  loadEvents();
+  return () => controller.abort();
+}, []);
   const [pendingRequests, setPendingRequests] = useState(() =>
     mockUsers.slice(0, 3),
   );
   const [connectedUsers, setConnectedUsers] = useState(() =>
     mockUsers.slice(3, 9),
   );
-  const exploreEvents = [
-    ...mockEvents,
-    ...createdEvents.map((event) => ({
-      ...event,
-      image: event.imageUrl,
-      time: event.startTime,
-    })),
-  ];
+ const exploreEvents = apiEvents.map((event) => ({
+  ...event,
+  image: event.imageUrl,
+  time: event.startTime,
+}));
 
   function handleRsvpChange(eventId, attendeeIds) {
     setRsvps((previous) => ({
@@ -479,26 +553,32 @@ export default function App() {
           />
 
           <Route
-            path="/events"
-            element={
-              <EventsPreview
-                events={exploreEvents}
-                rsvps={rsvps}
-                onUpdateRsvp={handleRsvpChange}
-              />
-            }
-          />
+  path="/events"
+  element={
+    <EventsPreview
+      events={exploreEvents}
+      rsvps={rsvps}
+      onUpdateRsvp={handleRsvpChange}
+      eventsLoading={eventsLoading}
+      eventsError={eventsError}
+    />
+  }
+/>
 
           <Route
-            path="/events/:eventId"
-            element={
-              <EventsPreview
-                events={exploreEvents}
-                rsvps={rsvps}
-                onUpdateRsvp={handleRsvpChange}
-              />
-            }
-          />
+  path="/events/:eventId"
+  element={
+    <EventsPreview
+      events={exploreEvents}
+      rsvps={rsvps}
+      onUpdateRsvp={handleRsvpChange}
+      eventsLoading={eventsLoading}
+      eventsError={eventsError}
+    />
+  }
+/>
+            
+          
         </Route>
       </Routes>
     </BrowserRouter>
