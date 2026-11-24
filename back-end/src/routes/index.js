@@ -2,6 +2,7 @@ import { Router } from "express";
 import authRouter from "./auth.js";
 import interestsRouter from "./interests.js";
 import usersRouter, { profilesRouter } from "./users.js";
+import participationRouter from "./participation.js";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use("/auth", authRouter);
 router.use(interestsRouter);
 router.use("/users", usersRouter);
 router.use("/profiles", profilesRouter);
+router.use(participationRouter);
 
 export default router;
