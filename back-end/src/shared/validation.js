@@ -17,20 +17,21 @@ export function isValidRegistrationPassword(password) {
 }
 
 const interestAliases = new Map([
-  ["Arts", "Art"],
-  ["Gaming", "Games"],
+  ["arts", "art"],
+  ["gaming", "games"],
 ]);
 
 export function normalizeInterests(interests) {
   if (!Array.isArray(interests)) return null;
 
+  const catalog = new Map(store.interests.map((name) => [name.toLowerCase(), name]));
   const normalized = new Set();
   for (const value of interests) {
     if (typeof value !== "string") return null;
 
-    const trimmed = value.trim();
-    const interest = interestAliases.get(trimmed) ?? trimmed;
-    if (!store.interests.includes(interest)) return null;
+    const key = value.trim().toLowerCase();
+    const interest = catalog.get(interestAliases.get(key) ?? key);
+    if (!interest) return null;
     normalized.add(interest);
   }
 
