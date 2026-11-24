@@ -1,0 +1,12 @@
+
+{
+  "all": true,
+  "src": ["src"],
+  "exclude": [
+    "src/server.js",
+    "test/**"
+  ],
+  "reporter": ["text", "html"],
+  "reports-dir": "coverage"
+}
+    
