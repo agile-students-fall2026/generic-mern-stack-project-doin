@@ -4,29 +4,89 @@ import { store } from "../data/store.js";
 
 const router = Router();
 
-// Get all active events with optional search and category filtering.
+
 router.get("/", (req, res) => {
-  let events = store.events.filter((event) => event.status === "active");
+  const { search, category, location, date } = req.query;
 
-  const search = req.query.search;
-  const category = req.query.category;
+  // Reject repeated parameters and non-string values.
+  const filters = { search, category, location, date };
 
-  // Search events by title.
-  if (search) {
+  for (const [name, value] of Object.entries(filters)) {
+    if (value !== undefined && typeof value !== "string") {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: `Invalid ${name} filter.`,
+        },
+      });
+    }
+  }
+
+  let events = store.events.filter(
+    (event) => event.status === "active"
+  );
+
+  // Search title, location, and category.
+  if (search?.trim()) {
+    const term = search.trim().toLowerCase();
+
     events = events.filter((event) =>
-      event.title.toLowerCase().includes(search.toLowerCase()),
+      [event.title, event.location, event.category].some(
+        (value) => value.toLowerCase().includes(term)
+      )
     );
   }
 
-  // Filter events by category.
-  if (category) {
+  // Filter by category, including supported aliases.
+  if (category?.trim()) {
+    const input = category.trim().toLowerCase();
+
+    const aliases = {
+      arts: "art",
+      gaming: "games",
+    };
+
+    const normalizedCategory = aliases[input] ?? input;
+
     events = events.filter(
-      (event) => event.category.toLowerCase() === category.toLowerCase(),
+      (event) =>
+        event.category.toLowerCase() === normalizedCategory
     );
   }
 
-  res.json(events);
+  // Filter by location.
+  if (location?.trim()) {
+    const term = location.trim().toLowerCase();
+
+    events = events.filter((event) =>
+      event.location.toLowerCase().includes(term)
+    );
+  }
+
+  // Filter by event date.
+  if (date?.trim()) {
+    const selectedDate = date.trim();
+
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(selectedDate) ||
+      Number.isNaN(Date.parse(`${selectedDate}T00:00:00Z`))
+    ) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid date filter.",
+        },
+      });
+    }
+
+    events = events.filter(
+      (event) => event.date === selectedDate
+    );
+  }
+
+  return res.status(200).json(events);
 });
+
 
 // Get details of one event using its ID.
 
