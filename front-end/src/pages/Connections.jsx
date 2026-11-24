@@ -68,7 +68,7 @@ const sentPeople = outgoingRequests.map((request) => ({
           {incomingPeople.map((user) => (
             <div
               className="doin-card connection-user connection-request"
-              key={user.requestIdid}
+              key={user.requestId}
             >
               <PersonLink person={user} />
               <div className="connection-request-actions">

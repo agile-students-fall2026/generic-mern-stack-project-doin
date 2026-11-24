@@ -533,12 +533,21 @@ const discoverUsers = availableUsers
   ];
 
     function handleRsvpChange(eventId, attendeeIds) {
-      setRsvps((previous) => ({
-        ...previous,
-        [eventId]: attendeeIds,
-      }));
-    }
+    setRsvps((previous) => ({
+    ...previous,
+    [eventId]: attendeeIds,
+  }));
 
+  setServerEvents((previous) =>
+    previous.map((event) =>
+      event.id === eventId
+        ? { ...event, attendeeIds }
+        : event
+    )
+  );
+}
+
+ 
     const myEventsData = myEvents;
 
     const profileStats = [

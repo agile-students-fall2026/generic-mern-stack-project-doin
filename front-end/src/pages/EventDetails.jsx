@@ -188,27 +188,31 @@ const EventDetails = (props) => {
 
           {/* RSVP Button */}
           <div className="event-section rsvp-actions">
-            {currentUser &&
-              (isAttending ? (
-                <button
-                  className="doin-button doin-button--secondary"
-                  onClick={() => {
-                    setMessage("");
-                    setConfirmation("leave");
-                  }}
-                >
-                  Leave Event
-                </button>
-              ) : (
-                <button
-                  className="doin-button doin-button--primary"
-                  onClick={handleLeave}
-                  disabled={isSubmitting}
+              {currentUser &&
+                (isAttending ? (
+                  <button
+                    className="doin-button doin-button--secondary"
+                    disabled={isSubmitting}
+                    onClick={() => {
+                      setMessage("");
+                      setConfirmation("leave");
+                    }}
                   >
-                    {isSubmitting ? "Leaving..." : "Confirm Leave"}
-                </button>
-              ))}
-          </div>
+                    Leave Event
+                  </button>
+                ) : (
+                  <button
+                    className="doin-button doin-button--primary"
+                    disabled={isFull || isSubmitting}
+                    onClick={() => {
+                      setMessage("");
+                      setConfirmation("join");
+                    }}
+                  >
+                    {isFull ? "Event Full" : "Join Event"}
+                  </button>
+                ))}
+            </div>
 
           {/* RSVP Confirmation */}
           {confirmation === "join" && (
@@ -229,18 +233,20 @@ const EventDetails = (props) => {
               <button
                 className="doin-button doin-button--primary"
                 onClick={handleJoin}
+                disabled={isSubmitting}
               >
-                Confirm RSVP
+                {isSubmitting ? "Joining..." : "Confirm RSVP"}
               </button>
 
               <button
                 className="doin-button doin-button--secondary"
                 onClick={() => setConfirmation("")}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
             </div>
-          )}
+          )}  
 
           {/* Leave Confirmation */}
           {confirmation === "leave" && (
@@ -257,13 +263,16 @@ const EventDetails = (props) => {
               <button
                 className="doin-button doin-button--primary"
                 onClick={handleLeave}
+                disabled={isSubmitting}
               >
-                Confirm Leave
+          
+               {isSubmitting ? "Leaving..." : "Confirm Leave"}
               </button>
 
               <button
                 className="doin-button doin-button--secondary"
                 onClick={() => setConfirmation("")}
+                disabled={isSubmitting}
               >
                 Keep RSVP
               </button>
