@@ -18,7 +18,8 @@ import MyEvents from "./pages/MyEvents";
 import { mockEvent } from "./mocks/events";
 import mockEvents from "./mockEvents";
 import { mockUsers } from "./mocks/users";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { currentUserId, getMyUser, getPerson } from "./api";
 import DiscoverPeople from "./DiscoverPeople";
 import PersonDetails from "./PersonDetails";
 import BackButton from "./Components/BackButton";
@@ -59,18 +60,90 @@ const demoEvents = [
 
 function DiscoverPreview({ sentRequestIds, onSendRequest }) {
   const [selectedPerson, setSelectedPerson] = useState(null);
+  const [person, setPerson] = useState(null);
+  const [personUnavailable, setPersonUnavailable] = useState(false);
+  const [myInterests, setMyInterests] = useState([]);
+
+  // Shared interests are worked out against the signed in user from the
+  // back end (#101). When nobody is signed in there are none.
+  useEffect(() => {
+    if (!currentUserId()) {
+      return;
+    }
+    getMyUser()
+      .then((user) => setMyInterests(user.interests ?? []))
+      .catch(() => setMyInterests([]));
+  }, []);
+
+  // Person Details reads the full profile from the back end (#101),
+  // using the shared profile endpoint from #98. If that request fails
+  // the person from the list is shown instead, unless the back end
+  // answered 404, which means the profile is gone and the page shows
+  // an unavailable state instead.
+  useEffect(() => {
+    if (!selectedPerson) {
+      setPerson(null);
+      setPersonUnavailable(false);
+      return;
+    }
+    let active = true;
+    setPersonUnavailable(false);
+    getPerson(selectedPerson.id)
+      .then((data) => {
+        if (active) {
+          setPerson(data);
+        }
+      })
+      .catch((error) => {
+        if (!active) {
+          return;
+        }
+        if (error.status === 404) {
+          setPersonUnavailable(true);
+        } else {
+          setPerson(selectedPerson);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [selectedPerson]);
 
   if (!selectedPerson) {
     return <DiscoverPeople onViewProfile={setSelectedPerson} />;
   }
 
-  const person = normalizePerson(selectedPerson, mockProfile.interests);
+  if (personUnavailable) {
+    return (
+      <main className="doin-page">
+        <BackButton
+          onClick={() => setSelectedPerson(null)}
+          ariaLabel="Back to discovery"
+        />
+        <h1 className="doin-page-title">Person not found</h1>
+        <p>
+          This profile is unavailable. Return to discovery to choose someone
+          else.
+        </p>
+      </main>
+    );
+  }
+
+  if (!person) {
+    return (
+      <main className="doin-page">
+        <p>Loading profile...</p>
+      </main>
+    );
+  }
+
+  const fullPerson = normalizePerson(person, myInterests);
 
   return (
     <PersonDetails
-      person={person}
-      requested={sentRequestIds.includes(person.id)}
-      onRequest={() => onSendRequest(person.id)}
+      person={fullPerson}
+      requested={sentRequestIds.includes(fullPerson.id)}
+      onRequest={() => onSendRequest(fullPerson.id)}
       onBack={() => setSelectedPerson(null)}
     />
   );
