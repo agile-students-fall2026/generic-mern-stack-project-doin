@@ -1,46 +1,51 @@
-  import {
-    BrowserRouter,
-    Navigate,
-    Routes,
-    Route,
-    Outlet,
-    useNavigate,
-    useParams,
-  } from "react-router";
 
-  import Welcome from "./pages/Welcome";
-  import Login from "./pages/Login";
-  import Register from "./pages/Register";
-  import SelectInterests from "./pages/SelectInterests";
-  import SetupProfile from "./pages/SetupProfile";
-  import Profile from "./pages/Profile";
-  import EditProfile from "./pages/EditProfile";
-  import MyEvents from "./pages/MyEvents";
-  import { useState,useEffect } from "react";
-  import DiscoverPeople from "./DiscoverPeople";
-  import PersonDetails from "./PersonDetails";  
-  import BackButton from "./Components/BackButton";
-  import normalizePerson from "./normalizePerson";
-  import Explore from "./Explore";
-  import EventDetails from "./pages/EventDetails";
-  import Connections from "./pages/Connections";
-  import Layout from "./Components/Layout";
-  import CreateEvent from "./pages/CreateEvent";
-  import SessionBoundary from "./Components/SessionBoundary";
-  import { signedInPath, useSession } from "./useSession";
-  import { getEvents, 
-    getUserEvents, 
-    getConnections,
-    getConnectionRequests,
-    getUserById,
-    updateConnectionRequest,
-    sendConnectionRequest,
-    getUsers } 
-    from "./api";
+import { useState, useEffect } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Routes,
+  Route,
+  Outlet,
+  useNavigate,
+  useParams,
+} from "react-router";
 
-  
+import Welcome from "./pages/Welcome";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import SelectInterests from "./pages/SelectInterests";
+import SetupProfile from "./pages/SetupProfile";
+import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
+import MyEvents from "./pages/MyEvents";
+import DiscoverPeople from "./DiscoverPeople";
+import PersonDetails from "./PersonDetails";
+import BackButton from "./Components/BackButton";
+import normalizePerson from "./normalizePerson";
+import Explore from "./Explore";
+import EventDetails from "./pages/EventDetails";
+import Connections from "./pages/Connections";
+import Layout from "./Components/Layout";
+import CreateEvent from "./pages/CreateEvent";
+import SessionBoundary from "./Components/SessionBoundary";
+import { signedInPath, useSession } from "./useSession";
+
+import {
+  getEvents,
+  getEvent,
+  createEvent,
+  updateEvent,
+  cancelEvent,
+  getUserEvents,
+  getConnections,
+  getConnectionRequests,
+  getUserById,
+  updateConnectionRequest,
+  sendConnectionRequest,
+  getUsers,
+} from "./api";
+
 function DiscoverPreview({
-  people,
   currentUser,
   outgoingRequests,
   onSendRequest,
@@ -50,20 +55,17 @@ function DiscoverPreview({
 
   if (!selectedPerson) {
     return (
-      <DiscoverPeople
-        people={people}
-        onViewProfile={setSelectedPerson}
-      />
+      <DiscoverPeople onViewProfile={setSelectedPerson} />
     );
   }
 
   const person = normalizePerson(
     selectedPerson,
-    currentUser?.interests ?? []
+    currentUser?.interests ?? [],
   );
 
   const existingRequest = outgoingRequests.find(
-    (request) => request.recipientId === person.id
+    (request) => request.recipientId === person.id,
   );
 
   function handleRequest() {
@@ -84,8 +86,6 @@ function DiscoverPreview({
   );
 }
 
-
-  
 function ConnectionProfile({
   currentUser,
   availableUsers,
@@ -103,7 +103,6 @@ function ConnectionProfile({
   const navigate = useNavigate();
   const onBack = () => navigate("/connections");
 
-  // Find the person using real backend profiles
   const record = [
     ...availableUsers,
     ...connectedUsers,
@@ -125,19 +124,19 @@ function ConnectionProfile({
 
   const person = normalizePerson(
     record,
-    currentUser?.interests ?? []
+    currentUser?.interests ?? [],
   );
 
   const connected = connectedUsers.some(
-    (user) => user.id === person.id
+    (user) => user.id === person.id,
   );
 
   const incomingRequest = incomingRequests.find(
-    (request) => request.senderId === person.id
+    (request) => request.senderId === person.id,
   );
 
   const outgoingRequest = outgoingRequests.find(
-    (request) => request.recipientId === person.id
+    (request) => request.recipientId === person.id,
   );
 
   function handleRequest() {
@@ -194,131 +193,298 @@ function ConnectionProfile({
   );
 }
 
+function EventsPreview({
+  events,
+  currentUser,
+  eventsLoading,
+  eventsError,
+  onUpdateRsvp,
+  onEventChanged,
+}) {
+  const navigate = useNavigate();
+  const { eventId } = useParams();
 
-  function EventsPreview({ rsvps, onUpdateRsvp, events, currentUser,eventsLoading, eventsError }) {
-    const navigate = useNavigate();
-    const { eventId } = useParams();
+  const [eventDetails, setEventDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState("");
+  const [managementError, setManagementError] = useState("");
+  const [organizerName, setOrganizerName] = useState("");
+  const [attendeeUsers, setAttendeeUsers] = useState([]);
 
-    // No event ID: display the discovery page
-    if (!eventId) {
-      return (
-        <>
-          {eventsLoading && <p role="status">Loading events...</p>}
+  // Load event details directly from Express.
+  useEffect(() => {
+    if (!eventId) return;
 
-          {eventsError && (
-        <p role="alert">Unable to load events: {eventsError}</p>
-      )}
+    const controller = new AbortController();
 
-        <Explore
-          events={events}
-          onViewEvent={(event) => navigate(`/events/${event.id}`)}
-          onCreateEvent={() => navigate("/create-event")}
-        />
-        </>
-      );
-  }
+    setEventDetails(null);
+    setDetailsLoading(true);
+    setDetailsError("");
+    setManagementError("");
 
-    // Find the event matching the ID in the URL
-    const selectedEvent = events.find((event) => String(event.id) === eventId);
+    getEvent(eventId, controller.signal)
+      .then((event) => {
+        if (!controller.signal.aborted) {
+          setEventDetails(event);
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setDetailsError(error.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setDetailsLoading(false);
+        }
+      });
 
-    if (!selectedEvent) {
-      return (
-        <main className="event-details">
-          <p>Event not found.</p>
-          <button
-            type="button"
-            className="doin-button doin-button--secondary"
-            onClick={() => navigate("/events")}
-          >
-            Back to events
-          </button>
-        </main>
-      );
+    return () => controller.abort();
+  }, [eventId]);
+
+  // Retrieve the organizer's profile.
+  useEffect(() => {
+    const controller = new AbortController();
+
+    setOrganizerName("");
+
+    if (eventDetails?.organizerId) {
+      getUserById(
+        eventDetails.organizerId,
+        controller.signal,
+      )
+        .then((person) => {
+          if (!controller.signal.aborted) {
+            setOrganizerName(person.name);
+          }
+        })
+        .catch(() => {});
     }
 
-    // Prepare the event for EventDetails
-    const event = {
-      ...selectedEvent,
-      imageUrl: selectedEvent.imageUrl ?? selectedEvent.image,
-      startTime: selectedEvent.startTime ?? selectedEvent.time,
-      endTime: selectedEvent.endTime ?? "Not specified",
-      description:
-        selectedEvent.description ?? "Demo event for frontend testing.",
-      organizer: "Doin",
-      attendeeIds: rsvps[selectedEvent.id] ?? selectedEvent.attendeeIds ?? [],
-      capacity: selectedEvent.capacity ?? 20,
-    };
+    return () => controller.abort();
+  }, [eventDetails?.organizerId]);
 
-    const profileUser = currentUser;
+  // Retrieve real attendee profiles from Express.
+  useEffect(() => {
+    const controller = new AbortController();
+
+    setAttendeeUsers([]);
+
+    Promise.allSettled(
+      (eventDetails?.attendeeIds ?? []).map((id) =>
+        getUserById(id, controller.signal),
+      ),
+    ).then((results) => {
+      if (!controller.signal.aborted) {
+        setAttendeeUsers(
+          results
+            .filter((result) => result.status === "fulfilled")
+            .map((result) => result.value),
+        );
+      }
+    });
+
+    return () => controller.abort();
+  }, [eventDetails?.attendeeIds]);
+
+  // Display Explore Events.
+  if (!eventId) {
+    if (eventsLoading) {
+      return <p role="status">Loading events...</p>;
+    }
+
+    if (eventsError) {
+      return <p role="alert">{eventsError}</p>;
+    }
 
     return (
-      <EventDetails
-        key={event.id}
-        event={event}
-        users={mockUsers.map((user) =>
-          user.id === currentUser.id ? profileUser : user,
-        )}
-        currentUser={profileUser}
-        onBack={() => navigate("/events")}
-        onAttendeeChange={(ids) => onUpdateRsvp(event.id, ids)}
+      <Explore
+        events={events}
+        onViewEvent={(event) =>
+          navigate(`/events/${event.id}`)
+        }
+        onCreateEvent={() => navigate("/create-event")}
       />
     );
   }
 
-  export default function App() {
-    const { session, restoreSession, saveSession } = useSession();
-    const [serverEvents, setServerEvents] = useState([]);
-    const [myEvents, setMyEvents] = useState([]);
-    const [myEventsLoading, setMyEventsLoading] = useState(false);
-    const [myEventsError, setMyEventsError] = useState("");
-    const [eventsLoading, setEventsLoading] = useState(true);
-    const [eventsError, setEventsError] = useState("");
-    const { user } = session;
-    const sessionDestination = user ? signedInPath(user) : "/login";
-    const [rsvps, setRsvps] = useState({});
-    const [createdEvents, setCreatedEvents] = useState([]);
-    const [connectedUsers, setConnectedUsers] = useState([]);
-    const [connectionsLoading, setConnectionsLoading] = useState(false);
-    const [connectionsError, setConnectionsError] = useState("");
-    const [serverConnectionRequests, setServerConnectionRequests] = useState([]);
-    const [requestsLoading, setRequestsLoading] = useState(false);
-    const [requestsError, setRequestsError] = useState("");
-    const [requestUsers, setRequestUsers] = useState({});
-    const [updatingRequestId, setUpdatingRequestId] = useState(null);
-    const [availableUsers, setAvailableUsers] = useState([]);
-    const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-    const [suggestionsError, setSuggestionsError] = useState("");
+  if (detailsLoading) {
+    return <p role="status">Loading event details...</p>;
+  }
 
-    useEffect(() => {
-      if (!user?.id) {
-        setServerEvents([]);
-        setEventsLoading(false);
-        return;
-      }
+  if (detailsError) {
+    return (
+      <main className="event-details">
+        <p role="alert">{detailsError}</p>
 
-      const controller = new AbortController();
+        <button
+          type="button"
+          className="doin-button doin-button--secondary"
+          onClick={() => navigate("/events")}
+        >
+          Back to events
+        </button>
+      </main>
+    );
+  }
 
-      setEventsLoading(true);
-      setEventsError("");
+  if (!eventDetails || String(eventDetails.id) !== eventId) {
+    return <p role="status">Loading event details...</p>;
+  }
 
-      getEvents(controller.signal)
-        .then((events) => {
-          setServerEvents(events);
-        })
-        .catch((error) => {
-          if (!controller.signal.aborted) {
-            setEventsError(error.message);
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setEventsLoading(false);
-          }
-        });
+  const event = {
+    ...eventDetails,
+    organizer:
+      organizerName ||
+      eventDetails.organizerName ||
+      eventDetails.organizerId ||
+      "Unknown organizer",
+  };
 
-      return () => controller.abort();
-    }, [user?.id]);
+  const canManage =
+    Boolean(currentUser?.id) &&
+    event.organizerId === currentUser.id &&
+    event.status !== "cancelled";
 
+  // Edit the event through Express.
+  async function handleEditEvent() {
+    const title = window.prompt("Event name:", event.title);
+    if (title === null) return;
+
+    const description = window.prompt(
+      "Description:",
+      event.description,
+    );
+    if (description === null) return;
+
+    const location = window.prompt(
+      "Location:",
+      event.location,
+    );
+    if (location === null) return;
+
+    try {
+      setManagementError("");
+
+      const updated = await updateEvent(event.id, {
+        title: title.trim(),
+        description: description.trim(),
+        location: location.trim(),
+      });
+
+      setEventDetails(updated);
+      onEventChanged(updated, false);
+    } catch (error) {
+      setManagementError(error.message);
+    }
+  }
+
+  // Cancel the event through Express.
+  async function handleCancelEvent() {
+    try {
+      setManagementError("");
+
+      const cancelled = await cancelEvent(event.id);
+
+      onEventChanged(cancelled, true);
+      navigate("/events");
+    } catch (error) {
+      setManagementError(error.message);
+    }
+  }
+
+  return (
+    <EventDetails
+      key={event.id}
+      event={event}
+      users={attendeeUsers}
+      currentUser={currentUser}
+      canManage={canManage}
+      onEdit={handleEditEvent}
+      onCancel={handleCancelEvent}
+      managementError={managementError}
+      onBack={() => navigate("/events")}
+      onAttendeeChange={(ids) => {
+        setEventDetails((previous) => ({
+          ...previous,
+          attendeeIds: ids,
+        }));
+
+        onUpdateRsvp(event.id, ids);
+      }}
+    />
+  );
+}
+
+export default function App() {
+  const { session, restoreSession, saveSession } = useSession();
+  const { user } = session;
+
+  const sessionDestination = user
+    ? signedInPath(user)
+    : "/login";
+
+  const [serverEvents, setServerEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsError, setEventsError] = useState("");
+
+  const [myEvents, setMyEvents] = useState([]);
+  const [myEventsLoading, setMyEventsLoading] = useState(false);
+  const [myEventsError, setMyEventsError] = useState("");
+
+  const [rsvps, setRsvps] = useState({});
+  const [eventsRevision, setEventsRevision] = useState(0);
+
+  const [connectedUsers, setConnectedUsers] = useState([]);
+  const [connectionsLoading, setConnectionsLoading] =
+    useState(false);
+  const [connectionsError, setConnectionsError] = useState("");
+
+  const [serverConnectionRequests, setServerConnectionRequests] =
+    useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [requestsError, setRequestsError] = useState("");
+  const [requestUsers, setRequestUsers] = useState({});
+  const [updatingRequestId, setUpdatingRequestId] =
+    useState(null);
+
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] =
+    useState(false);
+  const [suggestionsError, setSuggestionsError] = useState("");
+
+  // Load events.
+  useEffect(() => {
+    if (!user?.id) {
+      setServerEvents([]);
+      setEventsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    setEventsLoading(true);
+    setEventsError("");
+
+    getEvents(controller.signal)
+      .then((events) => {
+        setServerEvents(events);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setEventsError(error.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setEventsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [user?.id]);
+
+  // Load My Events after RSVP or event management changes.
   useEffect(() => {
     if (!user?.id) {
       setMyEvents([]);
@@ -347,8 +513,9 @@ function ConnectionProfile({
       });
 
     return () => controller.abort();
-  }, [user?.id, rsvps]);
+  }, [user?.id, rsvps, eventsRevision]);
 
+  // Load accepted connections.
   useEffect(() => {
     if (!user?.id) {
       setConnectedUsers([]);
@@ -378,41 +545,41 @@ function ConnectionProfile({
 
     return () => controller.abort();
   }, [user?.id]);
-  
 
-useEffect(() => {
-  if (!user?.id) {
-    setAvailableUsers([]);
-    setSuggestionsLoading(false);
-    return;
-  }
+  // Load available users for connection suggestions.
+  useEffect(() => {
+    if (!user?.id) {
+      setAvailableUsers([]);
+      setSuggestionsLoading(false);
+      return;
+    }
 
-  const controller = new AbortController();
+    const controller = new AbortController();
 
-  setSuggestionsLoading(true);
-  setSuggestionsError("");
+    setSuggestionsLoading(true);
+    setSuggestionsError("");
 
-  getUsers(controller.signal)
-    .then((users) => {
-      if (!controller.signal.aborted) {
-        setAvailableUsers(users);
-      }
-    })
-    .catch((error) => {
-      if (!controller.signal.aborted) {
-        setSuggestionsError(error.message);
-      }
-    })
-    .finally(() => {
-      if (!controller.signal.aborted) {
-        setSuggestionsLoading(false);
-      }
-    });
+    getUsers(controller.signal)
+      .then((users) => {
+        if (!controller.signal.aborted) {
+          setAvailableUsers(users);
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setSuggestionsError(error.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setSuggestionsLoading(false);
+        }
+      });
 
-  return () => controller.abort();
-}, [user?.id]);
+    return () => controller.abort();
+  }, [user?.id]);
 
-
+  // Load connection requests.
   useEffect(() => {
     if (!user?.id) {
       setServerConnectionRequests([]);
@@ -443,7 +610,7 @@ useEffect(() => {
     return () => controller.abort();
   }, [user?.id]);
 
-
+  // Retrieve profiles involved in connection requests.
   useEffect(() => {
     if (!user?.id || serverConnectionRequests.length === 0) {
       setRequestUsers({});
@@ -452,26 +619,27 @@ useEffect(() => {
 
     const controller = new AbortController();
 
-    // Find the other user involved in each request
     const userIds = [
       ...new Set(
         serverConnectionRequests.map((request) =>
           request.senderId === user.id
             ? request.recipientId
-            : request.senderId
-        )
+            : request.senderId,
+        ),
       ),
     ];
 
     Promise.all(
-      userIds.map((id) => getUserById(id, controller.signal))
+      userIds.map((id) =>
+        getUserById(id, controller.signal),
+      ),
     )
       .then((users) => {
         if (!controller.signal.aborted) {
           setRequestUsers(
             Object.fromEntries(
-              users.map((person) => [person.id, person])
-            )
+              users.map((person) => [person.id, person]),
+            ),
           );
         }
       })
@@ -484,132 +652,135 @@ useEffect(() => {
     return () => controller.abort();
   }, [user?.id, serverConnectionRequests]);
 
-
   const incomingRequests = serverConnectionRequests.filter(
-    (request) => request.recipientId === user?.id
+    (request) =>
+      request.recipientId === user?.id &&
+      request.status === "pending",
   );
-
 
   const outgoingRequests = serverConnectionRequests.filter(
-    (request) => request.senderId === user?.id
+    (request) =>
+      request.senderId === user?.id &&
+      request.status === "pending",
   );
-  
 
-const suggestedUsers = availableUsers
-  .filter(
-    (person) =>
-      person.id !== user?.id &&
-      !connectedUsers.some(
-        (connected) => connected.id === person.id
-      ) &&
-      !incomingRequests.some(
-        (request) => request.senderId === person.id
-      )
-  )
-  .slice(0, 3);
-
-const discoverUsers = availableUsers
-  .filter((person) => person.id !== user?.id)
-  .map((person) => ({
-    ...person,
-    image: person.imageUrl,
-    hobbies: (person.interests ?? []).join(" • "),
-  }));
-
+  const suggestedUsers = availableUsers
+    .filter(
+      (person) =>
+        person.id !== user?.id &&
+        !connectedUsers.some(
+          (connected) => connected.id === person.id,
+        ) &&
+        !incomingRequests.some(
+          (request) => request.senderId === person.id,
+        ),
+    )
+    .slice(0, 3);
 
   const sentRequestIds = outgoingRequests.map(
-  (request) => request.recipientId
+    (request) => request.recipientId,
   );
 
-
-
-    const exploreEvents = [
-      ...serverEvents,
-      ...createdEvents.map((event) => ({
-      ...event,
-      image: event.imageUrl,
-      time: event.startTime,
-    })),
-  ];
-
-    function handleRsvpChange(eventId, attendeeIds) {
-    setRsvps((previous) => ({
-    ...previous,
-    [eventId]: attendeeIds,
+  const exploreEvents = serverEvents.map((event) => ({
+    ...event,
+    image: event.imageUrl,
+    time: event.startTime,
   }));
 
-  setServerEvents((previous) =>
-    previous.map((event) =>
-      event.id === eventId
-        ? { ...event, attendeeIds }
-        : event
-    )
-  );
-}
-
- 
-    const myEventsData = myEvents;
-
-    const profileStats = [
-      {
-        label: "Connections",
-        value: connectedUsers.length,
-      },
-      {
-        label: "Hosted",
-        value: myEventsData.filter(
-          (event) => event.organizerId === user?.id
-        ).length,
-      },
-      {
-        label: "Attended",
-        value: myEventsData.filter((event) =>
-          (event.attendeeIds ?? []).includes(user?.id),
-        ).length,
-      },
-    ];
-function handleCreateEvent(newEvent) {
-  setCreatedEvents((previous) => [
-    ...previous,
-    {
-      ...newEvent,
-      id: newEvent.id ?? crypto.randomUUID(),
-      organizerId: user?.id,
-      attendeeIds: newEvent.attendeeIds ?? [],
-    },
-  ]);
-}
-async function handleSendRequest(personId) {
-  if (
-    !user?.id ||
-    !personId ||
-    updatingRequestId ||
-    sentRequestIds.includes(personId) ||
-    connectedUsers.some((person) => person.id === personId)
-  ) {
-    return;
-  }
-
-  setUpdatingRequestId(personId);
-  setRequestsError("");
-
-  try {
-    const newRequest = await sendConnectionRequest(personId);
-
-    // Update the requests after Express confirms success
-    setServerConnectionRequests((previous) => [
+  // Update event participation after a successful API request.
+  function handleRsvpChange(eventId, attendeeIds) {
+    setRsvps((previous) => ({
       ...previous,
-      newRequest,
-    ]);
-  } catch (error) {
-    setRequestsError(error.message);
-  } finally {
-    setUpdatingRequestId(null);
-  }
-}
+      [eventId]: attendeeIds,
+    }));
 
-    async function handleAcceptRequest(person) {
-    if (!user?.id || !person.requestId || updatingRequestId) return;
+    setServerEvents((previous) =>
+      previous.map((event) =>
+        event.id === eventId
+          ? { ...event, attendeeIds }
+          : event,
+      ),
+    );
+  }
+
+  const myEventsData = myEvents;
+
+  const profileStats = [
+    {
+      label: "Connections",
+      value: connectedUsers.length,
+    },
+    {
+      label: "Hosted",
+      value: myEventsData.filter(
+        (event) => event.organizerId === user?.id,
+      ).length,
+    },
+    {
+      label: "Attended",
+      value: myEventsData.filter((event) =>
+        (event.attendeeIds ?? []).includes(user?.id),
+      ).length,
+    },
+  ];
+
+  // Update the event list after creation, editing, or cancellation.
+  function handleEventChanged(changed, cancelled = false) {
+    setServerEvents((previous) =>
+      cancelled
+        ? previous.filter((event) => event.id !== changed.id)
+        : previous.some((event) => event.id === changed.id)
+          ? previous.map((event) =>
+              event.id === changed.id ? changed : event,
+            )
+          : [...previous, changed],
+    );
+
+    setEventsRevision((previous) => previous + 1);
+  }
+
+  async function handleCreateEvent(fields) {
+    const created = await createEvent(fields);
+
+    handleEventChanged(created);
+
+    return created;
+  }
+
+  // Send a connection request.
+  async function handleSendRequest(personId) {
+    if (
+      !user?.id ||
+      !personId ||
+      updatingRequestId ||
+      sentRequestIds.includes(personId) ||
+      connectedUsers.some((person) => person.id === personId)
+    ) {
+      return;
+    }
+
+    setUpdatingRequestId(personId);
+    setRequestsError("");
+
+    try {
+      const newRequest = await sendConnectionRequest(personId);
+
+      setServerConnectionRequests((previous) => [
+        ...previous,
+        newRequest,
+      ]);
+    } catch (error) {
+      setRequestsError(error.message);
+    } finally {
+      setUpdatingRequestId(null);
+    }
+  }
+
+  // Accept a connection request.
+  async function handleAcceptRequest(person) {
+    if (!user?.id || !person.requestId || updatingRequestId) {
+      return;
+    }
 
     setUpdatingRequestId(person.requestId);
     setRequestsError("");
@@ -617,12 +788,12 @@ async function handleSendRequest(personId) {
     try {
       await updateConnectionRequest(person.requestId, "accepted");
 
-      // Remove the accepted request from the pending list
       setServerConnectionRequests((previous) =>
-        previous.filter((request) => request.id !== person.requestId)
+        previous.filter(
+          (request) => request.id !== person.requestId,
+        ),
       );
 
-      // Reload accepted connections from Express
       const connections = await getConnections(user.id);
       setConnectedUsers(connections);
     } catch (error) {
@@ -632,6 +803,7 @@ async function handleSendRequest(personId) {
     }
   }
 
+  // Decline a connection request.
   async function handleDeclineRequest(person) {
     if (!person.requestId || updatingRequestId) return;
 
@@ -642,7 +814,9 @@ async function handleSendRequest(personId) {
       await updateConnectionRequest(person.requestId, "declined");
 
       setServerConnectionRequests((previous) =>
-        previous.filter((request) => request.id !== person.requestId)
+        previous.filter(
+          (request) => request.id !== person.requestId,
+        ),
       );
     } catch (error) {
       setRequestsError(error.message);
@@ -651,6 +825,7 @@ async function handleSendRequest(personId) {
     }
   }
 
+  // Cancel an outgoing connection request.
   async function handleCancelRequest(person) {
     if (!person.requestId || updatingRequestId) return;
 
@@ -661,7 +836,9 @@ async function handleSendRequest(personId) {
       await updateConnectionRequest(person.requestId, "cancelled");
 
       setServerConnectionRequests((previous) =>
-        previous.filter((request) => request.id !== person.requestId)
+        previous.filter(
+          (request) => request.id !== person.requestId,
+        ),
       );
     } catch (error) {
       setRequestsError(error.message);
@@ -669,159 +846,204 @@ async function handleSendRequest(personId) {
       setUpdatingRequestId(null);
     }
   }
-  
 
-    return (
-      <BrowserRouter>
-        <Routes>
-          {/* Pages without the navigation bar */}
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Pages without the navigation bar */}
+        <Route
+          path="/"
+          element={
+            <SessionBoundary
+              session={session}
+              onRetry={restoreSession}
+            >
+              {user ? (
+                <Navigate to={sessionDestination} replace />
+              ) : (
+                <Welcome />
+              )}
+            </SessionBoundary>
+          }
+        />
+
+        <Route
+          path="/login"
+          element={<Login onUserChange={saveSession} />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register onUserChange={saveSession} />}
+        />
+
+        <Route
+          element={
+            <SessionBoundary
+              session={session}
+              onRetry={restoreSession}
+            >
+              {user && !user.profileComplete ? (
+                <Outlet />
+              ) : (
+                <Navigate to={sessionDestination} replace />
+              )}
+            </SessionBoundary>
+          }
+        >
           <Route
-            path="/"
+            path="/select-interests"
             element={
-              <SessionBoundary session={session} onRetry={restoreSession}>
-                {user ? <Navigate to={sessionDestination} replace /> : <Welcome />}
-              </SessionBoundary>
+              <SelectInterests
+                user={user}
+                onUserChange={saveSession}
+              />
             }
           />
-          <Route path="/login" element={<Login onUserChange={saveSession} />} />
-          <Route path="/register" element={<Register onUserChange={saveSession} />} />
+
           <Route
+            path="/setup-profile"
             element={
-              <SessionBoundary session={session} onRetry={restoreSession}>
-                {user && !user.profileComplete ? (
+              <SetupProfile onUserChange={saveSession} />
+            }
+          />
+        </Route>
+
+        {/* Main app pages with the navigation bar */}
+        <Route
+          element={
+            <SessionBoundary
+              session={session}
+              onRetry={restoreSession}
+            >
+              {user?.profileComplete ? (
+                <Layout>
                   <Outlet />
-                ) : (
-                  <Navigate to={sessionDestination} replace />
-                )}
-              </SessionBoundary>
-            }
-          >
-            <Route
-              path="/select-interests"
-              element={<SelectInterests user={user} onUserChange={saveSession} />}
-            />
-            <Route
-              path="/setup-profile"
-              element={<SetupProfile onUserChange={saveSession} />}
-            />
-          </Route>
-
-          {/* Main app pages with the navigation bar */}
+                </Layout>
+              ) : (
+                <Navigate to={sessionDestination} replace />
+              )}
+            </SessionBoundary>
+          }
+        >
           <Route
-            element={
-              <SessionBoundary session={session} onRetry={restoreSession}>
-                {user?.profileComplete ? (
-                  <Layout>
-                    <Outlet />
-                  </Layout>
-                ) : (
-                  <Navigate to={sessionDestination} replace />
-                )}
-              </SessionBoundary>
-            }
-          >
-            <Route path="/profile" element={<Profile user ={user} Profile stats={profileStats} />} />
-            <Route path="/edit-profile" element={<EditProfile />} />
-            <Route
-              path="/create-event"
-              element={<CreateEvent onCreate={handleCreateEvent} />}
-            />
+            path="/profile"
+            element={<Profile stats={profileStats} />}
+          />
 
-            <Route
-              path="/my-events"
-              element={
-                <MyEvents 
-                events={myEventsData} 
+          <Route
+            path="/edit-profile"
+            element={<EditProfile />}
+          />
+
+          <Route
+            path="/create-event"
+            element={
+              <CreateEvent onCreate={handleCreateEvent} />
+            }
+          />
+
+          <Route
+            path="/my-events"
+            element={
+              <MyEvents
+                events={myEventsData}
                 currentUser={user}
                 loading={myEventsLoading}
                 error={myEventsError}
-                      
-                />
-              }
-            />
+              />
+            }
+          />
 
-            <Route
-              path="/discover"
-              element={
-                <DiscoverPreview
-                  people={discoverUsers}
-                  currentUser={user}
-                  outgoingRequests={outgoingRequests}
-                  onSendRequest={handleSendRequest}
-                  onCancelRequest={handleCancelRequest}
-                />
-              }
-            />
+          <Route
+            path="/discover"
+            element={
+              <DiscoverPreview
+                currentUser={user}
+                outgoingRequests={outgoingRequests}
+                onSendRequest={handleSendRequest}
+                onCancelRequest={handleCancelRequest}
+              />
+            }
+          />
 
-            <Route
-              path="/connections"
-              element={
-                <Connections
-                  sentRequestIds={sentRequestIds}
-                  onSendRequest={handleSendRequest}
-                  connectedUsers={connectedUsers}
-                  onAcceptRequest={handleAcceptRequest}
-                  onDeclineRequest={handleDeclineRequest}
-                  incomingRequests={incomingRequests}
-                  outgoingRequests={outgoingRequests}
-                  requestUsers={requestUsers}
-                  onCancelRequest={handleCancelRequest}
-                  updatingRequestId={updatingRequestId}
-                  loading={connectionsLoading|| requestsLoading || suggestionsLoading}
-                  error={connectionsError|| requestsError || suggestionsError}  
-                  suggestedUsers={suggestedUsers}
-                />
-              }
-            />
+          <Route
+            path="/connections"
+            element={
+              <Connections
+                sentRequestIds={sentRequestIds}
+                onSendRequest={handleSendRequest}
+                connectedUsers={connectedUsers}
+                onAcceptRequest={handleAcceptRequest}
+                onDeclineRequest={handleDeclineRequest}
+                incomingRequests={incomingRequests}
+                outgoingRequests={outgoingRequests}
+                requestUsers={requestUsers}
+                onCancelRequest={handleCancelRequest}
+                updatingRequestId={updatingRequestId}
+                loading={
+                  connectionsLoading ||
+                  requestsLoading ||
+                  suggestionsLoading
+                }
+                error={
+                  connectionsError ||
+                  requestsError ||
+                  suggestionsError
+                }
+                suggestedUsers={suggestedUsers}
+              />
+            }
+          />
 
-            <Route
-              path="/connections/:personId"
-              element={
-                <ConnectionProfile
-                  currentUser={user}
-                  availableUsers={availableUsers}
-                  requestUsers={requestUsers}
-                  incomingRequests={incomingRequests}
-                  outgoingRequests={outgoingRequests}
-                  connectedUsers={connectedUsers}
-                  onSendRequest={handleSendRequest}
-                  onCancelRequest={handleCancelRequest}
-                  onAcceptRequest={handleAcceptRequest}
-                  onDeclineRequest={handleDeclineRequest}
-                  updatingRequestId={updatingRequestId}
-                />
-              }
-            />
+          <Route
+            path="/connections/:personId"
+            element={
+              <ConnectionProfile
+                currentUser={user}
+                availableUsers={availableUsers}
+                requestUsers={requestUsers}
+                incomingRequests={incomingRequests}
+                outgoingRequests={outgoingRequests}
+                connectedUsers={connectedUsers}
+                onSendRequest={handleSendRequest}
+                onCancelRequest={handleCancelRequest}
+                onAcceptRequest={handleAcceptRequest}
+                onDeclineRequest={handleDeclineRequest}
+                updatingRequestId={updatingRequestId}
+              />
+            }
+          />
 
-            <Route
-              path="/events"
-              element={
-                <EventsPreview
-                  events={exploreEvents}
-                  rsvps={rsvps}
-                  onUpdateRsvp={handleRsvpChange}
-                  currentUser={user}
-                  eventsLoading={eventsLoading}
-                  eventsError={eventsError}
-                />
-              }
-            />
+          <Route
+            path="/events"
+            element={
+              <EventsPreview
+                events={exploreEvents}
+                onUpdateRsvp={handleRsvpChange}
+                currentUser={user}
+                eventsLoading={eventsLoading}
+                eventsError={eventsError}
+                onEventChanged={handleEventChanged}
+              />
+            }
+          />
 
-            <Route
-              path="/events/:eventId"
-              element={
-                <EventsPreview
-                  events={exploreEvents}
-                  rsvps={rsvps}
-                  onUpdateRsvp={handleRsvpChange}
-                  currentUser={user}
-                  eventsLoading={eventsLoading}
-                  eventsError={eventsError}
-                />
-              }
-            />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    );
-  }
+          <Route
+            path="/events/:eventId"
+            element={
+              <EventsPreview
+                events={exploreEvents}
+                onUpdateRsvp={handleRsvpChange}
+                currentUser={user}
+                eventsLoading={eventsLoading}
+                eventsError={eventsError}
+                onEventChanged={handleEventChanged}
+              />
+            }
+          />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}

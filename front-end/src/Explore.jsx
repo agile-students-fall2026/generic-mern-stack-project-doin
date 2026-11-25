@@ -1,36 +1,99 @@
-import { useState } from "react";
-import "./Explore.css";
+
+import { useEffect, useState } from "react";
 import EventsTabs from "./Components/EventsTabs";
+import "./Explore.css";
+import { getEventCategories, searchEvents } from "./api";
 
-
-function Explore({ onViewEvent, onCreateEvent, events = mockEvents }) {
+function Explore({ onViewEvent, onCreateEvent, events = [] }) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [locationFilter, setLocationFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("");
 
-  const locations = [...new Set(events.map((event) => event.location))].sort();
+  const [categories, setCategories] = useState([]);
+  const [filteredResults, setFilteredResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const categories = [...new Set(events.map((event) => event.category))].sort();
+  // Get categories from the Express backend.
+  useEffect(() => {
+    const controller = new AbortController();
 
-  const filteredEvents = events.filter((event) => {
-    const searchText = search.trim().toLowerCase();
+    getEventCategories(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setCategories(data);
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          setError(err.message);
+        }
+      });
 
-    const matchesSearch =
-      event.title.toLowerCase().includes(searchText) ||
-      event.location.toLowerCase().includes(searchText) ||
-      event.category.toLowerCase().includes(searchText);
+    return () => controller.abort();
+  }, []);
 
-    const matchesCategory =
-      categoryFilter === "All" || event.category === categoryFilter;
+  const locations = [
+    ...new Set(events.map((event) => event.location)),
+  ].sort();
 
-    const matchesLocation =
-      locationFilter === "All" || event.location === locationFilter;
+  const hasFilters =
+    search.trim() !== "" ||
+    categoryFilter !== "All" ||
+    locationFilter !== "All" ||
+    dateFilter !== "";
 
-    const matchesDate = dateFilter === "" || event.date === dateFilter;
+  // Search and filter through the backend.
+  useEffect(() => {
+    if (!hasFilters) {
+  setFilteredResults(null);
+  setLoading(false);
+  setError("");
+  return;
+}
 
-    return matchesSearch && matchesCategory && matchesLocation && matchesDate;
-  });
+    const controller = new AbortController();
+
+    setLoading(true);
+    setError("");
+
+    const timer = setTimeout(() => {
+      searchEvents(
+        {
+          search,
+          category: categoryFilter,
+          location: locationFilter,
+          date: dateFilter,
+        },
+        controller.signal
+      )
+        .then((data) => {
+          if (!controller.signal.aborted) {
+            setFilteredResults(data);
+          }
+        })
+        .catch((err) => {
+          if (!controller.signal.aborted) {
+            setError(err.message);
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setLoading(false);
+          }
+        });
+    }, 250);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [search, categoryFilter, locationFilter, dateFilter, hasFilters]);
+
+  const filteredEvents = hasFilters
+    ? (filteredResults ?? [])
+    : events;
 
   return (
     <div className="explore doin-page">
@@ -55,7 +118,9 @@ function Explore({ onViewEvent, onCreateEvent, events = mockEvents }) {
       />
 
       <div className="event-filters">
-        <label htmlFor="event-category-filter">Filter by category</label>
+        <label htmlFor="event-category-filter">
+          Filter by category
+        </label>
 
         <select
           id="event-category-filter"
@@ -71,7 +136,9 @@ function Explore({ onViewEvent, onCreateEvent, events = mockEvents }) {
           ))}
         </select>
 
-        <label htmlFor="event-location-filter">Filter by location</label>
+        <label htmlFor="event-location-filter">
+          Filter by location
+        </label>
 
         <select
           id="event-location-filter"
@@ -87,7 +154,9 @@ function Explore({ onViewEvent, onCreateEvent, events = mockEvents }) {
           ))}
         </select>
 
-        <label htmlFor="event-date-filter">Filter by date</label>
+        <label htmlFor="event-date-filter">
+          Filter by date
+        </label>
 
         <input
           id="event-date-filter"
@@ -107,21 +176,36 @@ function Explore({ onViewEvent, onCreateEvent, events = mockEvents }) {
         )}
       </div>
 
-      {filteredEvents.map((event) => (
-        <div className="event-card" key={event.id}>
-          <img src={event.image} alt={event.title} />
+      {loading && <p role="status">Searching events...</p>}
+      {error && <p role="alert">{error}</p>}
 
-          <div className="event-info">
-            <h3>{event.title}</h3>
-            <p>
-              {event.date} {event.time} • {event.location}
-            </p>
+      {!loading &&
+        !error &&
+        filteredEvents.map((event) => (
+          <div className="event-card" key={event.id}>
+            <img
+              src={event.imageUrl ?? event.image}
+              alt={event.title}
+            />
 
-            <button onClick={() => onViewEvent(event)}>View event</button>
+            <div className="event-info">
+              <h3>{event.title}</h3>
+              <p>
+                {event.date} {event.startTime ?? event.time} •{" "}
+                {event.location}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => onViewEvent(event)}
+              >
+                View event
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
-      {filteredEvents.length === 0 && (
+        ))}
+
+      {!loading && !error && filteredEvents.length === 0 && (
         <p role="status">No events match your search.</p>
       )}
     </div>

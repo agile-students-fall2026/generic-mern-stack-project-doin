@@ -1,3 +1,4 @@
+
 const apiUrl = "/api";
 const currentUserKey = "doin.currentUserId";
 
@@ -26,18 +27,26 @@ async function request(path, { useMockUser = true, ...options } = {}) {
     response = await fetch(apiUrl + path, { ...options, headers });
   } catch (error) {
     if (options.signal?.aborted) throw error;
-    throw new Error("Couldn't reach Doin. Check your connection and try again.", { cause: error });
+    throw new Error("Couldn't reach Doin. Check your connection and try again.", {
+      cause: error,
+    });
   }
 
   const data = await response.json().catch(() => null);
   if (!response.ok || data === null) {
-    const error = new Error(data?.error?.message ?? "Something went wrong. Please try again.");
+    const error = new Error(
+      data?.error?.message ?? "Something went wrong. Please try again."
+    );
     error.status = response.status;
     error.code = data?.error?.code;
     throw error;
   }
   return data;
 }
+
+//
+// AUTHENTICATION AND ONBOARDING API
+//
 
 export function registerAccount(fields, signal) {
   return request("/auth/register", {
@@ -82,12 +91,110 @@ export function setupProfile(fields, signal) {
 }
 
 //
+// PROFILE AND PEOPLE DISCOVERY API
+//
+
+// Discover people (#99), with search and interest filtering (#100).
+export function getPeople(search, interest) {
+  const parts = [];
+  if (search.trim()) {
+    parts.push(`search=${encodeURIComponent(search.trim())}`);
+  }
+  if (interest && interest !== "All") {
+    parts.push(`interest=${encodeURIComponent(interest)}`);
+  }
+  const query = parts.length > 0 ? `?${parts.join("&")}` : "";
+  return request(`/users${query}`);
+}
+
+// One profile (#98), shared by My Profile, Edit Profile, and Person
+// Details (#99).
+export function getPerson(userId) {
+  return request(`/users/${userId}`);
+}
+
+// Profile update (#98). Only the owner can update their own profile.
+export function updateProfile(userId, fields) {
+  return request(`/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify(fields),
+  });
+}
+
+export function getUserById(userId, signal) {
+  return request(`/users/${encodeURIComponent(userId)}`, {
+    signal,
+  });
+}
+
+export function getUsers(signal) {
+  return request("/users", { signal });
+}
+
+//
 // EVENTS API
 //
 
 export function getEvents(signal) {
   return request("/events", { signal });
 }
+
+export function getEvent(eventId, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}`, { signal });
+}
+
+export function getEventCategories(signal) {
+  return request("/events/categories", { signal });
+}
+
+export function searchEvents(filters = {}, signal) {
+  const params = new URLSearchParams();
+
+  for (const key of ["search", "category", "location", "date"]) {
+    const value = filters[key];
+
+    if (
+      typeof value === "string" &&
+      value.trim() &&
+      value !== "All"
+    ) {
+      params.set(key, value.trim());
+    }
+  }
+
+  const query = params.toString();
+
+  return request(`/events${query ? `?${query}` : ""}`, {
+    signal,
+  });
+}
+
+export function createEvent(fields, signal) {
+  return request("/events", {
+    method: "POST",
+    body: JSON.stringify(fields),
+    signal,
+  });
+}
+
+export function updateEvent(eventId, fields, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(fields),
+    signal,
+  });
+}
+
+export function cancelEvent(eventId, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}`, {
+    method: "DELETE",
+    signal,
+  });
+}
+
+//
+// RSVP AND MY EVENTS API
+//
 
 export function joinEvent(eventId, signal) {
   return request(`/events/${encodeURIComponent(eventId)}/rsvp`, {
@@ -147,17 +254,4 @@ export function getConnections(userId, signal) {
     `/users/${encodeURIComponent(userId)}/connections`,
     { signal },
   );
-
 }
-
-export function getUserById(userId, signal) {
-  return request(`/users/${encodeURIComponent(userId)}`, {
-    signal,
-  });
-
-}
-
-export function getUsers(signal) {
-  return request("/users", { signal });
-}
-
