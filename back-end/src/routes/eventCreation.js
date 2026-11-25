@@ -39,16 +39,6 @@ function validTimezone(timezone) {
   }
 }
 
-// Temporary fallback until #104 is merged.
-const eventCategories = [
-  "Art",
-  "Food",
-  "Games",
-  "Music",
-  "Social",
-  "Sports",
-];
-
 router.post("/events", requireMockUser, (req, res) => {
   const {
     title,
@@ -105,9 +95,7 @@ router.post("/events", requireMockUser, (req, res) => {
 
   const categoryInput = category.trim().toLowerCase();
 
-  const categories = store.categories.length
-    ? store.categories
-    : eventCategories;
+const categories = store.categories;
 
   const normalizedCategory =
     aliases[categoryInput] ??
