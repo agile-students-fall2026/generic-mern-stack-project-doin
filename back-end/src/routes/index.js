@@ -1,5 +1,7 @@
+
 import { Router } from "express";
 import authRouter from "./auth.js";
+import eventsRouter from "./events.js";
 import interestsRouter from "./interests.js";
 import usersRouter, { profilesRouter } from "./users.js";
 import connectionsRouter from "./connections.js";
@@ -16,5 +18,8 @@ router.use(interestsRouter);
 router.use("/users", usersRouter);
 router.use("/profiles", profilesRouter);
 router.use(connectionsRouter);
+
+// Event discovery and event details.
+router.use("/events", eventsRouter);
 
 export default router;
