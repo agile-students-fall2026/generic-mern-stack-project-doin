@@ -120,6 +120,7 @@ export function getEvent(eventId, signal) {
 
 export function getEventCategories(signal) {
   return request("/events/categories", { signal });
+}
 
 
 export function searchEvents(filters = {}, signal) {
@@ -140,6 +141,32 @@ export function searchEvents(filters = {}, signal) {
   const query = params.toString();
 
   return request(`/events${query ? `?${query}` : ""}`, {
+    signal,
+  });
+}
+
+
+export function createEvent(fields, signal) {
+  return request("/events", {
+    method: "POST",
+    body: JSON.stringify(fields),
+    signal,
+  });
+}
+
+
+export function updateEvent(eventId, fields, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(fields),
+    signal,
+  });
+}
+
+
+export function cancelEvent(eventId, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}`, {
+    method: "DELETE",
     signal,
   });
 }

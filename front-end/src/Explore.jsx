@@ -47,10 +47,11 @@ function Explore({ onViewEvent, onCreateEvent, events = [] }) {
   // Search and filter through the backend.
   useEffect(() => {
     if (!hasFilters) {
-      setFilteredResults(null);
-      setLoading(false);
-      return;
-    }
+  setFilteredResults(null);
+  setLoading(false);
+  setError("");
+  return;
+}
 
     const controller = new AbortController();
 

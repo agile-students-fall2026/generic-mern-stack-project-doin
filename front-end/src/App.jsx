@@ -8,7 +8,7 @@ import {
   useNavigate,
   useParams,
 } from "react-router";
-import { getEvent, getEvents } from "./api";
+import { createEvent, getEvent, getEvents } from "./api";
 import BackButton from "./Components/BackButton";
 import Layout from "./Components/Layout";
 import SessionBoundary from "./Components/SessionBoundary";
@@ -261,31 +261,37 @@ useEffect(() => {
   return () => controller.abort();
 }, [eventId]);
 
-  if (eventsLoading) {
-  return <p>Loading events...</p>;
-}
-
-if (eventsError) {
-  return <p role="alert">{eventsError}</p>;
-}
-
-  // No event ID: display the discovery page
+  
+  // Show the event list only when no event ID is selected.
   if (!eventId) {
+    if (eventsLoading) {
+      return <p role="status">Loading events...</p>;
+    }
+
+    if (eventsError) {
+      return <p role="alert">{eventsError}</p>;
+    }
+
     return (
       <Explore
         events={events}
-        onViewEvent={(event) => navigate(`/events/${event.id}`)}
+        onViewEvent={(event) =>
+          navigate(`/events/${event.id}`)
+        }
         onCreateEvent={() => navigate("/create-event")}
       />
     );
   }
 
-  // Find the event matching the ID in the URL
-  const selectedEvent = eventDetails;
-  if (!selectedEvent) {
+  // Event details must load independently of the event list.
+  if (detailsLoading) {
+    return <p role="status">Loading event details...</p>;
+  }
+
+  if (detailsError) {
     return (
       <main className="event-details">
-        <p>Event not found.</p>
+        <p role="alert">{detailsError}</p>
         <button
           type="button"
           className="doin-button doin-button--secondary"
@@ -296,6 +302,13 @@ if (eventsError) {
       </main>
     );
   }
+
+  if (!eventDetails) {
+    return <p role="status">Loading event details...</p>;
+  }
+
+  const selectedEvent = eventDetails;
+
 
   // Prepare the event for EventDetails
   const event = {
@@ -423,14 +436,20 @@ useEffect(() => {
     );
   }
 
-  function handleCreateEvent(newEvent) {
-    setCreatedEvents((previous) => [
-      ...previous,
-      {
-        ...newEvent,
-        organizerId: currentUser.id,
-      },
-    ]);
+  
+  async function handleCreateEvent(fields) {
+    const createdEvent = await createEvent(fields);
+
+    // Reload events from Express after successful creation.
+    try {
+      const updatedEvents = await getEvents();
+      setApiEvents(updatedEvents);
+      setEventsError("");
+    } catch {
+      setEventsError("Could not refresh events.");
+    }
+
+    return createdEvent;
   }
 
   function handleAcceptRequest(user) {
