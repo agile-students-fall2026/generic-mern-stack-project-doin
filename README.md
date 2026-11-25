@@ -197,6 +197,15 @@ The team members and their **Sprint 2 roles** are:
 | Alpartun Gunhan | [AlpartunG](https://github.com/AlpartunG) | Scrum Master |
 | Alp Ozbay | [ozbayalp](https://github.com/ozbayalp) | Product Owner |
 
+The team members and their **Sprint 3 roles** are:
+
+| Member | GitHub | Sprint 3 role |
+| --- | --- | --- |
+| Elize Azzi | [ea3682](https://github.com/ea3682) | Product Owner |
+| Maurice Farfan | [MSF841](https://github.com/MSF841) | Scrum Master |
+| Alpartun Gunhan | [AlpartunG](https://github.com/AlpartunG) | Developer |
+| Alp Ozbay | [ozbayalp](https://github.com/ozbayalp) | Stakeholder |
+
 ## Planned later features
 
 Potential future additions, outside the current MVP, include direct messaging and more advanced interest-based recommendations.
