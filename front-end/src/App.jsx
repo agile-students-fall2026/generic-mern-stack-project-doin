@@ -1,195 +1,153 @@
-import { useEffect, useState } from "react";
+
+import { useState, useEffect } from "react";
 import {
   BrowserRouter,
   Navigate,
-  Outlet,
-  Route,
   Routes,
+  Route,
+  Outlet,
   useNavigate,
   useParams,
 } from "react-router";
-import {
-  cancelEvent,
-  createEvent,
-  currentUserId,
-  getEvent,
-  getEvents,
-  getMyUser,
-  getPerson,
-  updateEvent,
-} from "./api";
 
-import BackButton from "./Components/BackButton";
-import Layout from "./Components/Layout";
-import SessionBoundary from "./Components/SessionBoundary";
-import DiscoverPeople from "./DiscoverPeople";
-import Explore from "./Explore";
-import mockDiscoverPeople from "./mockDiscoverPeople";
-import { mockEvent } from "./mocks/events";
-import mockProfile from "./mocks/mockProfile";
-import { mockUsers } from "./mocks/users";
-import normalizePerson from "./normalizePerson";
-import Connections from "./pages/Connections";
-import CreateEvent from "./pages/CreateEvent";
-import EditProfile from "./pages/EditProfile";
-import EventDetails from "./pages/EventDetails";
+import Welcome from "./pages/Welcome";
 import Login from "./pages/Login";
-import MyEvents from "./pages/MyEvents";
-import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 import SelectInterests from "./pages/SelectInterests";
 import SetupProfile from "./pages/SetupProfile";
-import Welcome from "./pages/Welcome";
+import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
+import MyEvents from "./pages/MyEvents";
+import DiscoverPeople from "./DiscoverPeople";
 import PersonDetails from "./PersonDetails";
+import BackButton from "./Components/BackButton";
+import normalizePerson from "./normalizePerson";
+import Explore from "./Explore";
+import EventDetails from "./pages/EventDetails";
+import Connections from "./pages/Connections";
+import Layout from "./Components/Layout";
+import CreateEvent from "./pages/CreateEvent";
+import SessionBoundary from "./Components/SessionBoundary";
 import { signedInPath, useSession } from "./useSession";
-const currentUser = mockUsers[0];
 
-const demoEvents = [
-  {
-    ...mockEvent,
-    id: "demo-joined",
-    title: "Weekend Hiking Meetup",
-    category: "Sports",
-    imageUrl: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800",
-    organizerId: mockUsers[1].id,
-    attendeeIds: [currentUser.id],
-  },
-  {
-    ...mockEvent,
-    id: "demo-hosting",
-    title: "Board Game Night",
-    category: "Gaming",
-    imageUrl:
-      "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=800",
-    organizerId: currentUser.id,
-    attendeeIds: [],
-  },
-];
+import {
+  getEvents,
+  getEvent,
+  createEvent,
+  updateEvent,
+  cancelEvent,
+  getUserEvents,
+  getConnections,
+  getConnectionRequests,
+  getUserById,
+  updateConnectionRequest,
+  sendConnectionRequest,
+  getUsers,
+} from "./api";
 
-function DiscoverPreview({ sentRequestIds, onSendRequest }) {
+function DiscoverPreview({
+  currentUser,
+  outgoingRequests,
+  onSendRequest,
+  onCancelRequest,
+}) {
   const [selectedPerson, setSelectedPerson] = useState(null);
-  const [person, setPerson] = useState(null);
-  const [personUnavailable, setPersonUnavailable] = useState(false);
-  const [myInterests, setMyInterests] = useState([]);
-
-  // Shared interests are worked out against the signed in user from the
-  // back end (#101). When nobody is signed in there are none.
-  useEffect(() => {
-    if (!currentUserId()) {
-      return;
-    }
-    getMyUser()
-      .then((user) => setMyInterests(user.interests ?? []))
-      .catch(() => setMyInterests([]));
-  }, []);
-
-  // Person Details reads the full profile from the back end (#101),
-  // using the shared profile endpoint from #98. If that request fails
-  // the person from the list is shown instead, unless the back end
-  // answered 404, which means the profile is gone and the page shows
-  // an unavailable state instead.
-  useEffect(() => {
-    if (!selectedPerson) {
-      setPerson(null);
-      setPersonUnavailable(false);
-      return;
-    }
-    let active = true;
-    setPersonUnavailable(false);
-    getPerson(selectedPerson.id)
-      .then((data) => {
-        if (active) {
-          setPerson(data);
-        }
-      })
-      .catch((error) => {
-        if (!active) {
-          return;
-        }
-        if (error.status === 404) {
-          setPersonUnavailable(true);
-        } else {
-          setPerson(selectedPerson);
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [selectedPerson]);
 
   if (!selectedPerson) {
-    return <DiscoverPeople onViewProfile={setSelectedPerson} />;
-  }
-
-  if (personUnavailable) {
     return (
-      <main className="doin-page">
-        <BackButton
-          onClick={() => setSelectedPerson(null)}
-          ariaLabel="Back to discovery"
-        />
-        <h1 className="doin-page-title">Person not found</h1>
-        <p>
-          This profile is unavailable. Return to discovery to choose someone
-          else.
-        </p>
-      </main>
+      <DiscoverPeople onViewProfile={setSelectedPerson} />
     );
   }
 
-  if (!person) {
-    return (
-      <main className="doin-page">
-        <p>Loading profile...</p>
-      </main>
-    );
-  }
+  const person = normalizePerson(
+    selectedPerson,
+    currentUser?.interests ?? [],
+  );
 
-  const fullPerson = normalizePerson(person, myInterests);
+  const existingRequest = outgoingRequests.find(
+    (request) => request.recipientId === person.id,
+  );
+
+  function handleRequest() {
+    if (existingRequest) {
+      onCancelRequest({ requestId: existingRequest.id });
+    } else {
+      onSendRequest(person.id);
+    }
+  }
 
   return (
     <PersonDetails
-      person={fullPerson}
-      requested={sentRequestIds.includes(fullPerson.id)}
-      onRequest={() => onSendRequest(fullPerson.id)}
+      person={person}
+      requested={Boolean(existingRequest)}
+      onRequest={handleRequest}
       onBack={() => setSelectedPerson(null)}
     />
   );
 }
 
 function ConnectionProfile({
-  sentRequestIds,
-  onSendRequest,
-  pendingRequests,
+  currentUser,
+  availableUsers,
+  requestUsers,
+  incomingRequests,
+  outgoingRequests,
   connectedUsers,
+  onSendRequest,
+  onCancelRequest,
   onAcceptRequest,
   onDeclineRequest,
+  updatingRequestId,
 }) {
   const { personId } = useParams();
   const navigate = useNavigate();
-  const record = [
-    ...pendingRequests,
-    ...connectedUsers,
-    ...mockUsers,
-    ...mockDiscoverPeople,
-  ].find((person) => String(person.id) === personId);
   const onBack = () => navigate("/connections");
+
+  const record = [
+    ...availableUsers,
+    ...connectedUsers,
+    ...Object.values(requestUsers),
+  ].find((person) => String(person.id) === personId);
 
   if (!record) {
     return (
       <main className="doin-page">
-        <BackButton onClick={onBack} ariaLabel="Back to connections" />
+        <BackButton
+          onClick={onBack}
+          ariaLabel="Back to connections"
+        />
         <h1 className="doin-page-title">Person not found</h1>
-        <p>
-          This profile is unavailable. Return to Connections to choose someone else.
-        </p>
+        <p>This profile is unavailable.</p>
       </main>
     );
   }
 
-  const person = normalizePerson(record, mockProfile.interests);
-  const connected = connectedUsers.some((user) => user.id === person.id);
-  const pending = pendingRequests.some((user) => user.id === person.id);
+  const person = normalizePerson(
+    record,
+    currentUser?.interests ?? [],
+  );
+
+  const connected = connectedUsers.some(
+    (user) => user.id === person.id,
+  );
+
+  const incomingRequest = incomingRequests.find(
+    (request) => request.senderId === person.id,
+  );
+
+  const outgoingRequest = outgoingRequests.find(
+    (request) => request.recipientId === person.id,
+  );
+
+  function handleRequest() {
+    if (updatingRequestId !== null) return;
+
+    if (outgoingRequest) {
+      onCancelRequest({ requestId: outgoingRequest.id });
+    } else {
+      onSendRequest(person.id);
+    }
+  }
 
   return (
     <PersonDetails
@@ -197,24 +155,35 @@ function ConnectionProfile({
       person={person}
       onBack={onBack}
       backAriaLabel="Back to connections"
-      requested={sentRequestIds.includes(person.id)}
-      onRequest={() => onSendRequest(person.id)}
+      requested={Boolean(outgoingRequest)}
+      onRequest={handleRequest}
     >
       {connected ? (
         <p>You are connected.</p>
-      ) : pending ? (
+      ) : incomingRequest ? (
         <>
           <button
             type="button"
             className="doin-button doin-button--primary"
-            onClick={() => onAcceptRequest(record)}
+            disabled={updatingRequestId !== null}
+            onClick={() =>
+              onAcceptRequest({
+                requestId: incomingRequest.id,
+              })
+            }
           >
             Accept
           </button>
+
           <button
             type="button"
             className="doin-button doin-button--secondary"
-            onClick={() => onDeclineRequest(record)}
+            disabled={updatingRequestId !== null}
+            onClick={() =>
+              onDeclineRequest({
+                requestId: incomingRequest.id,
+              })
+            }
           >
             Decline
           </button>
@@ -225,75 +194,100 @@ function ConnectionProfile({
 }
 
 function EventsPreview({
-  rsvps,
-  onUpdateRsvp,
   events,
+  currentUser,
   eventsLoading,
   eventsError,
+  onUpdateRsvp,
   onEventChanged,
 }) {
   const navigate = useNavigate();
   const { eventId } = useParams();
 
-const [eventDetails, setEventDetails] = useState(null);
-const [detailsLoading, setDetailsLoading] = useState(false);
-const [detailsError, setDetailsError] = useState("");
-const [managementError, setManagementError] = useState("");
-const [organizerName, setOrganizerName] = useState("");
-useEffect(() => {
-  if (!eventId) return;
+  const [eventDetails, setEventDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState("");
+  const [managementError, setManagementError] = useState("");
+  const [organizerName, setOrganizerName] = useState("");
+  const [attendeeUsers, setAttendeeUsers] = useState([]);
 
-  const controller = new AbortController();
+  // Load event details directly from Express.
+  useEffect(() => {
+    if (!eventId) return;
 
-  async function loadEvent() {
+    const controller = new AbortController();
+
+    setEventDetails(null);
     setDetailsLoading(true);
     setDetailsError("");
-    setEventDetails(null);
+    setManagementError("");
 
-    try {
-      const event = await getEvent(eventId, controller.signal);
+    getEvent(eventId, controller.signal)
+      .then((event) => {
+        if (!controller.signal.aborted) {
+          setEventDetails(event);
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setDetailsError(error.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setDetailsLoading(false);
+        }
+      });
 
+    return () => controller.abort();
+  }, [eventId]);
+
+  // Retrieve the organizer's profile.
+  useEffect(() => {
+    const controller = new AbortController();
+
+    setOrganizerName("");
+
+    if (eventDetails?.organizerId) {
+      getUserById(
+        eventDetails.organizerId,
+        controller.signal,
+      )
+        .then((person) => {
+          if (!controller.signal.aborted) {
+            setOrganizerName(person.name);
+          }
+        })
+        .catch(() => {});
+    }
+
+    return () => controller.abort();
+  }, [eventDetails?.organizerId]);
+
+  // Retrieve real attendee profiles from Express.
+  useEffect(() => {
+    const controller = new AbortController();
+
+    setAttendeeUsers([]);
+
+    Promise.allSettled(
+      (eventDetails?.attendeeIds ?? []).map((id) =>
+        getUserById(id, controller.signal),
+      ),
+    ).then((results) => {
       if (!controller.signal.aborted) {
-        setEventDetails(event);
-      }
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        setDetailsError(
-          error.status === 404 ? "Event not found." : "Could not load event.",
+        setAttendeeUsers(
+          results
+            .filter((result) => result.status === "fulfilled")
+            .map((result) => result.value),
         );
       }
-    } finally {
-      if (!controller.signal.aborted) {
-        setDetailsLoading(false);
-      }
-    }
-  }
+    });
 
-  loadEvent();
-  return () => controller.abort();
-}, [eventId]);
+    return () => controller.abort();
+  }, [eventDetails?.attendeeIds]);
 
-useEffect(() => {
-  const organizerId = eventDetails?.organizerId;
-  setOrganizerName("");
-
-  if (!organizerId) return;
-
-  let active = true;
-
-  getPerson(organizerId)
-    .then((person) => {
-      if (active) setOrganizerName(person.name ?? "");
-    })
-    .catch(() => {});
-
-  return () => {
-    active = false;
-  };
-}, [eventDetails?.organizerId]);
-
-  
-  // Show the event list only when no event ID is selected.
+  // Display Explore Events.
   if (!eventId) {
     if (eventsLoading) {
       return <p role="status">Loading events...</p>;
@@ -314,7 +308,6 @@ useEffect(() => {
     );
   }
 
-  // Event details must load independently of the event list.
   if (detailsLoading) {
     return <p role="status">Loading event details...</p>;
   }
@@ -323,6 +316,7 @@ useEffect(() => {
     return (
       <main className="event-details">
         <p role="alert">{detailsError}</p>
+
         <button
           type="button"
           className="doin-button doin-button--secondary"
@@ -334,93 +328,90 @@ useEffect(() => {
     );
   }
 
-  if (!eventDetails) {
+  if (!eventDetails || String(eventDetails.id) !== eventId) {
     return <p role="status">Loading event details...</p>;
   }
 
-  const selectedEvent = eventDetails;
-
-const canManage =
-  Boolean(currentUserId()) &&
-  String(selectedEvent.organizerId) === String(currentUserId());
-
-async function handleEditEvent() {
-  const title = window.prompt("Event name:", selectedEvent.title);
-  if (title === null) return;
-
-  const description = window.prompt(
-    "Description:",
-    selectedEvent.description
-  );
-  if (description === null) return;
-
-  const location = window.prompt("Location:", selectedEvent.location);
-  if (location === null) return;
-
-  try {
-    setManagementError("");
-    const updated = await updateEvent(selectedEvent.id, {
-      title: title.trim(),
-      description: description.trim(),
-      location: location.trim(),
-    });
-
-    setEventDetails(updated);
-    onEventChanged(updated, false);
-  } catch (error) {
-    setManagementError(error.message || "Could not update event.");
-  }
-}
-
-async function handleCancelEvent() {
-  try {
-    setManagementError("");
-    await cancelEvent(selectedEvent.id);
-    onEventChanged(selectedEvent, true);
-    navigate("/events");
-  } catch (error) {
-    setManagementError(error.message || "Could not cancel event.");
-  }
-}
-
-
-  // Prepare the event for EventDetails
   const event = {
-    ...selectedEvent,
-    imageUrl: selectedEvent.imageUrl ?? selectedEvent.image,
-    startTime: selectedEvent.startTime ?? selectedEvent.time,
-    endTime: selectedEvent.endTime ?? "Not specified",
-    description:
-      selectedEvent.description ?? "Demo event for frontend testing.",
+    ...eventDetails,
     organizer:
-  organizerName ||
-  selectedEvent.organizerName ||
-  selectedEvent.organizerId ||
-  "Unknown organizer",
-    attendeeIds: rsvps[selectedEvent.id] ?? selectedEvent.attendeeIds ?? [],
-    capacity: selectedEvent.capacity ?? 20,
+      organizerName ||
+      eventDetails.organizerName ||
+      eventDetails.organizerId ||
+      "Unknown organizer",
   };
 
-  const profileUser = {
-    ...currentUser,
-    name: mockProfile.name,
-    imageUrl: mockProfile.imageUrl,
-  };
+  const canManage =
+    Boolean(currentUser?.id) &&
+    event.organizerId === currentUser.id &&
+    event.status !== "cancelled";
+
+  // Edit the event through Express.
+  async function handleEditEvent() {
+    const title = window.prompt("Event name:", event.title);
+    if (title === null) return;
+
+    const description = window.prompt(
+      "Description:",
+      event.description,
+    );
+    if (description === null) return;
+
+    const location = window.prompt(
+      "Location:",
+      event.location,
+    );
+    if (location === null) return;
+
+    try {
+      setManagementError("");
+
+      const updated = await updateEvent(event.id, {
+        title: title.trim(),
+        description: description.trim(),
+        location: location.trim(),
+      });
+
+      setEventDetails(updated);
+      onEventChanged(updated, false);
+    } catch (error) {
+      setManagementError(error.message);
+    }
+  }
+
+  // Cancel the event through Express.
+  async function handleCancelEvent() {
+    try {
+      setManagementError("");
+
+      const cancelled = await cancelEvent(event.id);
+
+      onEventChanged(cancelled, true);
+      navigate("/events");
+    } catch (error) {
+      setManagementError(error.message);
+    }
+  }
 
   return (
     <EventDetails
-  key={event.id}
-  canManage={canManage}
-  onEdit={handleEditEvent}
-  onCancel={handleCancelEvent}
-  managementError={managementError}
-  event={event}
-      users={mockUsers.map((user) =>
-        user.id === currentUser.id ? profileUser : user,
-      )}
-      currentUser={profileUser}
+      key={event.id}
+      event={event}
+      users={attendeeUsers}
+      currentUser={currentUser}
+      canManage={canManage}
+      onEdit={handleEditEvent}
+      onCancel={handleCancelEvent}
+      managementError={managementError}
       onBack={() => navigate("/events")}
-      onAttendeeChange={(ids) => onUpdateRsvp(event.id, ids)}
+      onAttendeeChange={(ids) => {
+        setEventDetails((previous) => ({
+          ...previous,
+          attendeeIds: ids,
+        }));
+
+        onUpdateRsvp(event.id, ids);
+      }}
     />
   );
 }
@@ -428,68 +419,291 @@ async function handleCancelEvent() {
 export default function App() {
   const { session, restoreSession, saveSession } = useSession();
   const { user } = session;
-  const sessionDestination = user ? signedInPath(user) : "/login";
+
+  const sessionDestination = user
+    ? signedInPath(user)
+    : "/login";
+
+  const [serverEvents, setServerEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsError, setEventsError] = useState("");
+
+  const [myEvents, setMyEvents] = useState([]);
+  const [myEventsLoading, setMyEventsLoading] = useState(false);
+  const [myEventsError, setMyEventsError] = useState("");
+
   const [rsvps, setRsvps] = useState({});
-  const [sentRequestIds, setSentRequestIds] = useState([]);
-  const [createdEvents, setCreatedEvents] = useState([]);
-  const [apiEvents, setApiEvents] = useState([]);
-const [eventsLoading, setEventsLoading] = useState(true);
-const [eventsError, setEventsError] = useState("");
+  const [eventsRevision, setEventsRevision] = useState(0);
 
-useEffect(() => {
-  const controller = new AbortController();
+  const [connectedUsers, setConnectedUsers] = useState([]);
+  const [connectionsLoading, setConnectionsLoading] =
+    useState(false);
+  const [connectionsError, setConnectionsError] = useState("");
 
-  async function loadEvents() {
-    try {
-      const events = await getEvents(controller.signal);
+  const [serverConnectionRequests, setServerConnectionRequests] =
+    useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [requestsError, setRequestsError] = useState("");
+  const [requestUsers, setRequestUsers] = useState({});
+  const [updatingRequestId, setUpdatingRequestId] =
+    useState(null);
 
-      if (!controller.signal.aborted) {
-        setApiEvents(events);
-        setEventsError("");
-      }
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        setEventsError("Could not load events.");
-      }
-    } finally {
-      if (!controller.signal.aborted) {
-        setEventsLoading(false);
-      }
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] =
+    useState(false);
+  const [suggestionsError, setSuggestionsError] = useState("");
+
+  // Load events.
+  useEffect(() => {
+    if (!user?.id) {
+      setServerEvents([]);
+      setEventsLoading(false);
+      return;
     }
-  }
 
-  loadEvents();
-  return () => controller.abort();
-}, []);
-  const [pendingRequests, setPendingRequests] = useState(() =>
-    mockUsers.slice(0, 3),
-  );
-  const [connectedUsers, setConnectedUsers] = useState(() =>
-    mockUsers.slice(3, 9),
-  );
- const exploreEvents = apiEvents.map((event) => ({
-  ...event,
-  image: event.imageUrl,
-  time: event.startTime,
-}));
+    const controller = new AbortController();
 
+    setEventsLoading(true);
+    setEventsError("");
+
+    getEvents(controller.signal)
+      .then((events) => {
+        setServerEvents(events);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setEventsError(error.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setEventsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [user?.id]);
+
+  // Load My Events after RSVP or event management changes.
+  useEffect(() => {
+    if (!user?.id) {
+      setMyEvents([]);
+      setMyEventsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    setMyEventsLoading(true);
+    setMyEventsError("");
+
+    getUserEvents(user.id, undefined, controller.signal)
+      .then((events) => {
+        setMyEvents(events);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setMyEventsError(error.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setMyEventsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [user?.id, rsvps, eventsRevision]);
+
+  // Load accepted connections.
+  useEffect(() => {
+    if (!user?.id) {
+      setConnectedUsers([]);
+      setConnectionsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    setConnectionsLoading(true);
+    setConnectionsError("");
+
+    getConnections(user.id, controller.signal)
+      .then((connections) => {
+        setConnectedUsers(connections);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setConnectionsError(error.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setConnectionsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [user?.id]);
+
+  // Load available users for connection suggestions.
+  useEffect(() => {
+    if (!user?.id) {
+      setAvailableUsers([]);
+      setSuggestionsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    setSuggestionsLoading(true);
+    setSuggestionsError("");
+
+    getUsers(controller.signal)
+      .then((users) => {
+        if (!controller.signal.aborted) {
+          setAvailableUsers(users);
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setSuggestionsError(error.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setSuggestionsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [user?.id]);
+
+  // Load connection requests.
+  useEffect(() => {
+    if (!user?.id) {
+      setServerConnectionRequests([]);
+      setRequestsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    setRequestsLoading(true);
+    setRequestsError("");
+
+    getConnectionRequests(user.id, controller.signal)
+      .then((requests) => {
+        setServerConnectionRequests(requests);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setRequestsError(error.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setRequestsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [user?.id]);
+
+  // Retrieve profiles involved in connection requests.
+  useEffect(() => {
+    if (!user?.id || serverConnectionRequests.length === 0) {
+      setRequestUsers({});
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const userIds = [
+      ...new Set(
+        serverConnectionRequests.map((request) =>
+          request.senderId === user.id
+            ? request.recipientId
+            : request.senderId,
+        ),
+      ),
+    ];
+
+    Promise.all(
+      userIds.map((id) =>
+        getUserById(id, controller.signal),
+      ),
+    )
+      .then((users) => {
+        if (!controller.signal.aborted) {
+          setRequestUsers(
+            Object.fromEntries(
+              users.map((person) => [person.id, person]),
+            ),
+          );
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setRequestsError(error.message);
+        }
+      });
+
+    return () => controller.abort();
+  }, [user?.id, serverConnectionRequests]);
+
+  const incomingRequests = serverConnectionRequests.filter(
+    (request) =>
+      request.recipientId === user?.id &&
+      request.status === "pending",
+  );
+
+  const outgoingRequests = serverConnectionRequests.filter(
+    (request) =>
+      request.senderId === user?.id &&
+      request.status === "pending",
+  );
+
+  const suggestedUsers = availableUsers
+    .filter(
+      (person) =>
+        person.id !== user?.id &&
+        !connectedUsers.some(
+          (connected) => connected.id === person.id,
+        ) &&
+        !incomingRequests.some(
+          (request) => request.senderId === person.id,
+        ),
+    )
+    .slice(0, 3);
+
+  const sentRequestIds = outgoingRequests.map(
+    (request) => request.recipientId,
+  );
+
+  const exploreEvents = serverEvents.map((event) => ({
+    ...event,
+    image: event.imageUrl,
+    time: event.startTime,
+  }));
+
+  // Update event participation after a successful API request.
   function handleRsvpChange(eventId, attendeeIds) {
     setRsvps((previous) => ({
       ...previous,
       [eventId]: attendeeIds,
     }));
+
+    setServerEvents((previous) =>
+      previous.map((event) =>
+        event.id === eventId
+          ? { ...event, attendeeIds }
+          : event,
+      ),
+    );
   }
 
-  const myEventsData = [
-    ...demoEvents,
-    ...exploreEvents.map((event) => ({
-      ...event,
-      imageUrl: event.imageUrl ?? event.image,
-      startTime: event.startTime ?? event.time,
-      organizerId: event.organizerId ?? null,
-      attendeeIds: rsvps[event.id] ?? event.attendeeIds ?? [],
-    })),
-  ];
+  const myEventsData = myEvents;
 
   const profileStats = [
     {
@@ -499,57 +713,138 @@ useEffect(() => {
     {
       label: "Hosted",
       value: myEventsData.filter(
-        (event) => event.organizerId === currentUser.id,
+        (event) => event.organizerId === user?.id,
       ).length,
     },
     {
       label: "Attended",
       value: myEventsData.filter((event) =>
-        (event.attendeeIds ?? []).includes(currentUser.id),
+        (event.attendeeIds ?? []).includes(user?.id),
       ).length,
     },
   ];
 
-  function handleSendRequest(personId) {
-    setSentRequestIds((previous) =>
-      previous.includes(personId)
-        ? previous.filter((id) => id !== personId)
-        : [...previous, personId],
+  // Update the event list after creation, editing, or cancellation.
+  function handleEventChanged(changed, cancelled = false) {
+    setServerEvents((previous) =>
+      cancelled
+        ? previous.filter((event) => event.id !== changed.id)
+        : previous.some((event) => event.id === changed.id)
+          ? previous.map((event) =>
+              event.id === changed.id ? changed : event,
+            )
+          : [...previous, changed],
     );
+
+    setEventsRevision((previous) => previous + 1);
   }
 
-  
   async function handleCreateEvent(fields) {
-    const createdEvent = await createEvent(fields);
+    const created = await createEvent(fields);
 
-    // Reload events from Express after successful creation.
-    try {
-      const updatedEvents = await getEvents();
-      setApiEvents(updatedEvents);
-      setEventsError("");
-    } catch {
-      setEventsError("Could not refresh events.");
+    handleEventChanged(created);
+
+    return created;
+  }
+
+  // Send a connection request.
+  async function handleSendRequest(personId) {
+    if (
+      !user?.id ||
+      !personId ||
+      updatingRequestId ||
+      sentRequestIds.includes(personId) ||
+      connectedUsers.some((person) => person.id === personId)
+    ) {
+      return;
     }
 
-    return createdEvent;
+    setUpdatingRequestId(personId);
+    setRequestsError("");
+
+    try {
+      const newRequest = await sendConnectionRequest(personId);
+
+      setServerConnectionRequests((previous) => [
+        ...previous,
+        newRequest,
+      ]);
+    } catch (error) {
+      setRequestsError(error.message);
+    } finally {
+      setUpdatingRequestId(null);
+    }
   }
 
-  function handleAcceptRequest(user) {
-    setPendingRequests((previous) =>
-      previous.filter((person) => person.id !== user.id),
-    );
+  // Accept a connection request.
+  async function handleAcceptRequest(person) {
+    if (!user?.id || !person.requestId || updatingRequestId) {
+      return;
+    }
 
-    setConnectedUsers((previous) =>
-      previous.some((person) => person.id === user.id)
-        ? previous
-        : [...previous, user],
-    );
+    setUpdatingRequestId(person.requestId);
+    setRequestsError("");
+
+    try {
+      await updateConnectionRequest(person.requestId, "accepted");
+
+      setServerConnectionRequests((previous) =>
+        previous.filter(
+          (request) => request.id !== person.requestId,
+        ),
+      );
+
+      const connections = await getConnections(user.id);
+      setConnectedUsers(connections);
+    } catch (error) {
+      setRequestsError(error.message);
+    } finally {
+      setUpdatingRequestId(null);
+    }
   }
 
-  function handleDeclineRequest(user) {
-    setPendingRequests((previous) =>
-      previous.filter((person) => person.id !== user.id),
-    );
+  // Decline a connection request.
+  async function handleDeclineRequest(person) {
+    if (!person.requestId || updatingRequestId) return;
+
+    setUpdatingRequestId(person.requestId);
+    setRequestsError("");
+
+    try {
+      await updateConnectionRequest(person.requestId, "declined");
+
+      setServerConnectionRequests((previous) =>
+        previous.filter(
+          (request) => request.id !== person.requestId,
+        ),
+      );
+    } catch (error) {
+      setRequestsError(error.message);
+    } finally {
+      setUpdatingRequestId(null);
+    }
+  }
+
+  // Cancel an outgoing connection request.
+  async function handleCancelRequest(person) {
+    if (!person.requestId || updatingRequestId) return;
+
+    setUpdatingRequestId(person.requestId);
+    setRequestsError("");
+
+    try {
+      await updateConnectionRequest(person.requestId, "cancelled");
+
+      setServerConnectionRequests((previous) =>
+        previous.filter(
+          (request) => request.id !== person.requestId,
+        ),
+      );
+    } catch (error) {
+      setRequestsError(error.message);
+    } finally {
+      setUpdatingRequestId(null);
+    }
   }
 
   return (
@@ -559,16 +854,35 @@ useEffect(() => {
         <Route
           path="/"
           element={
-            <SessionBoundary session={session} onRetry={restoreSession}>
-              {user ? <Navigate to={sessionDestination} replace /> : <Welcome />}
+            <SessionBoundary
+              session={session}
+              onRetry={restoreSession}
+            >
+              {user ? (
+                <Navigate to={sessionDestination} replace />
+              ) : (
+                <Welcome />
+              )}
             </SessionBoundary>
           }
         />
-        <Route path="/login" element={<Login onUserChange={saveSession} />} />
-        <Route path="/register" element={<Register onUserChange={saveSession} />} />
+
+        <Route
+          path="/login"
+          element={<Login onUserChange={saveSession} />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register onUserChange={saveSession} />}
+        />
+
         <Route
           element={
-            <SessionBoundary session={session} onRetry={restoreSession}>
+            <SessionBoundary
+              session={session}
+              onRetry={restoreSession}
+            >
               {user && !user.profileComplete ? (
                 <Outlet />
               ) : (
@@ -579,18 +893,29 @@ useEffect(() => {
         >
           <Route
             path="/select-interests"
-            element={<SelectInterests user={user} onUserChange={saveSession} />}
+            element={
+              <SelectInterests
+                user={user}
+                onUserChange={saveSession}
+              />
+            }
           />
+
           <Route
             path="/setup-profile"
-            element={<SetupProfile onUserChange={saveSession} />}
+            element={
+              <SetupProfile onUserChange={saveSession} />
+            }
           />
         </Route>
 
         {/* Main app pages with the navigation bar */}
         <Route
           element={
-            <SessionBoundary session={session} onRetry={restoreSession}>
+            <SessionBoundary
+              session={session}
+              onRetry={restoreSession}
+            >
               {user?.profileComplete ? (
                 <Layout>
                   <Outlet />
@@ -601,17 +926,32 @@ useEffect(() => {
             </SessionBoundary>
           }
         >
-          <Route path="/profile" element={<Profile stats={profileStats} />} />
-          <Route path="/edit-profile" element={<EditProfile />} />
+          <Route
+            path="/profile"
+            element={<Profile stats={profileStats} />}
+          />
+
+          <Route
+            path="/edit-profile"
+            element={<EditProfile />}
+          />
+
           <Route
             path="/create-event"
-            element={<CreateEvent onCreate={handleCreateEvent} />}
+            element={
+              <CreateEvent onCreate={handleCreateEvent} />
+            }
           />
 
           <Route
             path="/my-events"
             element={
-              <MyEvents events={myEventsData} currentUser={currentUser} />
+              <MyEvents
+                events={myEventsData}
+                currentUser={user}
+                loading={myEventsLoading}
+                error={myEventsError}
+              />
             }
           />
 
@@ -619,8 +959,10 @@ useEffect(() => {
             path="/discover"
             element={
               <DiscoverPreview
-                sentRequestIds={sentRequestIds}
+                currentUser={user}
+                outgoingRequests={outgoingRequests}
                 onSendRequest={handleSendRequest}
+                onCancelRequest={handleCancelRequest}
               />
             }
           />
@@ -631,10 +973,25 @@ useEffect(() => {
               <Connections
                 sentRequestIds={sentRequestIds}
                 onSendRequest={handleSendRequest}
-                pendingRequests={pendingRequests}
                 connectedUsers={connectedUsers}
                 onAcceptRequest={handleAcceptRequest}
                 onDeclineRequest={handleDeclineRequest}
+                incomingRequests={incomingRequests}
+                outgoingRequests={outgoingRequests}
+                requestUsers={requestUsers}
+                onCancelRequest={handleCancelRequest}
+                updatingRequestId={updatingRequestId}
+                loading={
+                  connectionsLoading ||
+                  requestsLoading ||
+                  suggestionsLoading
+                }
+                error={
+                  connectionsError ||
+                  requestsError ||
+                  suggestionsError
+                }
+                suggestedUsers={suggestedUsers}
               />
             }
           />
@@ -643,35 +1000,31 @@ useEffect(() => {
             path="/connections/:personId"
             element={
               <ConnectionProfile
-                sentRequestIds={sentRequestIds}
-                onSendRequest={handleSendRequest}
-                pendingRequests={pendingRequests}
+                currentUser={user}
+                availableUsers={availableUsers}
+                requestUsers={requestUsers}
+                incomingRequests={incomingRequests}
+                outgoingRequests={outgoingRequests}
                 connectedUsers={connectedUsers}
+                onSendRequest={handleSendRequest}
+                onCancelRequest={handleCancelRequest}
                 onAcceptRequest={handleAcceptRequest}
                 onDeclineRequest={handleDeclineRequest}
+                updatingRequestId={updatingRequestId}
               />
             }
           />
 
-   
           <Route
             path="/events"
             element={
               <EventsPreview
                 events={exploreEvents}
-                rsvps={rsvps}
                 onUpdateRsvp={handleRsvpChange}
+                currentUser={user}
                 eventsLoading={eventsLoading}
                 eventsError={eventsError}
-                onEventChanged={(changed, cancelled) =>
-                  setApiEvents((previous) =>
-                    cancelled
-                      ? previous.filter((item) => item.id !== changed.id)
-                      : previous.map((item) =>
-                          item.id === changed.id ? changed : item
-                        )
-                  )
-                }
+                onEventChanged={handleEventChanged}
               />
             }
           />
@@ -681,24 +1034,15 @@ useEffect(() => {
             element={
               <EventsPreview
                 events={exploreEvents}
-                rsvps={rsvps}
                 onUpdateRsvp={handleRsvpChange}
+                currentUser={user}
                 eventsLoading={eventsLoading}
                 eventsError={eventsError}
-                onEventChanged={(changed, cancelled) =>
-                  setApiEvents((previous) =>
-                    cancelled
-                      ? previous.filter((item) => item.id !== changed.id)
-                      : previous.map((item) =>
-                          item.id === changed.id ? changed : item
-                        )
-                  )
-                }
+                onEventChanged={handleEventChanged}
               />
             }
           />
-
-</Route>
+        </Route>
       </Routes>
     </BrowserRouter>
   );

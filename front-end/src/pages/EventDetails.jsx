@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import BackButton from "../Components/BackButton";
 import "../styles/EventDetails.css";
 import "../styles/EventRSVP.css";
+import { joinEvent, leaveEvent } from "../api";
 
 const EventDetails = (props) => {
   const event = props.event;
@@ -13,6 +14,7 @@ const EventDetails = (props) => {
   const [confirmation, setConfirmation] = useState("");
   const [message, setMessage] = useState("");
   const confirmationRef = useRef(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (confirmation) {
@@ -38,27 +40,50 @@ const EventDetails = (props) => {
   const isFull = attendeeIds.length >= event.capacity;
 
   // Join the event
-  const handleJoin = () => {
-    if (!currentUser || isAttending || isFull) {
-      return;
-    }
+  const handleJoin = async() => {
+   if (!currentUser || isAttending || isFull || isSubmitting) {
+    return;
+  }
 
-    props.onAttendeeChange([...attendeeIds, currentUser.id]);
+  setIsSubmitting(true);
+  setMessage("");
+
+  try {
+    const updatedEvent = await joinEvent(event.id);
+
+    props.onAttendeeChange(updatedEvent.attendeeIds);
+
     setConfirmation("");
     setMessage("You have successfully joined this event!");
-  };
+  } catch (error) {
+    setMessage(error.message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Leave the event
-  const handleLeave = () => {
-    if (!currentUser || !isAttending) {
-      return;
-    }
+  const handleLeave = async() => {
+      if (!currentUser || !isAttending || isSubmitting) {
+    return;
+  }
 
-    props.onAttendeeChange(attendeeIds.filter((id) => id !== currentUser.id));
+  setIsSubmitting(true);
+  setMessage("");
+
+  try {
+    const updatedEvent = await leaveEvent(event.id);
+
+    props.onAttendeeChange(updatedEvent.attendeeIds);
+
     setConfirmation("");
     setMessage("You have left this event.");
-  };
-
+  } catch (error) {
+    setMessage(error.message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   return (
     <main className="event-details">
       {onBack && <BackButton onClick={onBack} ariaLabel="Back to events" />}
@@ -190,30 +215,31 @@ const EventDetails = (props) => {
 
           {/* RSVP Button */}
           <div className="event-section rsvp-actions">
-            {currentUser &&
-              (isAttending ? (
-                <button
-                  className="doin-button doin-button--secondary"
-                  onClick={() => {
-                    setMessage("");
-                    setConfirmation("leave");
-                  }}
-                >
-                  Leave Event
-                </button>
-              ) : (
-                <button
-                  className="doin-button doin-button--primary"
-                  disabled={isFull}
-                  onClick={() => {
-                    setMessage("");
-                    setConfirmation("join");
-                  }}
-                >
-                  {isFull ? "Event Full" : "Join Event"}
-                </button>
-              ))}
-          </div>
+              {currentUser &&
+                (isAttending ? (
+                  <button
+                    className="doin-button doin-button--secondary"
+                    disabled={isSubmitting}
+                    onClick={() => {
+                      setMessage("");
+                      setConfirmation("leave");
+                    }}
+                  >
+                    Leave Event
+                  </button>
+                ) : (
+                  <button
+                    className="doin-button doin-button--primary"
+                    disabled={isFull || isSubmitting}
+                    onClick={() => {
+                      setMessage("");
+                      setConfirmation("join");
+                    }}
+                  >
+                    {isFull ? "Event Full" : "Join Event"}
+                  </button>
+                ))}
+            </div>
 
           {/* RSVP Confirmation */}
           {confirmation === "join" && (
@@ -234,18 +260,20 @@ const EventDetails = (props) => {
               <button
                 className="doin-button doin-button--primary"
                 onClick={handleJoin}
+                disabled={isSubmitting}
               >
-                Confirm RSVP
+                {isSubmitting ? "Joining..." : "Confirm RSVP"}
               </button>
 
               <button
                 className="doin-button doin-button--secondary"
                 onClick={() => setConfirmation("")}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
             </div>
-          )}
+          )}  
 
           {/* Leave Confirmation */}
           {confirmation === "leave" && (
@@ -262,13 +290,16 @@ const EventDetails = (props) => {
               <button
                 className="doin-button doin-button--primary"
                 onClick={handleLeave}
+                disabled={isSubmitting}
               >
-                Confirm Leave
+          
+               {isSubmitting ? "Leaving..." : "Confirm Leave"}
               </button>
 
               <button
                 className="doin-button doin-button--secondary"
                 onClick={() => setConfirmation("")}
+                disabled={isSubmitting}
               >
                 Keep RSVP
               </button>

@@ -1,3 +1,4 @@
+
 const apiUrl = "/api";
 const currentUserKey = "doin.currentUserId";
 
@@ -26,18 +27,26 @@ async function request(path, { useMockUser = true, ...options } = {}) {
     response = await fetch(apiUrl + path, { ...options, headers });
   } catch (error) {
     if (options.signal?.aborted) throw error;
-    throw new Error("Couldn't reach Doin. Check your connection and try again.", { cause: error });
+    throw new Error("Couldn't reach Doin. Check your connection and try again.", {
+      cause: error,
+    });
   }
 
   const data = await response.json().catch(() => null);
   if (!response.ok || data === null) {
-    const error = new Error(data?.error?.message ?? "Something went wrong. Please try again.");
+    const error = new Error(
+      data?.error?.message ?? "Something went wrong. Please try again."
+    );
     error.status = response.status;
     error.code = data?.error?.code;
     throw error;
   }
   return data;
 }
+
+//
+// AUTHENTICATION AND ONBOARDING API
+//
 
 export function registerAccount(fields, signal) {
   return request("/auth/register", {
@@ -81,9 +90,11 @@ export function setupProfile(fields, signal) {
   });
 }
 
-// Discover people (#99), with search and interest filtering (#100). The
-// search text and the interest go in the address as query values, and an
-// empty search or the All choice simply leaves that value out.
+//
+// PROFILE AND PEOPLE DISCOVERY API
+//
+
+// Discover people (#99), with search and interest filtering (#100).
 export function getPeople(search, interest) {
   const parts = [];
   if (search.trim()) {
@@ -110,6 +121,20 @@ export function updateProfile(userId, fields) {
   });
 }
 
+export function getUserById(userId, signal) {
+  return request(`/users/${encodeURIComponent(userId)}`, {
+    signal,
+  });
+}
+
+export function getUsers(signal) {
+  return request("/users", { signal });
+}
+
+//
+// EVENTS API
+//
+
 export function getEvents(signal) {
   return request("/events", { signal });
 }
@@ -121,7 +146,6 @@ export function getEvent(eventId, signal) {
 export function getEventCategories(signal) {
   return request("/events/categories", { signal });
 }
-
 
 export function searchEvents(filters = {}, signal) {
   const params = new URLSearchParams();
@@ -145,7 +169,6 @@ export function searchEvents(filters = {}, signal) {
   });
 }
 
-
 export function createEvent(fields, signal) {
   return request("/events", {
     method: "POST",
@@ -153,7 +176,6 @@ export function createEvent(fields, signal) {
     signal,
   });
 }
-
 
 export function updateEvent(eventId, fields, signal) {
   return request(`/events/${encodeURIComponent(eventId)}`, {
@@ -163,10 +185,73 @@ export function updateEvent(eventId, fields, signal) {
   });
 }
 
-
 export function cancelEvent(eventId, signal) {
   return request(`/events/${encodeURIComponent(eventId)}`, {
     method: "DELETE",
     signal,
   });
+}
+
+//
+// RSVP AND MY EVENTS API
+//
+
+export function joinEvent(eventId, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}/rsvp`, {
+    method: "POST",
+    signal,
+  });
+}
+
+export function leaveEvent(eventId, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}/rsvp`, {
+    method: "DELETE",
+    signal,
+  });
+}
+
+export function getUserEvents(userId, type, signal) {
+  const filter = type ? `?type=${encodeURIComponent(type)}` : "";
+
+  return request(
+    `/users/${encodeURIComponent(userId)}/events${filter}`,
+    { signal },
+  );
+}
+
+//
+// CONNECTIONS API
+//
+
+export function sendConnectionRequest(recipientId, signal) {
+  return request("/connections/requests", {
+    method: "POST",
+    body: JSON.stringify({ recipientId }),
+    signal,
+  });
+}
+
+export function getConnectionRequests(userId, signal) {
+  return request(
+    `/users/${encodeURIComponent(userId)}/connection-requests`,
+    { signal },
+  );
+}
+
+export function updateConnectionRequest(requestId, status, signal) {
+  return request(
+    `/connections/requests/${encodeURIComponent(requestId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+      signal,
+    },
+  );
+}
+
+export function getConnections(userId, signal) {
+  return request(
+    `/users/${encodeURIComponent(userId)}/connections`,
+    { signal },
+  );
 }

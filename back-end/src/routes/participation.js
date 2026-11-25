@@ -130,20 +130,21 @@ router.get("/users/:userId/events", requireMockUser, (req, res) => {
     });
   }
 
-  // Find events the user joined or is hosting
+  // Find active events the user joined or is hosting
   const events = store.events.filter((event) => {
-    const joined = event.attendeeIds.includes(userId);
-    const hosting = event.organizerId === userId;
+  if (event.status !== "active") return false;
 
-    if (type === "joined") return joined;
-    if (type === "hosting") return hosting;
+  const joined = event.attendeeIds.includes(userId);
+  const hosting = event.organizerId === userId;
 
-    return joined || hosting;
-  });
+  if (type === "joined") return joined;
+  if (type === "hosting") return hosting;
 
-  return res.status(200).json(events);
+  return joined || hosting;
+
 });
 
-
+return res.status(200).json(events);
+});
 
 export default router;

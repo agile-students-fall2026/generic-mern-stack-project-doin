@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import "../styles/MyEvents.css";
 import EventsTabs from "../Components/EventsTabs";
 
+
 const MyEvents = (props) => {
   const events = props.events || [];
   const currentUser = props.currentUser;
+  const loading = props.loading;
+  const error = props.error;
 
   const [activeTab, setActiveTab] = useState("joined");
 
@@ -56,6 +59,8 @@ const MyEvents = (props) => {
         </div>
 
         {/* Event List */}
+        {loading && <p role="status">Loading your events...</p>}
+        {error && <p role="alert">{error}</p>}
         <div className="my-events-list">
           {displayedEvents.length > 0 ? (
             displayedEvents.map((event) => (
