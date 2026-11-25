@@ -9,12 +9,14 @@ import {
   useParams,
 } from "react-router";
 import {
+  cancelEvent,
   createEvent,
   currentUserId,
   getEvent,
   getEvents,
   getMyUser,
   getPerson,
+  updateEvent,
 } from "./api";
 
 import BackButton from "./Components/BackButton";
@@ -228,6 +230,7 @@ function EventsPreview({
   events,
   eventsLoading,
   eventsError,
+  onEventChanged,
 }) {
   const navigate = useNavigate();
   const { eventId } = useParams();
@@ -235,7 +238,8 @@ function EventsPreview({
 const [eventDetails, setEventDetails] = useState(null);
 const [detailsLoading, setDetailsLoading] = useState(false);
 const [detailsError, setDetailsError] = useState("");
-
+const [managementError, setManagementError] = useState("");
+const [organizerName, setOrganizerName] = useState("");
 useEffect(() => {
   if (!eventId) return;
 
@@ -268,6 +272,25 @@ useEffect(() => {
   loadEvent();
   return () => controller.abort();
 }, [eventId]);
+
+useEffect(() => {
+  const organizerId = eventDetails?.organizerId;
+  setOrganizerName("");
+
+  if (!organizerId) return;
+
+  let active = true;
+
+  getPerson(organizerId)
+    .then((person) => {
+      if (active) setOrganizerName(person.name ?? "");
+    })
+    .catch(() => {});
+
+  return () => {
+    active = false;
+  };
+}, [eventDetails?.organizerId]);
 
   
   // Show the event list only when no event ID is selected.
@@ -317,6 +340,49 @@ useEffect(() => {
 
   const selectedEvent = eventDetails;
 
+const canManage =
+  Boolean(currentUserId()) &&
+  String(selectedEvent.organizerId) === String(currentUserId());
+
+async function handleEditEvent() {
+  const title = window.prompt("Event name:", selectedEvent.title);
+  if (title === null) return;
+
+  const description = window.prompt(
+    "Description:",
+    selectedEvent.description
+  );
+  if (description === null) return;
+
+  const location = window.prompt("Location:", selectedEvent.location);
+  if (location === null) return;
+
+  try {
+    setManagementError("");
+    const updated = await updateEvent(selectedEvent.id, {
+      title: title.trim(),
+      description: description.trim(),
+      location: location.trim(),
+    });
+
+    setEventDetails(updated);
+    onEventChanged(updated, false);
+  } catch (error) {
+    setManagementError(error.message || "Could not update event.");
+  }
+}
+
+async function handleCancelEvent() {
+  try {
+    setManagementError("");
+    await cancelEvent(selectedEvent.id);
+    onEventChanged(selectedEvent, true);
+    navigate("/events");
+  } catch (error) {
+    setManagementError(error.message || "Could not cancel event.");
+  }
+}
+
 
   // Prepare the event for EventDetails
   const event = {
@@ -326,7 +392,11 @@ useEffect(() => {
     endTime: selectedEvent.endTime ?? "Not specified",
     description:
       selectedEvent.description ?? "Demo event for frontend testing.",
-    organizer: "Doin",
+    organizer:
+  organizerName ||
+  selectedEvent.organizerName ||
+  selectedEvent.organizerId ||
+  "Unknown organizer",
     attendeeIds: rsvps[selectedEvent.id] ?? selectedEvent.attendeeIds ?? [],
     capacity: selectedEvent.capacity ?? 20,
   };
@@ -339,8 +409,12 @@ useEffect(() => {
 
   return (
     <EventDetails
-      key={event.id}
-      event={event}
+  key={event.id}
+  canManage={canManage}
+  onEdit={handleEditEvent}
+  onCancel={handleCancelEvent}
+  managementError={managementError}
+  event={event}
       users={mockUsers.map((user) =>
         user.id === currentUser.id ? profileUser : user,
       )}
@@ -579,34 +653,52 @@ useEffect(() => {
             }
           />
 
+   
           <Route
-  path="/events"
-  element={
-    <EventsPreview
-      events={exploreEvents}
-      rsvps={rsvps}
-      onUpdateRsvp={handleRsvpChange}
-      eventsLoading={eventsLoading}
-      eventsError={eventsError}
-    />
-  }
-/>
+            path="/events"
+            element={
+              <EventsPreview
+                events={exploreEvents}
+                rsvps={rsvps}
+                onUpdateRsvp={handleRsvpChange}
+                eventsLoading={eventsLoading}
+                eventsError={eventsError}
+                onEventChanged={(changed, cancelled) =>
+                  setApiEvents((previous) =>
+                    cancelled
+                      ? previous.filter((item) => item.id !== changed.id)
+                      : previous.map((item) =>
+                          item.id === changed.id ? changed : item
+                        )
+                  )
+                }
+              />
+            }
+          />
 
           <Route
-  path="/events/:eventId"
-  element={
-    <EventsPreview
-      events={exploreEvents}
-      rsvps={rsvps}
-      onUpdateRsvp={handleRsvpChange}
-      eventsLoading={eventsLoading}
-      eventsError={eventsError}
-    />
-  }
-/>
-            
-          
-        </Route>
+            path="/events/:eventId"
+            element={
+              <EventsPreview
+                events={exploreEvents}
+                rsvps={rsvps}
+                onUpdateRsvp={handleRsvpChange}
+                eventsLoading={eventsLoading}
+                eventsError={eventsError}
+                onEventChanged={(changed, cancelled) =>
+                  setApiEvents((previous) =>
+                    cancelled
+                      ? previous.filter((item) => item.id !== changed.id)
+                      : previous.map((item) =>
+                          item.id === changed.id ? changed : item
+                        )
+                  )
+                }
+              />
+            }
+          />
+
+</Route>
       </Routes>
     </BrowserRouter>
   );

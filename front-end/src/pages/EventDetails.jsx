@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import BackButton from "../Components/BackButton";
 import "../styles/EventDetails.css";
 import "../styles/EventRSVP.css";
-import BackButton from "../Components/BackButton";
 
 const EventDetails = (props) => {
   const event = props.event;
@@ -77,6 +77,34 @@ const EventDetails = (props) => {
 
           <p className="event-organizer">Organized by {event.organizer}</p>
 
+          {props.canManage && (
+            <div className="event-section">
+              <button
+                type="button"
+                className="doin-button doin-button--secondary"
+                onClick={() => props.onEdit?.()}
+              >
+                Edit Event
+              </button>
+
+              <button
+                type="button"
+                className="doin-button doin-button--secondary"
+                onClick={() => {
+                  if (window.confirm("Cancel this event?")) {
+                    props.onCancel?.();
+                  }
+                }}
+              >
+                Cancel Event
+              </button>
+            </div>
+          )}
+
+          {props.managementError && (
+            <p role="alert">{props.managementError}</p>
+          )}
+
           {/* Event Description */}
           <div className="event-section">
             <h2>About This Event</h2>
@@ -116,14 +144,13 @@ const EventDetails = (props) => {
                 <div
                   className="attendee-progress-fill"
                   style={{
-                    width: `${
-                      event.capacity > 0
+                    width: `${event.capacity > 0
                         ? Math.min(
-                            100,
-                            (attendeeIds.length / event.capacity) * 100,
-                          )
+                          100,
+                          (attendeeIds.length / event.capacity) * 100,
+                        )
                         : 0
-                    }%`,
+                      }%`,
                   }}
                 />
               </div>
