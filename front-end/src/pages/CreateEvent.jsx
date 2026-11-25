@@ -12,40 +12,55 @@ const CreateEvent = (props) => {
   const [capacity, setCapacity] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (isSubmitted) return;
+    if (isSubmitted || isSubmitting) return;
 
     if (endTime <= startTime) {
       setMessage("End time must be after start time.");
       return;
     }
 
-    const id = crypto.randomUUID();
-
     const newEvent = {
-      id: id,
-      title: title,
-      description: description,
-      date: date,
-      startTime: startTime,
-      endTime: endTime,
-      location: location,
-      category: category,
+      title,
+      description,
+      date,
+      startTime,
+      endTime,
+      location,
+      category,
       capacity: Number(capacity),
-      attendeeIds: [],
-      imageUrl: `https://picsum.photos/seed/${id}/800/400`,
     };
 
-    if (props.onCreate) {
-      props.onCreate(newEvent);
-    }
+    setIsSubmitting(true);
+    setMessage("");
 
-    setIsSubmitted(true);
-    setMessage("Event created successfully!");
+    try {
+      if (!props.onCreate) {
+        throw new Error("Event creation is unavailable.");
+      }
+
+      await props.onCreate(newEvent);
+
+      setIsSubmitted(true);
+      setMessage("Event created successfully!");
+
+      // The backend creates and returns the event ID.
+      // The new event is now included in the refreshed API list.
+    } catch (error) {
+      setMessage(
+        error.message || "Could not create event. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+
 
   return (
     <main className="create-event-page">
@@ -167,12 +182,12 @@ const CreateEvent = (props) => {
           <button
             className="doin-button doin-button--primary create-event-submit"
             type="submit"
-            disabled={isSubmitted}
+            disabled={isSubmitted || isSubmitting}
           >
-            {isSubmitted ? "Event Published" : "Publish Event"}
+            {isSubmitting ? "Publishing..." : isSubmitted ? "Event Published" : "Publish Event"}
           </button>
 
-          {message && <p role="status">{message}</p>}
+          {message && <p role={isSubmitted ? "status" : "alert"}>{message}</p>}
         </form>
       </div>
     </main>

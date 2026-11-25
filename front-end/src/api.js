@@ -109,3 +109,64 @@ export function updateProfile(userId, fields) {
     body: JSON.stringify(fields),
   });
 }
+
+export function getEvents(signal) {
+  return request("/events", { signal });
+}
+
+export function getEvent(eventId, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}`, { signal });
+}
+
+export function getEventCategories(signal) {
+  return request("/events/categories", { signal });
+}
+
+
+export function searchEvents(filters = {}, signal) {
+  const params = new URLSearchParams();
+
+  for (const key of ["search", "category", "location", "date"]) {
+    const value = filters[key];
+
+    if (
+      typeof value === "string" &&
+      value.trim() &&
+      value !== "All"
+    ) {
+      params.set(key, value.trim());
+    }
+  }
+
+  const query = params.toString();
+
+  return request(`/events${query ? `?${query}` : ""}`, {
+    signal,
+  });
+}
+
+
+export function createEvent(fields, signal) {
+  return request("/events", {
+    method: "POST",
+    body: JSON.stringify(fields),
+    signal,
+  });
+}
+
+
+export function updateEvent(eventId, fields, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(fields),
+    signal,
+  });
+}
+
+
+export function cancelEvent(eventId, signal) {
+  return request(`/events/${encodeURIComponent(eventId)}`, {
+    method: "DELETE",
+    signal,
+  });
+}

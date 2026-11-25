@@ -1,39 +1,47 @@
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Navigate,
-  Routes,
-  Route,
   Outlet,
+  Route,
+  Routes,
   useNavigate,
   useParams,
 } from "react-router";
-import Welcome from "./pages/Welcome";
+import {
+  cancelEvent,
+  createEvent,
+  currentUserId,
+  getEvent,
+  getEvents,
+  getMyUser,
+  getPerson,
+  updateEvent,
+} from "./api";
+
+import BackButton from "./Components/BackButton";
+import Layout from "./Components/Layout";
+import SessionBoundary from "./Components/SessionBoundary";
+import DiscoverPeople from "./DiscoverPeople";
+import Explore from "./Explore";
+import mockDiscoverPeople from "./mockDiscoverPeople";
+import { mockEvent } from "./mocks/events";
+import mockProfile from "./mocks/mockProfile";
+import { mockUsers } from "./mocks/users";
+import normalizePerson from "./normalizePerson";
+import Connections from "./pages/Connections";
+import CreateEvent from "./pages/CreateEvent";
+import EditProfile from "./pages/EditProfile";
+import EventDetails from "./pages/EventDetails";
 import Login from "./pages/Login";
+import MyEvents from "./pages/MyEvents";
+import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 import SelectInterests from "./pages/SelectInterests";
 import SetupProfile from "./pages/SetupProfile";
-import Profile from "./pages/Profile";
-import EditProfile from "./pages/EditProfile";
-import MyEvents from "./pages/MyEvents";
-import { mockEvent } from "./mocks/events";
-import mockEvents from "./mockEvents";
-import { mockUsers } from "./mocks/users";
-import { useEffect, useState } from "react";
-import { currentUserId, getMyUser, getPerson } from "./api";
-import DiscoverPeople from "./DiscoverPeople";
+import Welcome from "./pages/Welcome";
 import PersonDetails from "./PersonDetails";
-import BackButton from "./Components/BackButton";
-import mockDiscoverPeople from "./mockDiscoverPeople";
-import normalizePerson from "./normalizePerson";
-import mockProfile from "./mocks/mockProfile";
-import Explore from "./Explore";
-import EventDetails from "./pages/EventDetails";
-import Connections from "./pages/Connections";
-import Layout from "./Components/Layout";
-import CreateEvent from "./pages/CreateEvent";
-import SessionBoundary from "./Components/SessionBoundary";
 import { signedInPath, useSession } from "./useSession";
-
 const currentUser = mockUsers[0];
 
 const demoEvents = [
@@ -216,28 +224,105 @@ function ConnectionProfile({
   );
 }
 
-function EventsPreview({ rsvps, onUpdateRsvp, events }) {
+function EventsPreview({
+  rsvps,
+  onUpdateRsvp,
+  events,
+  eventsLoading,
+  eventsError,
+  onEventChanged,
+}) {
   const navigate = useNavigate();
   const { eventId } = useParams();
 
-  // No event ID: display the discovery page
+const [eventDetails, setEventDetails] = useState(null);
+const [detailsLoading, setDetailsLoading] = useState(false);
+const [detailsError, setDetailsError] = useState("");
+const [managementError, setManagementError] = useState("");
+const [organizerName, setOrganizerName] = useState("");
+useEffect(() => {
+  if (!eventId) return;
+
+  const controller = new AbortController();
+
+  async function loadEvent() {
+    setDetailsLoading(true);
+    setDetailsError("");
+    setEventDetails(null);
+
+    try {
+      const event = await getEvent(eventId, controller.signal);
+
+      if (!controller.signal.aborted) {
+        setEventDetails(event);
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setDetailsError(
+          error.status === 404 ? "Event not found." : "Could not load event.",
+        );
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setDetailsLoading(false);
+      }
+    }
+  }
+
+  loadEvent();
+  return () => controller.abort();
+}, [eventId]);
+
+useEffect(() => {
+  const organizerId = eventDetails?.organizerId;
+  setOrganizerName("");
+
+  if (!organizerId) return;
+
+  let active = true;
+
+  getPerson(organizerId)
+    .then((person) => {
+      if (active) setOrganizerName(person.name ?? "");
+    })
+    .catch(() => {});
+
+  return () => {
+    active = false;
+  };
+}, [eventDetails?.organizerId]);
+
+  
+  // Show the event list only when no event ID is selected.
   if (!eventId) {
+    if (eventsLoading) {
+      return <p role="status">Loading events...</p>;
+    }
+
+    if (eventsError) {
+      return <p role="alert">{eventsError}</p>;
+    }
+
     return (
       <Explore
         events={events}
-        onViewEvent={(event) => navigate(`/events/${event.id}`)}
+        onViewEvent={(event) =>
+          navigate(`/events/${event.id}`)
+        }
         onCreateEvent={() => navigate("/create-event")}
       />
     );
   }
 
-  // Find the event matching the ID in the URL
-  const selectedEvent = events.find((event) => String(event.id) === eventId);
+  // Event details must load independently of the event list.
+  if (detailsLoading) {
+    return <p role="status">Loading event details...</p>;
+  }
 
-  if (!selectedEvent) {
+  if (detailsError) {
     return (
       <main className="event-details">
-        <p>Event not found.</p>
+        <p role="alert">{detailsError}</p>
         <button
           type="button"
           className="doin-button doin-button--secondary"
@@ -249,6 +334,56 @@ function EventsPreview({ rsvps, onUpdateRsvp, events }) {
     );
   }
 
+  if (!eventDetails) {
+    return <p role="status">Loading event details...</p>;
+  }
+
+  const selectedEvent = eventDetails;
+
+const canManage =
+  Boolean(currentUserId()) &&
+  String(selectedEvent.organizerId) === String(currentUserId());
+
+async function handleEditEvent() {
+  const title = window.prompt("Event name:", selectedEvent.title);
+  if (title === null) return;
+
+  const description = window.prompt(
+    "Description:",
+    selectedEvent.description
+  );
+  if (description === null) return;
+
+  const location = window.prompt("Location:", selectedEvent.location);
+  if (location === null) return;
+
+  try {
+    setManagementError("");
+    const updated = await updateEvent(selectedEvent.id, {
+      title: title.trim(),
+      description: description.trim(),
+      location: location.trim(),
+    });
+
+    setEventDetails(updated);
+    onEventChanged(updated, false);
+  } catch (error) {
+    setManagementError(error.message || "Could not update event.");
+  }
+}
+
+async function handleCancelEvent() {
+  try {
+    setManagementError("");
+    await cancelEvent(selectedEvent.id);
+    onEventChanged(selectedEvent, true);
+    navigate("/events");
+  } catch (error) {
+    setManagementError(error.message || "Could not cancel event.");
+  }
+}
+
+
   // Prepare the event for EventDetails
   const event = {
     ...selectedEvent,
@@ -257,7 +392,11 @@ function EventsPreview({ rsvps, onUpdateRsvp, events }) {
     endTime: selectedEvent.endTime ?? "Not specified",
     description:
       selectedEvent.description ?? "Demo event for frontend testing.",
-    organizer: "Doin",
+    organizer:
+  organizerName ||
+  selectedEvent.organizerName ||
+  selectedEvent.organizerId ||
+  "Unknown organizer",
     attendeeIds: rsvps[selectedEvent.id] ?? selectedEvent.attendeeIds ?? [],
     capacity: selectedEvent.capacity ?? 20,
   };
@@ -270,8 +409,12 @@ function EventsPreview({ rsvps, onUpdateRsvp, events }) {
 
   return (
     <EventDetails
-      key={event.id}
-      event={event}
+  key={event.id}
+  canManage={canManage}
+  onEdit={handleEditEvent}
+  onCancel={handleCancelEvent}
+  managementError={managementError}
+  event={event}
       users={mockUsers.map((user) =>
         user.id === currentUser.id ? profileUser : user,
       )}
@@ -289,20 +432,46 @@ export default function App() {
   const [rsvps, setRsvps] = useState({});
   const [sentRequestIds, setSentRequestIds] = useState([]);
   const [createdEvents, setCreatedEvents] = useState([]);
+  const [apiEvents, setApiEvents] = useState([]);
+const [eventsLoading, setEventsLoading] = useState(true);
+const [eventsError, setEventsError] = useState("");
+
+useEffect(() => {
+  const controller = new AbortController();
+
+  async function loadEvents() {
+    try {
+      const events = await getEvents(controller.signal);
+
+      if (!controller.signal.aborted) {
+        setApiEvents(events);
+        setEventsError("");
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setEventsError("Could not load events.");
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setEventsLoading(false);
+      }
+    }
+  }
+
+  loadEvents();
+  return () => controller.abort();
+}, []);
   const [pendingRequests, setPendingRequests] = useState(() =>
     mockUsers.slice(0, 3),
   );
   const [connectedUsers, setConnectedUsers] = useState(() =>
     mockUsers.slice(3, 9),
   );
-  const exploreEvents = [
-    ...mockEvents,
-    ...createdEvents.map((event) => ({
-      ...event,
-      image: event.imageUrl,
-      time: event.startTime,
-    })),
-  ];
+ const exploreEvents = apiEvents.map((event) => ({
+  ...event,
+  image: event.imageUrl,
+  time: event.startTime,
+}));
 
   function handleRsvpChange(eventId, attendeeIds) {
     setRsvps((previous) => ({
@@ -349,14 +518,20 @@ export default function App() {
     );
   }
 
-  function handleCreateEvent(newEvent) {
-    setCreatedEvents((previous) => [
-      ...previous,
-      {
-        ...newEvent,
-        organizerId: currentUser.id,
-      },
-    ]);
+  
+  async function handleCreateEvent(fields) {
+    const createdEvent = await createEvent(fields);
+
+    // Reload events from Express after successful creation.
+    try {
+      const updatedEvents = await getEvents();
+      setApiEvents(updatedEvents);
+      setEventsError("");
+    } catch {
+      setEventsError("Could not refresh events.");
+    }
+
+    return createdEvent;
   }
 
   function handleAcceptRequest(user) {
@@ -478,6 +653,7 @@ export default function App() {
             }
           />
 
+   
           <Route
             path="/events"
             element={
@@ -485,6 +661,17 @@ export default function App() {
                 events={exploreEvents}
                 rsvps={rsvps}
                 onUpdateRsvp={handleRsvpChange}
+                eventsLoading={eventsLoading}
+                eventsError={eventsError}
+                onEventChanged={(changed, cancelled) =>
+                  setApiEvents((previous) =>
+                    cancelled
+                      ? previous.filter((item) => item.id !== changed.id)
+                      : previous.map((item) =>
+                          item.id === changed.id ? changed : item
+                        )
+                  )
+                }
               />
             }
           />
@@ -496,10 +683,22 @@ export default function App() {
                 events={exploreEvents}
                 rsvps={rsvps}
                 onUpdateRsvp={handleRsvpChange}
+                eventsLoading={eventsLoading}
+                eventsError={eventsError}
+                onEventChanged={(changed, cancelled) =>
+                  setApiEvents((previous) =>
+                    cancelled
+                      ? previous.filter((item) => item.id !== changed.id)
+                      : previous.map((item) =>
+                          item.id === changed.id ? changed : item
+                        )
+                  )
+                }
               />
             }
           />
-        </Route>
+
+</Route>
       </Routes>
     </BrowserRouter>
   );
