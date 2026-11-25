@@ -39,9 +39,14 @@ function validTimezone(timezone) {
   }
 }
 
-// Temporary fallback while #104's category seeds are unmerged.
+// Temporary fallback until #104 is merged.
 const eventCategories = [
-  "Art", "Food", "Games", "Music", "Social", "Sports",
+  "Art",
+  "Food",
+  "Games",
+  "Music",
+  "Social",
+  "Sports",
 ];
 
 router.post("/events", requireMockUser, (req, res) => {
@@ -59,8 +64,13 @@ router.post("/events", requireMockUser, (req, res) => {
   } = req.body ?? {};
 
   const required = {
-    title, description, date, startTime, endTime,
-    location, category,
+    title,
+    description,
+    date,
+    startTime,
+    endTime,
+    location,
+    category,
   };
 
   for (const [field, value] of Object.entries(required)) {
@@ -88,9 +98,13 @@ router.post("/events", requireMockUser, (req, res) => {
     return sendError(res, "Invalid timezone.");
   }
 
-  const aliases = { gaming: "Games", arts: "Art" };
+  const aliases = {
+    gaming: "Games",
+    arts: "Art",
+  };
 
   const categoryInput = category.trim().toLowerCase();
+
   const categories = store.categories.length
     ? store.categories
     : eventCategories;
@@ -109,7 +123,10 @@ router.post("/events", requireMockUser, (req, res) => {
   }
 
   if (!Number.isInteger(capacity) || capacity < 1) {
-    return sendError(res, "Capacity must be a positive integer.");
+    return sendError(
+      res,
+      "Capacity must be a positive integer."
+    );
   }
 
   if (typeof imageUrl !== "string" || !imageUrl.trim()) {
@@ -118,17 +135,28 @@ router.post("/events", requireMockUser, (req, res) => {
 
   const image = imageUrl.trim();
 
+  // Accept local images under /static/images/.
+  // Reject parent-directory paths such as /static/images/..
   const validLocalImage =
-    /^\/static\/images\/[a-zA-Z0-9_.-]+$/.test(image) &&
+    /^\/static\/images\/[a-zA-Z0-9_-][a-zA-Z0-9_.-]*$/.test(image) &&
     !image.includes("..");
 
+  // Accept properly formed HTTP or HTTPS URLs.
+  // Reject malformed URLs such as https:fixture.example/photo.png.
   let validWebImage = false;
 
-  try {
-    const parsed = new URL(image);
-    validWebImage = ["http:", "https:"].includes(parsed.protocol);
-  } catch {
-    // Not an absolute URL.
+  if (/^https?:\/\//i.test(image)) {
+    try {
+      const parsed = new URL(image);
+
+      validWebImage =
+        ["http:", "https:"].includes(parsed.protocol) &&
+        Boolean(parsed.hostname) &&
+        !parsed.username &&
+        !parsed.password;
+    } catch {
+      validWebImage = false;
+    }
   }
 
   if (!validLocalImage && !validWebImage) {
@@ -158,4 +186,3 @@ router.post("/events", requireMockUser, (req, res) => {
 });
 
 export default router;
-

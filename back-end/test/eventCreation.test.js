@@ -139,4 +139,27 @@ describe("[Elize] Event Creation API #105", () => {
     expect(response.status).to.equal(201);
     expect(response.body.imageUrl).to.equal(imageUrl);
   });
-});
+
+
+
+  it("rejects malformed web image URLs", async () => {
+    const response = await createEvent({
+      ...validEvent,
+      imageUrl: "https:fixture.example/photo.png",
+    });
+
+    expect(response.status).to.equal(400);
+    expect(response.body.error.code).to.equal("VALIDATION_ERROR");
+  });
+
+  it("rejects invalid local image paths", async () => {
+    const response = await createEvent({
+      ...validEvent,
+      imageUrl: "/static/images/..",
+    });
+
+    expect(response.status).to.equal(400);
+    expect(response.body.error.code).to.equal("VALIDATION_ERROR");
+  });
+  });
+
