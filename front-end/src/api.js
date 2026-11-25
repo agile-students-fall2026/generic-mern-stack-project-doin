@@ -80,3 +80,32 @@ export function setupProfile(fields, signal) {
     signal,
   });
 }
+
+// Discover people (#99), with search and interest filtering (#100). The
+// search text and the interest go in the address as query values, and an
+// empty search or the All choice simply leaves that value out.
+export function getPeople(search, interest) {
+  const parts = [];
+  if (search.trim()) {
+    parts.push(`search=${encodeURIComponent(search.trim())}`);
+  }
+  if (interest && interest !== "All") {
+    parts.push(`interest=${encodeURIComponent(interest)}`);
+  }
+  const query = parts.length > 0 ? `?${parts.join("&")}` : "";
+  return request(`/users${query}`);
+}
+
+// One profile (#98), shared by My Profile, Edit Profile, and Person
+// Details (#99).
+export function getPerson(userId) {
+  return request(`/users/${userId}`);
+}
+
+// Profile update (#98). Only the owner can update their own profile.
+export function updateProfile(userId, fields) {
+  return request(`/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify(fields),
+  });
+}
