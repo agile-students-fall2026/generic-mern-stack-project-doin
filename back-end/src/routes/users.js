@@ -96,14 +96,52 @@ router.get("/me", requireMockUser, (req, res) => {
   res.set("Cache-Control", "no-store").json(serializePublicUser(req.currentUser));
 });
 
-// Discover people (#99). Only complete profiles can be discovered, and a
-// signed in user never sees their own profile in the list.
+// Reads the interest filter from the query string. The filter may be
+// given once, repeated, or separated by commas, and a person must have
+// every selected interest to match. The values are checked against the
+// shared interest list by normalizeInterests, which also accepts the
+// two older spellings from #91. Returns the canonical list, or null
+// when any value is not on the shared list.
+function readInterestFilter(query) {
+  if (query === undefined) return [];
+  const values = Array.isArray(query) ? query : [query];
+  const parts = [];
+  for (const value of values) {
+    if (typeof value !== "string") return null;
+    for (const part of value.split(",")) {
+      if (part.trim()) parts.push(part);
+    }
+  }
+  return normalizeInterests(parts);
+}
+
+// Discover people (#99), with search and interest filtering (#100). Only
+// complete profiles can be discovered, and a signed in user never sees
+// their own profile in the list. The search text matches part of a name
+// or username without worrying about capital letters, and no match
+// simply returns an empty list.
 router.get("/", (req, res) => {
+  const { search, interest } = req.query;
+  if (search !== undefined && typeof search !== "string") {
+    return invalidInput(res, "Search must be text.");
+  }
+  const selected = readInterestFilter(interest);
+  if (!selected) {
+    return invalidInput(res, "Please choose interests from the shared list.");
+  }
+  const text = typeof search === "string" ? search.trim().toLowerCase() : "";
   const currentUserId = req.get("Mock-User-Id");
   const people = store.users
     .filter((user) => user.profileComplete && user.id !== currentUserId)
+    .filter(
+      (user) =>
+        !text ||
+        user.name.toLowerCase().includes(text) ||
+        (user.username ?? "").toLowerCase().includes(text),
+    )
+    .filter((user) => selected.every((name) => user.interests.includes(name)))
     .map(serializePublicUser);
-  res.json(people);
+  return res.json(people);
 });
 
 // Profile retrieval (#98), shared with person details (#99).
