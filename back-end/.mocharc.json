@@ -3,5 +3,6 @@
   "extension": ["js"],
   "spec": "test/**/*.test.js",
   "timeout": 5000,
+  "fail-zero": true,
   "parallel": false
 }
