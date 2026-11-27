@@ -45,6 +45,7 @@ Name test files based on their features:
 - events.test.js
 - participation.test.js
 - connections.test.js
+- event-and-relationship-contracts.test.js
 
 ## Writing Tests
 
@@ -143,7 +144,7 @@ coverage commands use the same Mocha configuration and accept the same filters.
 
 ## Browser integration
 
-The browser harness runs a production build against an isolated Express server on
+The account and cross-feature harness runs a production build against an isolated Express server on
 an ephemeral loopback port. It exercises independent sessions, cross-user
 relationships and events, profile uploads, catalog recovery, guarded routes,
 and long content at mobile and desktop widths.
@@ -152,7 +153,7 @@ Build the frontend and run the harness from the repository root:
 
 ```bash
 npm --prefix front-end run build
-node front-end/test/browser.cjs
+node front-end/test/account-and-cross-feature-workflows.cjs
 ```
 
 The harness requires an existing Playwright installation with Chromium. Playwright
@@ -163,13 +164,27 @@ setting `PLAYWRIGHT_MODULE` to its absolute package path, and set
 ```bash
 PLAYWRIGHT_MODULE=/path/to/node_modules/playwright \
 PLAYWRIGHT_BROWSERS_PATH=/path/to/playwright-browsers \
-node front-end/test/browser.cjs
+node front-end/test/account-and-cross-feature-workflows.cjs
 ```
 
 If you need to acquire Playwright or Chromium, get approval through the team’s
 normal dependency process first. Set `DOIN_CLIENT_DIR` to test a build stored
 outside `front-end/dist`. The harness prints scenario outcomes and measured upload
 sizes and exits nonzero on a failed assertion or unexpected local HTTP failure.
+
+Other browser harnesses under `front-end/test/` use the same isolated server and Playwright environment.
+
+| Harness | Coverage |
+|---|---|
+| `shared-ui.cjs` | Shared controls, dialogs, notifications, and focus |
+| `event-discovery.cjs` | Event search, filters, artwork, and refresh |
+| `event-details.cjs` | Event details, attendance, and organizer actions |
+| `event-forms-connections.cjs` | Event forms, connection cards, and responsive layout |
+| `event-and-connection-workflows.cjs` | Event scheduling, images, guest capacity, and connection changes across sessions |
+| `responsive-navigation-and-workflows.cjs` | Navigation context, filter restoration, and event, people, and profile flows across widths |
+| `timezones-organizers-and-people-discovery.cjs` | Geographic and legacy timezones, organizer profiles, and Discover People eligibility |
+
+Run the standalone event formatter checks with `node front-end/test/event-format.test.js` from the repository root.
 
 ## Team Conventions
 

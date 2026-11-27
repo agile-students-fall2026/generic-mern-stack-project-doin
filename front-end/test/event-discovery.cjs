@@ -309,8 +309,8 @@ async function main() {
       await filterResponse(guest, {}, () => guest.getByRole("button", { name: "Retry events", exact: true }).click());
       assert.equal(await guest.locator("#event-search").evaluate((node) => document.activeElement === node), true);
       await heading(guest, "Tennis Meetup").waitFor();
-      await filterResponse(guest, { search: "nothing-doin-d2" }, () =>
-        guest.locator("#event-search").fill("nothing-doin-d2"));
+      await filterResponse(guest, { search: "no-matching-discovery-event" }, () =>
+        guest.locator("#event-search").fill("no-matching-discovery-event"));
       await results(guest).getByRole("status").filter({ hasText: "No events match your search." }).waitFor();
       await capture(guest, "discover-empty");
     });
@@ -329,8 +329,8 @@ async function main() {
     });
 
     await check("valid event artwork is preserved and a broken source uses the local fallback", async () => {
-      const validImage = "/static/images/d2-existing.svg";
-      const missingImage = "/static/images/d2-missing.svg";
+      const validImage = "/static/images/discovery-existing-artwork.svg";
+      const missingImage = "/static/images/discovery-missing-artwork.svg";
       await guest.route("**" + validImage, (route) => route.fulfill({
         path: path.join(root, "front-end/public/doin-illustration.svg"),
         contentType: "image/svg+xml",
@@ -415,10 +415,10 @@ async function main() {
     assert.deepEqual(errors, []);
     assert.deepEqual(httpFailures.filter(([status]) => status === 503),
       [[503, "/api/events/categories"], [503, "/api/events"]]);
-    assert(httpFailures.some(([status, route]) => status === 404 && route === "/static/images/d2-missing.svg"));
-    assert(httpFailures.every(([status, route]) => status === 503 || (status === 404 && route === "/static/images/d2-missing.svg")));
+    assert(httpFailures.some(([status, route]) => status === 404 && route === "/static/images/discovery-missing-artwork.svg"));
+    assert(httpFailures.every(([status, route]) => status === 503 || (status === 404 && route === "/static/images/discovery-missing-artwork.svg")));
     await writeFile(path.join(output, "results.json"), JSON.stringify({ cases, measurements, errors, httpFailures }, null, 2));
-    console.log(cases.length + " D2 browser scenarios passed. Evidence in " + output);
+    console.log(cases.length + " event discovery browser scenarios passed. Evidence in " + output);
   } finally {
     if (browser) await browser.close();
     if (server.listening) await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));

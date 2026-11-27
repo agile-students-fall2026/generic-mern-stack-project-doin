@@ -252,7 +252,7 @@ async function main() {
       await capture(attendee, "details-one-attendee");
       const failurePath = "**/api/users/user-alex";
       const rejectProfile = (request) => request.fulfill({
-        status: 503, json: { error: { code: "D3_TEST", message: "Attendee unavailable." } },
+        status: 503, json: { error: { code: "ATTENDEE_TEMPORARILY_UNAVAILABLE", message: "Attendee unavailable." } },
       });
       await attendee.route(failurePath, rejectProfile);
       await button(attendee, "Show Attendees").click();
@@ -469,7 +469,7 @@ async function main() {
     assert.deepEqual(pageErrors, []);
     assert.deepEqual(failures, [[503, "/api/users/user-alex"], [409, "/api" + rsvp]]);
     await writeFile(path.join(output, "results.json"), JSON.stringify({ scenarios, measurements, pageErrors, failures }, null, 2));
-    console.log(scenarios.length + " D3 browser scenarios passed. Evidence in " + output);
+    console.log(scenarios.length + " event detail browser scenarios passed. Evidence in " + output);
   } finally {
     if (browser) await browser.close();
     if (server.listening) await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));

@@ -264,7 +264,7 @@ async function main() {
         observe();
         await held;
         await route.fulfill({
-          status: 503, json: { error: { code: "D4_TEST", message: "Create service unavailable. Please try again." } },
+          status: 503, json: { error: { code: "SERVICE_TEMPORARILY_UNAVAILABLE", message: "Create service unavailable. Please try again." } },
         });
       };
       await host.route("**/api/events", inject);
@@ -389,7 +389,7 @@ async function main() {
         observe();
         await held;
         await intercepted.fulfill({
-          status: 503, json: { error: { code: "D4_TEST", message: "Could not accept this request. Try again." } },
+          status: 503, json: { error: { code: "SERVICE_TEMPORARILY_UNAVAILABLE", message: "Could not accept this request. Try again." } },
         });
       };
       await host.route("**/api" + route, failure);
@@ -570,10 +570,10 @@ async function main() {
       await eventForm(host, fixtureRoute + "/edit", true);
       review.push({ name: "edit-event", path: fixtureRoute + "/edit", documentHeight: (await measure(host)).documentHeight });
       await snapshot(host, "review-edit-event");
-      await visit(page, "/missing-d4-review", "Page not found");
+      await visit(page, "/missing-review-route", "Page not found");
       await record("page-not-found");
       await visit(page, "/events", "Discover Events");
-      await page.locator("#event-search").fill("unmatched-D4-fixture");
+      await page.locator("#event-search").fill("unmatched-review-fixture");
       await words(page, "No events match your search.").waitFor();
       await record("empty-events");
     });
@@ -581,7 +581,7 @@ async function main() {
     assert.deepEqual(errors, []);
     assert.deepEqual(httpFailures, [[503, "/api/events"], [503, "/api/connections/requests/" + incoming.id]]);
     await writeFile(path.join(output, "results.json"), JSON.stringify({ scenarios, measurements, review, errors, httpFailures }, null, 2));
-    console.log(scenarios.length + " D4 browser scenarios passed. Evidence in " + output);
+    console.log(scenarios.length + " event form and connection browser scenarios passed. Evidence in " + output);
   } finally {
     if (browser) await browser.close();
     if (server.listening) await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));

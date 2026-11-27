@@ -122,7 +122,7 @@ async function withResponse(page, method, endpoint, status, action) {
 
 async function fillEvent(page) {
   for (const [name, value] of Object.entries({
-    title: "D1 Event Form Check",
+    title: "Shared UI Event Form Check",
     description: draft.description,
     date: draft.date,
     start: draft.startTime,
@@ -228,7 +228,7 @@ async function main() {
         observed();
         await hold;
         await route.fulfill({
-          status: 503, json: { error: { code: "D1_RETRY", message: "RSVP temporarily unavailable." } },
+          status: 503, json: { error: { code: "RSVP_TEMPORARILY_UNAVAILABLE", message: "RSVP temporarily unavailable." } },
         });
       };
       await guest.route(pattern, fault);
@@ -353,7 +353,7 @@ async function main() {
 
     await test("profile save stays visible after the route transition", async () => {
       await visit(host, "/edit-profile", "Edit Profile");
-      await host.locator("#bio_field").fill("D1 test profile");
+      await host.locator("#bio_field").fill("Shared UI test profile");
       await withResponse(host, "PATCH", "/users/" + organizer.id, 200, () => button(host, "Save changes").click());
       await heading(host, "My Profile").waitFor();
       await expectToast(host, "Profile saved.");
@@ -361,7 +361,7 @@ async function main() {
     });
 
     await test("organizer cancellation favors Keep event and uses the existing DELETE API", async () => {
-      await visit(host, createdPath, "D1 Event Form Check");
+      await visit(host, createdPath, "Shared UI Event Form Check");
       const cancel = button(host, "Cancel Event");
       await cancel.click();
       const prompt = dialog(host, "Cancel this event?");
@@ -433,7 +433,7 @@ async function main() {
     assert.deepEqual(errors, []);
     assert.deepEqual(failures, [[503, "/api" + rsvpPath]]);
     await writeFile(path.join(output, "results.json"), JSON.stringify({ cases, errors, failures }, null, 2));
-    console.log(cases.length + " D1 scenarios passed. Screenshots and evidence in " + output);
+    console.log(cases.length + " shared UI browser scenarios passed. Screenshots and evidence in " + output);
   } finally {
     if (browser) await browser.close();
     if (server.listening) await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));

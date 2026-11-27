@@ -461,7 +461,7 @@ async function main() {
 
     assert.deepEqual(pageErrors, [], "uncaught browser errors");
     assert.deepEqual(unexpectedFailures, [], "unexpected local network failures");
-    console.log(`${passed} browser scenarios passed with zero uncaught errors or unexpected HTTP failures.`);
+    console.log(`${passed} account and cross-feature browser scenarios passed with zero uncaught errors or unexpected HTTP failures.`);
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));

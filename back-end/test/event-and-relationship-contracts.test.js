@@ -10,11 +10,11 @@ const existingEvent = "/api/events/event-1";
 const photo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf7sAAAAASUVORK5CYII=";
 const api = (method, path, user = host) => request(app)[method](path).set("Mock-User-Id", user);
 const fixture = {
-  title: "D5 event", description: "Learn printmaking.", date: "2030-06-10",
+  title: "Printmaking workshop", description: "Learn printmaking.", date: "2030-06-10",
   startTime: "13:00", endTime: "14:00", category: "Art", location: "Queens",
 };
 
-describe("[Alpartun] Post-D4 functional completion", () => {
+describe("[Alpartun] Event scheduling, guest capacity, images, and relationship contracts", () => {
   beforeEach(() => resetStore());
 
   it("publishes versioned worldwide timezone options and country and alias mappings", async () => {

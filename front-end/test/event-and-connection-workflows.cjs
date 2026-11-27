@@ -6,7 +6,7 @@ const { pathToFileURL } = require("node:url");
 
 const repo = path.resolve(process.env.DOIN_REPO_DIR ?? path.join(__dirname, "../.."));
 const clientDirectory = path.resolve(process.env.DOIN_CLIENT_DIR ?? path.join(repo, "front-end/dist"));
-const output = path.resolve(process.env.DOIN_BROWSER_OUTPUT_DIR ?? "/tmp/doin-d5-browser");
+const output = path.resolve(process.env.DOIN_BROWSER_OUTPUT_DIR ?? "/tmp/doin-event-and-connection-workflows-browser");
 const viewport = { width: 393, height: 852 };
 const photo = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf7sAAAAASUVORK5CYII=", "base64");
 const title = "Queens Printmaking Workshop";
@@ -89,8 +89,8 @@ async function main() {
         ? route.continue() : route.abort("blockedbyclient"));
       context.on("page", (page) => page.on("pageerror", (error) => errors.push(error.message)));
     }
-    const host = await signup(hostContext, "Maya Rivera", "d5maya");
-    const guest = await signup(guestContext, "Robin Patel", "d5robin");
+    const host = await signup(hostContext, "Maya Rivera", "workflowmaya");
+    const guest = await signup(guestContext, "Robin Patel", "workflowrobin");
     const check = async (name, run) => { await run(); scenarios.push(name); console.log("PASS " + name); };
     let created;
     let eventRoute;
@@ -262,7 +262,7 @@ async function main() {
 
     assert.deepEqual(errors, []);
     await writeFile(path.join(output, "results.json"), JSON.stringify({ scenarios, errors, layouts }, null, 2));
-    console.log(scenarios.length + " D5 browser scenarios passed.");
+    console.log(scenarios.length + " event and connection workflow browser scenarios passed.");
   } finally {
     if (browser) await browser.close();
     await new Promise((resolve) => server.close(resolve));
