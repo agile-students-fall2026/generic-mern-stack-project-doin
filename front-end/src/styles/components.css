@@ -1,61 +1,127 @@
-/* ========================================
-   DOIN SHARED COMPONENT STYLES
-   ======================================== */
+/* Page and component styles can override these defaults without extra specificity. */
+@layer doin-shared {
+  .doin-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--doin-space-sm);
+    min-inline-size: var(--doin-control-size);
+    min-block-size: var(--doin-control-size);
+    padding: var(--doin-space-sm) var(--doin-space-lg);
+    border: 1px solid var(--doin-control-border);
+    border-radius: var(--doin-radius);
+    background: var(--doin-surface);
+    color: var(--doin-text);
+    font-size: var(--doin-text-size);
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+  }
 
-/* Buttons */
-.doin-button {
-  padding: 12px 20px;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-  font-size: 16px;
-  text-decoration: none;
-  cursor: pointer;
-}
+  .doin-button--primary {
+    border-color: var(--doin-brand);
+    background: var(--doin-brand);
+    color: var(--doin-surface);
+  }
 
-/* Primary Button */
-.doin-button--primary {
-  background-color: #635bff;
-  color: white;
-}
+  .doin-button--danger {
+    border-color: var(--doin-danger);
+    background: var(--doin-danger);
+    color: var(--doin-surface);
+  }
 
-/* Secondary Button */
-.doin-button--secondary {
-  background-color: white;
-  color: #202638;
-}
+  .doin-button--danger-outline {
+    border-color: var(--doin-danger);
+    color: var(--doin-danger);
+  }
 
-/* Cards */
-.doin-card {
-  background-color: white;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-  padding: 15px;
-}
+  @media (hover: hover) {
+    .doin-button:where(:not(:disabled)):hover { background: var(--doin-canvas); }
+    .doin-button--primary:where(:not(:disabled)):hover { background: var(--doin-brand-hover); }
+    .doin-button--danger:where(:not(:disabled)):hover { background: var(--doin-danger-hover); }
+    .doin-button--danger-outline:where(:not(:disabled)):hover { background: var(--doin-danger-surface); }
+  }
 
-/* Input Fields */
-.doin-input {
-  padding: 10px;
-  border: 1px solid lightgray;
-  border-radius: 5px;
-  font-size: 16px;
-}
+  .doin-button:where(:not(:disabled)):active { background: var(--doin-lavender); }
+  .doin-button--primary:where(:not(:disabled)):active { background: var(--doin-brand-ink); }
+  .doin-button--danger:where(:not(:disabled)):active { background: var(--doin-danger-hover); }
+  .doin-button--danger-outline:where(:not(:disabled)):active { background: var(--doin-danger-surface); }
 
-/* Shared page layout */
+  .doin-button:disabled,
+  .doin-input:disabled {
+    background: var(--doin-canvas);
+    color: var(--doin-muted);
+    border-color: var(--doin-border);
+    cursor: not-allowed;
+  }
 
-.doin-page {
-  width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
-  padding: 20px 16px 32px;
-  box-sizing: border-box;
-  background-color: white;
-}
+  .doin-button[aria-busy="true"] {
+    background: var(--doin-lavender);
+    color: var(--doin-brand-ink);
+    cursor: progress;
+  }
 
-/* Shared page heading */
+  .doin-card {
+    background: var(--doin-surface);
+    border: 1px solid var(--doin-border);
+    border-radius: var(--doin-radius);
+    padding: 15px;
+  }
 
-.doin-page-title {
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.2;
-  margin: 0 0 20px;
+  .doin-input {
+    box-sizing: border-box;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    min-block-size: var(--doin-control-size);
+    padding: var(--doin-space-sm) var(--doin-space-md);
+    border: 1px solid var(--doin-control-border);
+    border-radius: var(--doin-radius-field);
+    background: var(--doin-surface);
+    color: var(--doin-text);
+    font: inherit;
+    font-size: var(--doin-text-size);
+  }
+
+  .doin-input::placeholder { color: var(--doin-muted); }
+  textarea.doin-input { resize: vertical; }
+  .doin-input[readonly] { background: var(--doin-canvas); }
+
+  .doin-label {
+    font-size: var(--doin-small-text);
+    font-weight: 600;
+  }
+
+  .doin-label:has(+ :is(input, select, textarea)[required])::after {
+    content: " *" / "";
+    color: var(--doin-danger);
+  }
+
+  .doin-input:is([aria-invalid="true"], :user-invalid) { border-color: var(--doin-danger); }
+
+  .doin-field-error {
+    color: var(--doin-danger);
+    font-size: var(--doin-small-text);
+    overflow-wrap: anywhere;
+  }
+
+  :is(.doin-button, .doin-input, .doin-back-button):focus-visible {
+    outline: var(--doin-focus-width) solid var(--doin-focus-color);
+    outline-offset: var(--doin-focus-width);
+  }
+
+  .doin-page {
+    width: 100%;
+    max-width: var(--doin-page-width);
+    margin: 0 auto;
+    padding: var(--doin-space-lg) var(--doin-gutter) 32px;
+    box-sizing: border-box;
+    background: var(--doin-surface);
+  }
+
+  .doin-page-title {
+    font-size: var(--doin-title-size);
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 var(--doin-space-lg);
+  }
 }

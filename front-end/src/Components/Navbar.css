@@ -1,11 +1,13 @@
 .app-layout {
   width: 100%;
-  max-width: 440px;
+  max-width: var(--doin-page-width);
   min-height: 100vh;
+  min-height: 100dvh;
+  padding-block-start: env(safe-area-inset-top);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  background-color: white;
+  background-color: var(--doin-surface);
 }
 
 .page-content {
@@ -18,19 +20,30 @@
   justify-content: space-around;
   align-items: center;
   width: 100%;
-  padding: 15px 10px;
+  padding: var(--doin-space-sm) 10px calc(var(--doin-space-sm) + env(safe-area-inset-bottom));
   box-sizing: border-box;
-  border-top: 1px solid lightgray;
-  background-color: white;
+  border-top: 1px solid var(--doin-border);
+  background-color: var(--doin-surface);
   position: sticky;
   bottom: 0;
-  z-index: 10;
+  z-index: var(--doin-nav-layer);
 }
 
 .navbar a {
-  color: #687386;
+  display: inline-flex;
+  min-inline-size: var(--doin-control-size);
+  min-block-size: var(--doin-control-size);
+  align-items: center;
+  justify-content: center;
+  color: var(--doin-muted);
   text-decoration: none;
   font-size: 13px;
   text-align: center;
   padding: 5px;
+}
+
+.navbar a:focus-visible {
+  outline: var(--doin-focus-width) solid var(--doin-focus-color);
+  outline-offset: var(--doin-focus-width);
+  border-radius: var(--doin-radius-field);
 }

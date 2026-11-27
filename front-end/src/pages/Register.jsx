@@ -101,7 +101,7 @@ export default function Register({ onUserChange }) {
           noValidate
         >
           <div className="auth-field">
-            <label htmlFor="fullName">Full name</label>
+            <label className="doin-label" htmlFor="fullName">Full name</label>
             <input
               className="doin-input"
               id="fullName"
@@ -115,14 +115,14 @@ export default function Register({ onUserChange }) {
               aria-describedby={errors.fullName ? "register-name-error" : undefined}
             />
             {errors.fullName && (
-              <p id="register-name-error" className="auth-error" role="alert">
+              <p id="register-name-error" className="doin-field-error" role="alert">
                 {errors.fullName}
               </p>
             )}
           </div>
 
           <div className="auth-field">
-            <label htmlFor="email">Email</label>
+            <label className="doin-label" htmlFor="email">Email</label>
             <input
               className="doin-input"
               id="email"
@@ -136,14 +136,14 @@ export default function Register({ onUserChange }) {
               aria-describedby={errors.email ? "register-email-error" : undefined}
             />
             {errors.email && (
-              <p id="register-email-error" className="auth-error" role="alert">
+              <p id="register-email-error" className="doin-field-error" role="alert">
                 {errors.email}
               </p>
             )}
           </div>
 
           <div className="auth-field">
-            <label htmlFor="password">Password</label>
+            <label className="doin-label" htmlFor="password">Password</label>
             <input
               className="doin-input"
               id="password"
@@ -157,14 +157,14 @@ export default function Register({ onUserChange }) {
               aria-describedby={errors.password ? "register-password-error" : undefined}
             />
             {errors.password && (
-              <p id="register-password-error" className="auth-error" role="alert">
+              <p id="register-password-error" className="doin-field-error" role="alert">
                 {errors.password}
               </p>
             )}
           </div>
 
           <div className="auth-field">
-            <label htmlFor="confirmPassword">Confirm password</label>
+            <label className="doin-label" htmlFor="confirmPassword">Confirm password</label>
             <input
               className="doin-input"
               id="confirmPassword"
@@ -178,18 +178,19 @@ export default function Register({ onUserChange }) {
               aria-describedby={errors.confirmPassword ? "register-confirm-error" : undefined}
             />
             {errors.confirmPassword && (
-              <p id="register-confirm-error" className="auth-error" role="alert">
+              <p id="register-confirm-error" className="doin-field-error" role="alert">
                 {errors.confirmPassword}
               </p>
             )}
           </div>
 
-          {error && <p className="auth-error" role="alert">{error}</p>}
+          {error && <p className="doin-field-error" role="alert">{error}</p>}
 
           <div className="auth-actions">
             <button
               type="submit"
               className="doin-button doin-button--primary auth-primary-button"
+              aria-busy={pending}
               disabled={pending}
             >
               {pending ? "Creating account…" : "Continue"}
