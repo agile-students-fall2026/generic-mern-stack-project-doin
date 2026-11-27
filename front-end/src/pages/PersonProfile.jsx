@@ -1,29 +1,33 @@
 import { useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router";
+import { Navigate, useLocation, useParams } from "react-router";
 import { getUserById } from "../api";
 import ConfirmationDialog from "../Components/ConfirmationDialog";
 import useToast from "../useToast";
+import Icon from "../Components/Icon";
 import BackButton from "../Components/BackButton";
 import normalizePerson from "../normalizePerson";
 import PersonDetails from "../PersonDetails";
 import useApiData from "../useApiData";
+import { eventProfileOrigin, useReturnTo } from "../viewHistory";
 
 export default function PersonProfile({ currentUser, relationships, refreshKey, fromConnections }) {
   const { personId } = useParams();
-  const navigate = useNavigate();
-  const personData = useApiData(personId, getUserById, refreshKey);
-  const { state } = useLocation();
-  const fromEvent = typeof state?.eventFrom === "string" && /^\/events\/[^/?#]+(?:\?.*)?$/.test(state.eventFrom);
-  const onBack = () => navigate(fromEvent ? state.eventFrom : fromConnections ? "/connections" : "/discover");
-  const backLabel = fromEvent ? "Back to event" : fromConnections ? "Back to connections" : "Back to discovery";
+  const isOwnProfile = personId === currentUser.id;
+  const personData = useApiData(isOwnProfile ? null : personId, getUserById, refreshKey);
+  const { search } = useLocation();
+  const eventOrigin = fromConnections ? "" : eventProfileOrigin(search);
+  const onBack = useReturnTo(eventOrigin || (fromConnections ? "/connections" : "/discover"));
+  const backLabel = eventOrigin ? "Event Details" : fromConnections ? "Connections" : "People";
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
   const fallbackFocus = useRef(null);
   const showSuccess = useToast();
 
+  if (isOwnProfile) return <Navigate to="/profile" replace />;
+
   if (personData.loading || personData.error) {
     return (
-      <main className="doin-page">
-        <BackButton onClick={onBack} ariaLabel={backLabel} />
+      <main className="doin-page doin-page--app">
+        <BackButton onClick={onBack} ariaLabel={`Back to ${backLabel}`} label={backLabel} />
         {personData.loading
           ? <p role="status">Loading profile...</p>
           : <p role="alert">{personData.error}</p>}
@@ -38,13 +42,13 @@ export default function PersonProfile({ currentUser, relationships, refreshKey, 
   const outgoing = data?.outgoingRequests.find((request) => request.recipientId === personId);
 
   return (
-    <PersonDetails person={person} onBack={onBack} backAriaLabel={backLabel} headingRef={fallbackFocus}>
+    <PersonDetails person={person} onBack={onBack} backLabel={backLabel} backAriaLabel={`Back to ${backLabel}`} headingRef={fallbackFocus}>
       {!confirmDisconnect && actionError && <p role="alert">{actionError}</p>}
       {loading && <p role="status">Loading connection status...</p>}
       {error && <p role="alert">{error}</p>}
       {connected && (
-        <>
-          <p className="profile-connection-status">Connected</p>
+        <div className="user-profile-secondary-actions">
+          <p className="profile-connection-status"><Icon name="check" /> Connected</p>
           <button type="button" className="doin-button doin-button--danger-outline" disabled={busy}
             onClick={(event) => {
               event.currentTarget.focus({ preventScroll: true });
@@ -52,7 +56,7 @@ export default function PersonProfile({ currentUser, relationships, refreshKey, 
             }}>
             Disconnect
           </button>
-        </>
+        </div>
       )}
       <ConfirmationDialog
         action={confirmDisconnect ? {
@@ -77,7 +81,7 @@ export default function PersonProfile({ currentUser, relationships, refreshKey, 
         fallbackFocusRef={fallbackFocus}
       />
       {incoming && !connected && (
-        <>
+        <div className="user-profile-secondary-actions">
           <button
             type="button"
             className="doin-button doin-button--primary"
@@ -94,9 +98,9 @@ export default function PersonProfile({ currentUser, relationships, refreshKey, 
           >
             Decline
           </button>
-        </>
+        </div>
       )}
-      {data && !connected && !incoming && personId !== currentUser.id && (
+      {data && !connected && !incoming && (
         <button
           type="button"
           className={`doin-button doin-button--${outgoing ? "secondary" : "primary"}`}

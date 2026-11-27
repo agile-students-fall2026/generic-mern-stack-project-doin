@@ -26,3 +26,12 @@
 .doin-back-button:focus-visible {
   border-radius: var(--doin-radius-field);
 }
+
+.doin-page--app .doin-back-button {
+  justify-self: start;
+  margin: -7px 0 -7px -6px;
+  padding-inline: 6px;
+  color: var(--doin-brand-ink);
+  font-size: .875rem;
+  font-weight: 700;
+}

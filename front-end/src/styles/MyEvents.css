@@ -1,38 +1,15 @@
-.my-events-page .events-tabs,
-.my-events-page .doin-page-title {
-  margin-bottom: var(--doin-space-md);
-}
-
-.my-events-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--doin-space-sm);
-  margin-bottom: var(--doin-gutter);
-}
-
 .my-events-list {
   display: grid;
   gap: var(--doin-space-sm);
   min-width: 0;
 }
 
-.my-event-edit-link {
-  font-size: var(--doin-small-text);
-}
-
 .my-events-message {
-  padding: var(--doin-space-md);
-  border-radius: var(--doin-radius);
-  background: var(--doin-canvas);
+  padding: 15px;
+  border: 1px solid var(--doin-line);
+  border-radius: 12px;
+  background: var(--doin-surface);
   overflow-wrap: anywhere;
 }
 
-.my-events-message[role="status"] {
-  color: var(--doin-muted);
-}
-
-.my-events-list .event-card-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--doin-space-sm);
-}
+.my-events-message[role="status"] { color: var(--doin-muted); }

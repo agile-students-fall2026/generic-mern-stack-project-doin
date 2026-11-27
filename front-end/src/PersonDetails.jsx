@@ -4,12 +4,12 @@ export default function PersonDetails({
   person,
   onBack,
   backAriaLabel = "Back to discovery",
+  backLabel,
   children,
   headingRef,
 }) {
   return (
     <UserProfile
-      title="Profile"
       headingRef={headingRef}
       name={person.name}
       username={person.username}
@@ -21,6 +21,7 @@ export default function PersonDetails({
       sharedInterests={person.sharedInterests ?? []}
       onBack={onBack}
       backAriaLabel={backAriaLabel}
+      backLabel={backLabel}
     >
       {children}
     </UserProfile>

@@ -46,6 +46,9 @@ test("midnight, noon, and other wall-clock times format without zone conversion"
   }
   assert.equal(formatEventTimeRange("15:00", "17:00"), "3:00 PM – 5:00 PM");
   assert.equal(formatEventTimeRange("00:00", "12:00"), "12:00 AM – 12:00 PM");
+  assert.equal(formatEventTimeRange("15:00", "17:00", { compact: true }), "3–5 PM");
+  assert.equal(formatEventTimeRange("10:30", "12:00", { compact: true }), "10:30 AM–12 PM");
+  assert.equal(formatEventTimeRange("09:00", undefined, { compact: true }), "9 AM");
 });
 
 test("invalid or incomplete time and zone values degrade safely", () => {

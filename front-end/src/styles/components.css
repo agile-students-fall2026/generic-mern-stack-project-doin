@@ -125,3 +125,96 @@
     margin: 0 0 var(--doin-space-lg);
   }
 }
+
+.doin-icon {
+  display: inline-block;
+  width: 19px;
+  height: 19px;
+  flex: none;
+  vertical-align: middle;
+}
+
+.doin-page.doin-page--app {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  padding-block-end: 16px;
+  background: var(--doin-canvas);
+  overflow-wrap: anywhere;
+}
+
+.doin-page--app :where(h1, h2, h3, p, dl, dd, ul) { margin: 0; }
+
+.doin-page--app .doin-page-title {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -.035em;
+}
+
+.doin-page--app :where(h2) {
+  font-size: 1.125rem;
+  line-height: 1.26;
+  letter-spacing: -.015em;
+}
+
+.doin-page--app .doin-button {
+  font-size: .875rem;
+  font-weight: 700;
+  line-height: 1.22;
+  padding-inline: 13px;
+  border-radius: 9px;
+}
+
+.doin-page--app .doin-button--danger-outline { border-color: #cc8790; }
+
+.doin-page--app .doin-button--secondary { color: var(--doin-brand-ink); }
+
+.doin-page--app .doin-button--primary:where(:not(:disabled, [aria-busy="true"])) {
+  background-color: var(--doin-action);
+  border-color: var(--doin-action);
+}
+
+@media (hover: hover) {
+  .doin-page--app .doin-button--primary:where(:not(:disabled, [aria-busy="true"])):hover {
+    background-color: var(--doin-brand-hover);
+  }
+}
+
+.doin-page--app .doin-button .doin-icon { width: 17px; height: 17px; }
+
+.doin-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--doin-space-md);
+}
+
+@media (max-width: 350px) {
+  .doin-title-row .doin-page-title { font-size: 1.55rem; }
+}
+
+.doin-form-card {
+  padding: 13px 12px 12px;
+  border: 1px solid var(--doin-line);
+  border-radius: 12px;
+  background: var(--doin-surface);
+}
+
+.doin-form-group {
+  display: grid;
+  min-width: 0;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.doin-form-group legend {
+  padding: 0;
+  margin-bottom: 10px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.2;
+}

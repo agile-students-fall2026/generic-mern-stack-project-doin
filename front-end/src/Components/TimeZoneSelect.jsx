@@ -10,7 +10,7 @@ function describeZones(catalog) {
   for (const [alias, id] of Object.entries(catalog?.aliases ?? {})) {
     (alternate[id] ??= []).push(alias);
   }
-  return Object.entries(catalog?.zones ?? {}).map(([id, codes]) => {
+  return Object.entries(catalog?.zones ?? {}).filter(([, codes]) => codes.length > 0).map(([id, codes]) => {
     const city = id.split("/").at(-1).replaceAll("_", " ");
     const names = codes.map(country);
     const zone = formatEventTimeZone(id, { long: true });
@@ -21,12 +21,16 @@ function describeZones(catalog) {
   }).sort((a, b) => a.label.localeCompare(b.label, "en"));
 }
 
-export default function TimeZoneSelect({ id, catalog, value, onChange, ...attributes }) {
+export default function TimeZoneSelect({ id, catalog, value, onChange, editing, ...attributes }) {
   const listId = useId();
   const list = useRef(null);
   const options = useMemo(() => describeZones(catalog), [catalog]);
   const selected = options.find((option) => option.id === value);
-  const label = selected?.label ?? value;
+  // Saved and detected legacy zones can remain selected outside the geographic list.
+  const retainedZone = catalog && value && !selected ? catalog.aliases[value] ?? value : "";
+  const retainedLabel = retainedZone === "UTC" ? "UTC"
+    : formatEventTimeZone(retainedZone, { long: true }) || retainedZone;
+  const label = selected?.label ?? (retainedLabel ? `${editing ? "Saved" : "Device"}: ${retainedLabel}` : "");
   const [query, setQuery] = useState(null);
   const [active, setActive] = useState(-1);
   const open = query !== null && Boolean(catalog);
@@ -78,8 +82,8 @@ export default function TimeZoneSelect({ id, catalog, value, onChange, ...attrib
         aria-activedescendant={open && activeOption ? `${listId}-${active}` : undefined}
         autoComplete="off"
         spellCheck={false}
-        placeholder={label || "Search city, country, or time zone"}
-        value={open ? query : label ?? ""}
+        placeholder={label || "Choose a time zone"}
+        value={open ? query : label}
         disabled={!catalog}
         onFocus={(event) => event.currentTarget.select()}
         onClick={() => { if (!open) setQuery(""); }}

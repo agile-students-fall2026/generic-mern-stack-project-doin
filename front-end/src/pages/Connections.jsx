@@ -1,13 +1,17 @@
 import { Link } from "react-router";
 import Avatar from "../Components/Avatar";
+import Icon from "../Components/Icon";
+import { useOrigin } from "../viewHistory";
 import { getUserById, getUsers } from "../api";
 import useApiData from "../useApiData";
 import "./Connections.css";
 
 function PersonLink({ person }) {
+  const origin = useOrigin();
   return (
     <Link
       className="connection-profile-link"
+      state={origin}
       to={`/connections/${encodeURIComponent(person.id)}`}
       aria-label={`View ${person.name}'s profile`}
     >
@@ -16,6 +20,7 @@ function PersonLink({ person }) {
         <span className="connection-name">{person.name}</span>
         {person.username && <span className="connection-username">@{person.username.replace(/^@/, "")}</span>}
       </div>
+      <Icon name="next" />
     </Link>
   );
 }
@@ -65,7 +70,7 @@ export default function Connections({ userId, relationships, refreshKey }) {
   const incomingIds = new Set(incomingPeople.map((person) => person.id));
   const outgoingIds = new Set(sentPeople.map((person) => person.id));
   const suggestedUsers = availableUsers.filter((person) =>
-    !connectedIds.has(person.id) && !incomingIds.has(person.id) && !outgoingIds.has(person.id)
+    person.id !== userId && !connectedIds.has(person.id) && !incomingIds.has(person.id) && !outgoingIds.has(person.id)
   ).slice(0, 3);
   const loading = relationships.loading || directory.loading || requestProfiles.loading;
 
@@ -74,7 +79,7 @@ export default function Connections({ userId, relationships, refreshKey }) {
   }
 
   return (
-    <main className="connections-page doin-page">
+    <main className="connections-page doin-page doin-page--app">
       <h1 className="doin-page-title">Connections</h1>
       {actionError && <p className="doin-field-error connection-message" role="alert">{actionError}</p>}
       {error && <p className="doin-field-error connection-message" role="alert">{error}</p>}
@@ -94,8 +99,8 @@ export default function Connections({ userId, relationships, refreshKey }) {
           )}
 
           <section className="connections-section">
-            <h2>Pending requests</h2>
-            {incomingPeople.length === 0 && !refreshing && <p className="connection-empty">No pending requests.</p>}
+            <h2>Incoming requests</h2>
+            {incomingPeople.length === 0 && !refreshing && <p className="connection-empty">No incoming requests.</p>}
             {incomingPeople.map((user) => (
               <ConnectionCard person={user} kind="request" key={user.requestId}>
                 <button
@@ -119,17 +124,7 @@ export default function Connections({ userId, relationships, refreshKey }) {
           </section>
 
           <section className="connections-section">
-            <h2>Your connections</h2>
-            {connectedUsers.length === 0 && (refreshing
-              ? <p role="status">Checking for connections...</p>
-              : <p className="connection-empty">You have no connections yet.</p>)}
-            {connectedUsers.map((user) => (
-              <ConnectionCard person={user} kind="accepted" key={user.id} />
-            ))}
-          </section>
-
-          <section className="connections-section">
-            <h2>Sent requests ({sentPeople.length})</h2>
+            <h2>Outgoing requests</h2>
             {sentPeople.length === 0 && <p className="connection-empty">No sent requests yet.</p>}
             {sentPeople.map((person) => (
               <ConnectionCard person={person} kind="outgoing" key={person.id}>
@@ -146,7 +141,18 @@ export default function Connections({ userId, relationships, refreshKey }) {
           </section>
 
           <section className="connections-section">
-            <h2>Suggested people</h2>
+            <h2>Accepted connections</h2>
+            {connectedUsers.length === 0 && (refreshing
+              ? <p role="status">Checking for connections...</p>
+              : <p className="connection-empty">No accepted connections yet.</p>)}
+            {connectedUsers.map((user) => (
+              <ConnectionCard person={user} kind="accepted" key={user.id} />
+            ))}
+          </section>
+
+          <section className="connections-section">
+            <h2>Suggested People</h2>
+            {!directory.error && !suggestedUsers.length && <p className="connection-empty">No suggestions right now.</p>}
             {suggestedUsers.map((user) => (
               <ConnectionCard person={user} kind="suggested" key={user.id}>
                 <button
@@ -159,6 +165,9 @@ export default function Connections({ userId, relationships, refreshKey }) {
                 </button>
               </ConnectionCard>
             ))}
+            <Link to="/discover" className="doin-button connection-discover-more">
+              <Icon name="next" /> Discover more people
+            </Link>
           </section>
         </>
       )}

@@ -49,13 +49,19 @@ function SuccessToast({ notice, onDismiss }) {
     const observer = new ResizeObserver(placeToast);
     observer.observe(toast);
     const content = document.querySelector(".page-content");
-    if (content) observer.observe(content);
+    const mutations = new MutationObserver(placeToast);
+    if (content) {
+      observer.observe(content);
+      // Async route content can replace a loading state without resizing the page shell.
+      mutations.observe(content, { childList: true, subtree: true, characterData: true });
+    }
     window.addEventListener("scroll", placeToast, { passive: true });
     window.addEventListener("resize", placeToast);
     window.visualViewport?.addEventListener("resize", placeToast);
     window.visualViewport?.addEventListener("scroll", placeToast);
     return () => {
       observer.disconnect();
+      mutations.disconnect();
       window.removeEventListener("scroll", placeToast);
       window.removeEventListener("resize", placeToast);
       window.visualViewport?.removeEventListener("resize", placeToast);

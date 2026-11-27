@@ -80,7 +80,7 @@ async function signIn(browser, name, username) {
   await page.locator("#login-email").fill(email);
   await page.locator("#login-password").fill(password);
   await button(page, "Log in").click();
-  await heading(page, "Discover people").waitFor();
+  await heading(page, "Discover People").waitFor();
   return session;
 }
 
@@ -240,7 +240,7 @@ async function main() {
       await assertFocused(field(host, "date"));
       assert.equal(await field(host, "date").getAttribute("aria-invalid"), "true");
       assert.match(await field(host, "date").getAttribute("aria-describedby"), /event-field-error/);
-      await host.locator("#event-date + [role=alert]").waitFor();
+      await host.locator(".event-date-display + [role=alert]").waitFor();
       await field(host, "date").fill(draft.date);
       await field(host, "endTime").fill("09:00");
       await create.click();
@@ -296,7 +296,7 @@ async function main() {
       await heading(host, draft.title).waitFor();
       await words(toast(host), "Event created.").waitFor();
       assert.equal(new URL(host.url()).pathname, createdRoute);
-      const back = button(host, "Back to events");
+      const back = button(host, "Back to Discover Events");
       await back.waitFor();
       const placement = await back.evaluate((node) => ({
         buttonTop: node.getBoundingClientRect().top,
@@ -356,26 +356,26 @@ async function main() {
       assert(layout.actionGap >= 8);
       assert.equal(await request.locator("img").getAttribute("data-avatar-fallback"), "");
       await snapshot(host, "connections-incoming");
-      const connected = personCard(section(host, "Your connections"), "Jordan Lee");
+      const connected = personCard(section(host, "Accepted connections"), "Jordan Lee");
       await link(connected, "View Jordan Lee's profile").waitFor();
       assert.equal(await connected.locator("button").count(), 0);
       await show(connected);
       await snapshot(host, "connections-accepted");
-      const outgoing = personCard(section(host, "Sent requests (1)"), "Sam Rivera");
+      const outgoing = personCard(section(host, "Outgoing requests"), "Sam Rivera");
       await button(outgoing, "Cancel request").waitFor();
-      assert.equal(await personCard(section(host, "Suggested people"), "Sam Rivera").count(), 0);
+      assert.equal(await personCard(section(host, "Suggested People"), "Sam Rivera").count(), 0);
       await show(outgoing);
       await snapshot(host, "connections-outgoing");
       await visit(empty.page, "/connections", "Connections");
-      await words(empty.page, "You have no connections yet.").waitFor();
-      await words(empty.page, "No pending requests.").waitFor();
+      await words(empty.page, "No accepted connections yet.").waitFor();
+      await words(empty.page, "No incoming requests.").waitFor();
       await words(empty.page, "No sent requests yet.").waitFor();
       await snapshot(empty.page, "connections-empty");
     });
 
     await check("failed connection mutation stays actionable and acceptance revalidates both sessions", async () => {
       await visit(guest, "/connections", "Connections");
-      await words(guest, "No pending requests.").waitFor();
+      await words(guest, "No incoming requests.").waitFor();
       const route = "/connections/requests/" + incoming.id;
       const request = personCard(host, "Noah Bennett");
       const accept = button(request, "Accept");
@@ -409,19 +409,19 @@ async function main() {
       await snapshot(host, "connections-action-error");
       const result = await responseTo(host, "PATCH", route, 200, () => accept.click());
       assert.equal(result.body.status, "accepted");
-      await link(section(host, "Your connections"), "View Noah Bennett's profile").waitFor();
+      await link(section(host, "Accepted connections"), "View Noah Bennett's profile").waitFor();
       await refresh(guest, "/users/" + sender.user.id + "/connections");
-      await link(section(guest, "Your connections"), "View Maya Rivera's profile").waitFor();
+      await link(section(guest, "Accepted connections"), "View Maya Rivera's profile").waitFor();
     });
 
     await check("decline and cancellation keep their existing request transitions", async () => {
       const decline = await api(owner.context, "POST", "/connections/requests", 201, "user-chris", { recipientId: owner.user.id });
       await refresh(host, "/users/" + owner.user.id + "/connection-requests");
-      const card = personCard(section(host, "Pending requests"), "Chris Nguyen");
+      const card = personCard(section(host, "Incoming requests"), "Chris Nguyen");
       const declined = await responseTo(host, "PATCH", "/connections/requests/" + decline.id, 200, () => button(card, "Decline").click());
       assert.equal(declined.body.status, "declined");
       await card.waitFor({ state: "detached" });
-      const outgoing = personCard(section(host, "Sent requests (1)"), "Sam Rivera");
+      const outgoing = personCard(section(host, "Outgoing requests"), "Sam Rivera");
       const canceled = await responseTo(host, "PATCH", "/connections/requests/" + sent.id, 200,
         () => button(outgoing, "Cancel request").click());
       assert.equal(canceled.body.status, "cancelled");
@@ -443,7 +443,7 @@ async function main() {
       await snapshot(host, "navigation-keyboard");
 
       await visit(host, "/connections", "Connections");
-      const lastSuggestion = section(host, "Suggested people").locator(".connection-user").last();
+      const lastSuggestion = section(host, "Suggested People").locator(".connection-user").last();
       await lastSuggestion.getByRole("link").focus();
       await host.keyboard.press("Tab");
       await assertFocused(button(lastSuggestion, "Connect"));
@@ -469,8 +469,8 @@ async function main() {
         touch(layout.start);
         touch(layout.end);
         assert(layout.clearance >= 0);
-        assert.equal(layout.start.y === layout.end.y, width >= 375);
-        assert(layout.start.width >= 152 && layout.end.width >= 152);
+        assert.equal(layout.start.y, layout.end.y);
+        assert.equal(layout.start.width, layout.end.width);
 
         await empty.page.setViewportSize({ width, height: viewport.height });
         await visit(empty.page, "/connections", "Connections");
@@ -494,7 +494,7 @@ async function main() {
       await cdp.send("Emulation.setSafeAreaInsetsOverride", { insets: { top: 28, bottom: 24, left: 0, right: 0 } });
       try {
         await eventForm(host, "/create-event");
-        assert.equal(await host.locator(".navbar").evaluate((node) => getComputedStyle(node).paddingBottom), "32px");
+        assert.equal(await host.locator(".navbar").evaluate((node) => getComputedStyle(node).paddingBottom), "29px");
         assert.equal(await host.locator(".app-layout").evaluate((node) => getComputedStyle(node).paddingTop), "28px");
         await clearance(button(host, "Create Event"));
         await visit(host, createdRoute, draft.title);
@@ -542,22 +542,22 @@ async function main() {
       assert.equal(await page.locator('label[for="profile-photo"]').evaluate((node) => getComputedStyle(node).outlineWidth), "2px");
       await page.locator("#username").fill("jamieperez");
       await button(page, "Finish setup").click();
-      await heading(page, "My profile").waitFor();
+      await heading(page, "My Profile").waitFor();
       await clearToast(page, "Profile saved.");
       await record("my-profile");
-      await visit(page, "/edit-profile", "Edit profile");
+      await visit(page, "/edit-profile", "Edit Profile");
       await page.locator("#username_field").waitFor();
       await record("edit-profile");
-      await visit(page, "/discover", "Discover people");
+      await visit(page, "/discover", "Discover People");
       await words(page, "Alex Morgan").waitFor();
       await record("discover-people");
       await page.goto(origin + "/discover/user-alex");
       await words(page, "Alex Morgan").waitFor();
       await record("person-details");
       await visit(page, "/connections", "Connections");
-      await words(page, "You have no connections yet.").waitFor();
+      await words(page, "No accepted connections yet.").waitFor();
       await record("connections");
-      await visit(page, "/events", "Discover events");
+      await visit(page, "/events", "Discover Events");
       await heading(page, "Tennis Meetup").waitFor();
       await record("discover-events");
       await visit(page, "/events/event-1", "Tennis Meetup");
@@ -572,7 +572,7 @@ async function main() {
       await snapshot(host, "review-edit-event");
       await visit(page, "/missing-d4-review", "Page not found");
       await record("page-not-found");
-      await visit(page, "/events", "Discover events");
+      await visit(page, "/events", "Discover Events");
       await page.locator("#event-search").fill("unmatched-D4-fixture");
       await words(page, "No events match your search.").waitFor();
       await record("empty-events");

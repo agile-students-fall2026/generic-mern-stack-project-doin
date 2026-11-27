@@ -24,10 +24,14 @@ export function formatEventTime(value) {
   return `${hour % 12 || 12}:${match[2]} ${hour < 12 ? "AM" : "PM"}`;
 }
 
-export function formatEventTimeRange(startTime, endTime) {
+export function formatEventTimeRange(startTime, endTime, { compact = false } = {}) {
   const start = formatEventTime(startTime);
   const end = formatEventTime(endTime);
-  return start && end ? `${start} – ${end}` : start;
+  if (!compact) return start && end ? `${start} – ${end}` : start;
+  const first = start.replace(":00 ", " ");
+  const last = end.replace(":00 ", " ");
+  if (!first || !last) return first;
+  return `${first.slice(-2) === last.slice(-2) ? first.slice(0, -3) : first}–${last}`;
 }
 
 export function formatEventTimeZone(timeZone, { long = false } = {}) {

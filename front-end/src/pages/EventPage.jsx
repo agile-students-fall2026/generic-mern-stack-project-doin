@@ -1,29 +1,34 @@
-import { useLocation, useNavigate, useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { getEvent, getUserById } from "../api";
 import useApiData from "../useApiData";
+import { useReturnTo } from "../viewHistory";
+import BackButton from "../Components/BackButton";
 import EventDetails from "./EventDetails";
 
 export default function EventPage({ currentUser, refreshKey }) {
   const { eventId } = useParams();
-  const navigate = useNavigate();
-  const { pathname, search } = useLocation();
+  const { search, state } = useLocation();
   const from = new URLSearchParams(search).get("from");
   const fromList = from === "joined" || from === "hosting";
   const backTo = fromList ? `/my-events?tab=${from}` : "/events";
+  const backLabel = from === "joined" ? "Joined" : from === "hosting" ? "Hosting" : "Discover Events";
+  const onBack = useReturnTo(backTo, state?.origin === backTo || (from === "joined" && state?.origin === "/my-events"));
   const eventData = useApiData(eventId, getEvent, refreshKey);
   const event = eventData.data;
   const organizer = useApiData(event?.organizerId ?? null, getUserById, refreshKey);
-  const onBack = () => navigate(backTo);
+  const isHost = event?.organizerId === currentUser.id;
+  const organizerProfile = organizer.data ?? (isHost ? currentUser : null);
 
-  if (eventData.loading) return <p className="event-details doin-page" role="status">Loading event details...</p>;
+  if (eventData.loading) return <p className="event-details doin-page doin-page--app" role="status">Loading event details...</p>;
 
   if (eventData.error) {
     return (
-      <main className="event-details doin-page">
-        <p role="alert" className="doin-field-error">{eventData.error}</p>
-        <button type="button" className="doin-button doin-button--secondary" onClick={onBack}>
-          {fromList ? "Back to My Events" : "Back to events"}
-        </button>
+      <main className="event-details doin-page doin-page--app">
+        <BackButton onClick={onBack} ariaLabel={`Back to ${backLabel}`} label={backLabel} />
+        <div className="browse-message">
+          <p role="alert" className="doin-field-error">{eventData.error}</p>
+          <button className="doin-button doin-button--secondary" type="button" onClick={eventData.invalidate}>Retry event</button>
+        </div>
       </main>
     );
   }
@@ -32,14 +37,13 @@ export default function EventPage({ currentUser, refreshKey }) {
     <EventDetails
       event={{
         ...event,
-        organizer: organizer.data?.name || event.organizerName || event.organizerId || "Unknown organizer",
-        organizerImage: organizer.data?.imageUrl,
+        organizer: organizerProfile?.name || event.organizerName || event.organizerId || "Unknown organizer",
+        organizerImage: organizerProfile?.imageUrl,
       }}
       currentUser={currentUser}
-      canManage={currentUser.id === event.organizerId && event.status === "active"}
+      canManage={isHost && event.status === "active"}
       onBack={onBack}
-      backLabel={fromList ? "Back to My Events" : "Back to events"}
-      eventLocation={pathname + search}
+      backLabel={backLabel}
       editSearch={search}
       onCanceled={onBack}
       onEventChange={eventData.replace}

@@ -182,7 +182,7 @@ router.patch("/events/:eventId", requireMockUser, (req, res) => {
   }
 
   updated.category = normalizedCategory;
-  updated.timezone = timeZone;
+  if ("timezone" in changes) updated.timezone = timeZone;
 
   // Update the shared event object only after all validation passes.
   Object.assign(event, updated);

@@ -7,7 +7,6 @@ import {
   Route,
   Routes,
   useLocation,
-  useNavigate,
 } from "react-router";
 
 import Welcome from "./pages/Welcome";
@@ -64,7 +63,6 @@ function AppRoutes() {
 function SessionRoutes({ session, restoreSession, saveSession, updateSessionUser, clearSession }) {
   const { user } = session;
   const location = useLocation();
-  const navigate = useNavigate();
   const foregroundRevision = useForegroundRefresh();
   const refreshKey = `${location.key}:${foregroundRevision}`;
   const sessionDestination = user ? signedInPath(user) : session.afterLogout ? "/" : "/login";
@@ -72,6 +70,7 @@ function SessionRoutes({ session, restoreSession, saveSession, updateSessionUser
   const showsRelationships = [
     "/connections",
     "/connections/:personId",
+    "/discover",
     "/discover/:personId",
   ].some((path) => matchPath(path, location.pathname));
   const showsMyEvents = matchPath("/my-events", location.pathname);
@@ -155,10 +154,7 @@ function SessionRoutes({ session, restoreSession, saveSession, updateSessionUser
         <Route
           path="/discover"
           element={
-            <DiscoverPeople
-              refreshKey={refreshKey}
-              onViewProfile={(person) => navigate(`/discover/${encodeURIComponent(person.id)}`)}
-            />
+            <DiscoverPeople refreshKey={refreshKey} userId={userId} relationships={relationships} />
           }
         />
         <Route
@@ -184,7 +180,7 @@ function SessionRoutes({ session, restoreSession, saveSession, updateSessionUser
         />
         <Route
           path="/events"
-          element={<Explore refreshKey={refreshKey} />}
+          element={<Explore refreshKey={refreshKey} userId={userId} />}
         />
         <Route
           path="/events/:eventId"

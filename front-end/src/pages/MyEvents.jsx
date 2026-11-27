@@ -4,11 +4,14 @@ import ConfirmationDialog from "../Components/ConfirmationDialog";
 import { cancelEventAction } from "../eventActions";
 import useSubmission from "../useSubmission";
 import useToast from "../useToast";
+import Icon from "../Components/Icon";
+import { useOrigin } from "../viewHistory";
 import EventCard from "../Components/EventCard";
 import EventsTabs from "../Components/EventsTabs";
 import "../styles/MyEvents.css";
 
 export default function MyEvents({ events, currentUser, loading, refreshing, error, onChange }) {
+  const origin = useOrigin();
   const [params, setParams] = useSearchParams();
   const activeTab = params.get("tab") === "hosting" ? "hosting" : "joined";
   const [cancelTarget, setCancelTarget] = useState(null);
@@ -40,16 +43,20 @@ export default function MyEvents({ events, currentUser, loading, refreshing, err
   const waiting = loading || (refreshing && displayedEvents.length === 0);
 
   return (
-    <main className="my-events-page doin-page">
+    <main className="my-events-page doin-page doin-page--app">
+      <header className="doin-title-row">
+        <h1 className="doin-page-title" ref={headingRef} tabIndex={-1}>My Events</h1>
+        <Link to="/create-event" state={origin} className="doin-button doin-button--primary" aria-label="Create event">
+          <Icon name="plus" /> Create
+        </Link>
+      </header>
       <EventsTabs />
-      <h1 className="doin-page-title" ref={headingRef} tabIndex={-1}>My Events</h1>
 
-      <div className="my-events-tabs" role="group" aria-label="My event lists">
+      <div className="my-events-tabs doin-segments" role="group" aria-label="My event lists">
         {[["joined", "Joined", joinedEvents], ["hosting", "Hosting", hostingEvents]].map(([type, label, list]) => (
           <button
             type="button"
             key={type}
-            className={`doin-button doin-button--${activeTab === type ? "primary" : "secondary"}`}
             aria-pressed={activeTab === type}
             aria-controls="my-events-results"
             onClick={() => setParams({ tab: type }, { replace: true })}
@@ -71,6 +78,7 @@ export default function MyEvents({ events, currentUser, loading, refreshing, err
                       <Link
                         className="doin-button doin-button--secondary my-event-edit-link"
                         to={`/events/${encodeURIComponent(event.id)}/edit?from=hosting`}
+                        state={origin}
                         aria-label={`Edit Event: ${event.title}`}
                       >
                         Edit Event

@@ -58,7 +58,7 @@ async function createProfile(context, name, username) {
   await page.locator("#login-email").fill(email);
   await page.locator("#login-password").fill(password);
   await button(page, "Log in").click();
-  await heading(page, "Discover people").waitFor();
+  await heading(page, "Discover People").waitFor();
   return { page, user };
 }
 
@@ -172,19 +172,19 @@ async function main() {
     await send(host.request, "PATCH", "/connections/requests/" + accepted.id, 200, { status: "accepted" }, organizer.id);
 
     await test("shared controls, category contrast, and keyboard focus", async () => {
-      await visit(host, "/events", "Discover events");
+      await visit(host, "/events", "Discover Events");
       await heading(host, "Tennis Meetup").waitFor();
       await capture(host, "06-event-discovery");
       const create = host.getByRole("link", { name: "Create event", exact: true });
       await assertSize(create);
       await assertSize(host.locator(".navbar").getByRole("link", { name: "Events" }));
       await assertSize(host.locator(".event-card-link").first());
-      for (let tab = 0; tab < 3; tab += 1) await host.keyboard.press("Tab");
+      await host.keyboard.press("Tab");
       await hasFocus(create);
       assert.deepEqual(await create.evaluate((node) => {
         const style = getComputedStyle(node);
         return [style.outlineStyle, style.outlineWidth, style.backgroundColor];
-      }), ["solid", "2px", "rgb(99, 91, 255)"]);
+      }), ["solid", "2px", "rgb(80, 71, 229)"]);
       await capture(host, "keyboard-focus");
       await visit(host, eventPath, event.title);
       await host.getByText("Organized by Maya Rivera").waitFor();
@@ -300,11 +300,11 @@ async function main() {
       await host.locator("#event-end").fill("09:00");
       const create = button(host, "Create Event");
       await create.click();
-      const end = host.getByLabel("End Time", { exact: true });
+      const end = host.getByLabel("Ends at", { exact: true });
       await hasFocus(end);
       assert.equal(await end.getAttribute("type"), "time");
       assert.equal(await end.getAttribute("aria-invalid"), "true");
-      assert.equal(await end.getAttribute("aria-describedby"), "event-timezone-hint event-field-error");
+      assert.equal(await end.getAttribute("aria-describedby"), "event-timezone-hint event-time-error");
       await host.getByRole("alert").filter({ hasText: "End time must be after start time." }).waitFor();
       assert.equal(await host.getByLabel("Date", { exact: true }).getAttribute("type"), "date");
       assert.equal(await host.getByLabel("Event Name", { exact: true }).getAttribute("required"), "");
@@ -352,10 +352,10 @@ async function main() {
     });
 
     await test("profile save stays visible after the route transition", async () => {
-      await visit(host, "/edit-profile", "Edit profile");
+      await visit(host, "/edit-profile", "Edit Profile");
       await host.locator("#bio_field").fill("D1 test profile");
-      await withResponse(host, "PATCH", "/users/" + organizer.id, 200, () => button(host, "Save").click());
-      await heading(host, "My profile").waitFor();
+      await withResponse(host, "PATCH", "/users/" + organizer.id, 200, () => button(host, "Save changes").click());
+      await heading(host, "My Profile").waitFor();
       await expectToast(host, "Profile saved.");
       await capture(host, "profile-saved-toast");
     });
@@ -375,7 +375,7 @@ async function main() {
       const result = await withResponse(host, "DELETE", createdPath, 200,
         () => button(prompt, "Cancel Event").click());
       assert.equal(result.status, "cancelled");
-      await heading(host, "Discover events").waitFor();
+      await heading(host, "Discover Events").waitFor();
       await expectToast(host, "Event canceled.");
     });
 
@@ -390,12 +390,12 @@ async function main() {
       await visit(page, "/setup-profile", "Set up your profile");
       await page.locator("#username").fill("jamieperez");
       await withResponse(page, "POST", "/profiles", 200, () => button(page, "Finish setup").click());
-      await heading(page, "My profile").waitFor();
+      await heading(page, "My Profile").waitFor();
       const toast = notification(page);
       await toast.getByText("Profile saved.", { exact: true }).waitFor();
       assert.equal(await toast.getAttribute("popover"), null);
-      await assertClearOfOverlay(page, page.getByRole("link", { name: "Edit profile", exact: true }));
-      await button(page, "Logout").click();
+      await assertClearOfOverlay(page, page.getByRole("link", { name: "Edit Profile", exact: true }));
+      await button(page, "Log Out").click();
       await toast.waitFor({ state: "hidden" });
       assert.equal(new URL(page.url()).pathname, "/");
       await page.close();

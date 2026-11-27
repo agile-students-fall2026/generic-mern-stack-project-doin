@@ -4,7 +4,7 @@ import Avatar from "../Components/Avatar";
 import BackButton from "../Components/BackButton";
 import ConfirmationDialog from "../Components/ConfirmationDialog";
 import EventArtwork from "../Components/EventArtwork";
-import LocationIcon from "../Components/LocationIcon";
+import Icon from "../Components/Icon";
 import "../styles/EventDetails.css";
 import { getUserById, joinEvent, leaveEvent } from "../api";
 import { formatEventDate, formatEventTimeRange, formatEventTimeZone } from "../eventFormat";
@@ -12,6 +12,7 @@ import useApiData from "../useApiData";
 import useSubmission from "../useSubmission";
 import useToast from "../useToast";
 import { cancelEventAction } from "../eventActions";
+import { eventProfilePath, useOrigin, useViewState } from "../viewHistory";
 
 const eventActions = {
   join: {
@@ -42,43 +43,23 @@ async function loadAttendees(key, signal) {
 
 function EventInformation({ event }) {
   const date = formatEventDate(event.date, { includeYear: true });
-  const time = formatEventTimeRange(event.startTime, event.endTime);
+  const time = formatEventTimeRange(event.startTime, event.endTime, { compact: true });
   const zone = formatEventTimeZone(event.timezone, { long: true });
 
+  const items = [
+    ["date", "Date", date],
+    ["pin", "Location", event.location],
+    ["time", "Time", time],
+    ["timezone", "Time zone", zone],
+  ];
   return (
-    <dl className="event-info">
-      {date && (
-        <div>
-          <dt className="doin-sr-only">Date</dt>
-          <dd>
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="5" width="18" height="16" rx="2" />
-              <path d="M7 3v4m10-4v4M3 10h18" />
-            </svg>
-            <time dateTime={event.date}>{date}</time>
-          </dd>
+    <dl className="event-info" aria-label="Schedule and location">
+      {items.map(([icon, label, value]) => value && (
+        <div key={label}>
+          <dt><Icon name={icon} />{label}</dt>
+          <dd className={icon === "pin" ? "event-location" : undefined}>{icon === "date" ? <time dateTime={event.date}>{value}</time> : value}</dd>
         </div>
-      )}
-      {time && (
-        <div>
-          <dt className="doin-sr-only">Time</dt>
-          <dd>
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 2" />
-            </svg>
-            <span>{time}{zone && <span className="event-time-zone"> · {zone}</span>}</span>
-          </dd>
-        </div>
-      )}
-      {event.location && (
-        <div>
-          <dt className="doin-sr-only">Location</dt>
-          <dd className="event-location"><LocationIcon /><span>{event.location}</span></dd>
-        </div>
-      )}
+      ))}
     </dl>
   );
 }
@@ -96,7 +77,8 @@ const EventDetails = (props) => {
   const event = props.event;
   const currentUser = props.currentUser;
   const onBack = props.onBack;
-  const [showAttendees, setShowAttendees] = useState(false);
+  const [{ showAttendees }, updateView] = useViewState({ showAttendees: false });
+  const origin = useOrigin();
   const attendeeListId = useId();
   const attendeeIds = (event.attendeeIds ?? []).filter((id) => id !== event.organizerId);
   const isHost = currentUser?.id === event.organizerId;
@@ -114,7 +96,7 @@ const EventDetails = (props) => {
   const isAttending = currentUser && attendeeIds.includes(currentUser.id);
   const isFull = attendeeIds.length >= event.capacity;
   const remaining = Math.max(0, event.capacity - attendeeIds.length);
-  const spots = `${remaining} ${remaining === 1 ? "spot" : "spots"} remaining`;
+  const spots = `${remaining} guest ${remaining === 1 ? "spot" : "spots"} left`;
   const action = confirmation === "cancel" ? cancelEventAction(event.title) : eventActions[confirmation];
   const date = formatEventDate(event.date);
   const descriptions = {
@@ -123,6 +105,12 @@ const EventDetails = (props) => {
   };
   const unavailable = action && unavailableReason(confirmation, { cancelled, isAttending, isFull, canManage: props.canManage });
   const actionDisabled = !currentUser || Boolean(unavailable);
+  const organizerIdentity = (
+    <>
+      <Avatar src={event.organizerImage} className="event-organizer-avatar" />
+      <span>Organized by {event.organizer}</span>
+    </>
+  );
 
   function openConfirmation(event, nextAction) {
     if (pending) return;
@@ -150,22 +138,27 @@ const EventDetails = (props) => {
   }
 
   return (
-    <main className="event-details doin-page">
-      {onBack && <BackButton onClick={onBack} ariaLabel={props.backLabel ?? "Back to events"} />}
+    <main className="event-details doin-page doin-page--app">
+      <BackButton onClick={onBack} ariaLabel={`Back to ${props.backLabel}`} label={props.backLabel} />
 
-      <article className="event-details-card">
+      <article className={`event-details-card${event.title.length > 60 ? " event-details-long" : ""}`}>
         <EventArtwork className="event-details-image" src={event.imageUrl} />
 
         <div className="event-details-content">
           <header className="event-details-header">
-            <span className="event-card-category">{event.category}</span>
-            <h1 ref={headingRef} tabIndex={-1}>{event.title}</h1>
+            <div className="event-detail-title">
+              <h1 className="doin-page-title" ref={headingRef} tabIndex={-1}>{event.title}</h1>
+              <span className="event-card-category">{event.category}</span>
+            </div>
             <div className="event-organizer">
-              <Link to={`/discover/${encodeURIComponent(event.organizerId)}`}
-                state={{ eventFrom: props.eventLocation }} className="event-organizer-link">
-                <Avatar src={event.organizerImage} className="event-organizer-avatar" />
-                <span>Organized by {event.organizer}</span>
-              </Link>
+              {isHost ? (
+                <div className="event-organizer-identity">{organizerIdentity}</div>
+              ) : (
+                <Link to={eventProfilePath(event.organizerId, event.id, props.editSearch)}
+                  state={origin} className="event-organizer-identity event-organizer-link">
+                  {organizerIdentity}
+                </Link>
+              )}
               {isHost && <span className="event-hosted-state">Hosted by you</span>}
             </div>
           </header>
@@ -176,7 +169,7 @@ const EventDetails = (props) => {
           <section className="event-section event-attendance">
             <h2>Who's going?</h2>
             <div className="attendee-summary">
-              <p className="attendee-count">{attendeeIds.length} of {event.capacity} attending</p>
+              <p className="attendee-count">{attendeeIds.length}/{event.capacity} attending</p>
               <p className="spots-remaining">{cancelled ? "RSVP closed" : spots}</p>
               <div className="attendee-progress" aria-hidden="true">
                 <div
@@ -202,17 +195,17 @@ const EventDetails = (props) => {
                 </div>
               )}
 
-              <button
-                type="button"
-                className="doin-button doin-button--secondary attendee-toggle"
-                onClick={() => setShowAttendees((open) => !open)}
-                aria-expanded={showAttendees}
-                aria-controls={attendeeListId}
-              >
-                {showAttendees ? "Hide Attendees" : "Show Attendees"}
-              </button>
             </div>
-
+            <button
+              type="button"
+              className="attendee-toggle"
+              onClick={() => updateView({ showAttendees: !showAttendees })}
+              aria-expanded={showAttendees}
+              aria-label={showAttendees ? "Hide Attendees" : "Show Attendees"}
+              aria-controls={attendeeListId}
+            >
+              <Icon name="down" /> Attendees <span>({attendeeIds.length})</span>
+            </button>
             <div className="attendee-list" id={attendeeListId} hidden={!showAttendees}>
               {showAttendees && (
                 <>
@@ -232,8 +225,21 @@ const EventDetails = (props) => {
                     <ul>
                       {attendees.data.users.map((user) => (
                         <li className="attendee" key={user.id}>
-                          <Avatar src={user.imageUrl} className="attendee-image" />
-                          <span>{user.name}</span>
+                          {user.id === currentUser.id ? (
+                            <div className="attendee-row attendee-self">
+                              <Avatar src={user.imageUrl} className="attendee-image" />
+                              <strong>{user.name}</strong>
+                              <span className="attendee-you">You</span>
+                            </div>
+                          ) : (
+                            <Link className="attendee-row" state={origin}
+                              to={eventProfilePath(user.id, event.id, props.editSearch)}
+                              aria-label={`View ${user.name}'s profile`}>
+                              <Avatar src={user.imageUrl} className="attendee-image" />
+                              <strong>{user.name}</strong>
+                              <Icon name="next" />
+                            </Link>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -244,10 +250,10 @@ const EventDetails = (props) => {
           </section>
 
           {props.canManage && (
-            <section className="event-section">
+            <section className="event-section event-section--plain">
               <h2>Manage event</h2>
               <div className="event-management-actions">
-                <Link className="doin-button doin-button--secondary" to={{ pathname: "edit", search: props.editSearch }}>Edit Event</Link>
+                <Link className="doin-button doin-button--secondary" to={{ pathname: "edit", search: props.editSearch }} state={origin}><Icon name="edit" /> Edit Event</Link>
                 <button
                   type="button"
                   className="doin-button doin-button--danger-outline"
@@ -259,7 +265,7 @@ const EventDetails = (props) => {
             </section>
           )}
 
-          <section className="event-section">
+          <section className="event-section event-section--plain">
             <h2>About this event</h2>
             <p className="event-description">{event.description}</p>
           </section>

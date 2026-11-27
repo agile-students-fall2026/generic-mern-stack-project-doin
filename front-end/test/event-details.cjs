@@ -68,7 +68,7 @@ async function startSession(browser, index) {
   await page.locator("#login-email").fill(email);
   await page.locator("#login-password").fill(password);
   await button(page, "Log in").click();
-  await heading(page, "Discover people").waitFor();
+  await heading(page, "Discover People").waitFor();
   return { user, page, context };
 }
 
@@ -199,14 +199,14 @@ async function main() {
       await visit(attendee, route);
       const info = attendee.locator(".event-info");
       await words(info, "Sat, Nov 28, 2026").waitFor();
-      await words(info, "10:30 AM – 12:00 PM · Eastern Time").waitFor();
-      await words(info, "· Eastern Time").waitFor();
+      await words(info, "10:30 AM–12 PM").waitFor();
+      await words(info, "Eastern Time").waitFor();
       assert.equal(await info.locator("time").getAttribute("datetime"), fixture.date);
       assert.equal(await info.locator("a, button").count(), 0);
       assert.equal(await link(attendee, "Edit Event").count(), 0);
       assert.equal(await button(attendee, "Cancel Event").count(), 0);
-      await words(attendee, "0 of 2 attending").waitFor();
-      await words(attendee, "2 spots remaining").waitFor();
+      await words(attendee, "0/2 attending").waitFor();
+      await words(attendee, "2 guest spots left").waitFor();
       const layout = measurements.available = await measure(attendee);
       hasTouchTarget(layout.primary);
       assert(layout.primary.y >= 0 && layout.primaryClearance > 0);
@@ -246,8 +246,8 @@ async function main() {
     await check("singular wording and expandable attendee list recover after a profile error", async () => {
       await api(owner.context, "POST", rsvp, 200, "user-alex");
       await refresh(attendee, route);
-      await words(attendee, "1 spot remaining").waitFor();
-      await words(attendee, "1 of 2 attending").waitFor();
+      await words(attendee, "1 guest spot left").waitFor();
+      await words(attendee, "1/2 attending").waitFor();
       measurements.oneAttendee = await measure(attendee);
       await capture(attendee, "details-one-attendee");
       const failurePath = "**/api/users/user-alex";
@@ -285,7 +285,7 @@ async function main() {
       await join.click();
       const updated = await responseTo(attendee, "POST", rsvp, 200, () => confirm.click());
       assert.deepEqual(updated.attendeeIds, ["user-alex", guest.user.id]);
-      await words(attendee, "2 of 2 attending").waitFor();
+      await words(attendee, "2/2 attending").waitFor();
       await hasFocus(button(attendee, "Leave Event"));
       await clearToast(attendee, "RSVP confirmed.");
       measurements.joined = await measure(attendee);
@@ -294,7 +294,7 @@ async function main() {
 
     await check("full event disables Join for nonattendees and enforces capacity in the API", async () => {
       await visit(spectator, route);
-      await words(spectator, "0 spots remaining").waitFor();
+      await words(spectator, "0 guest spots left").waitFor();
       assert.equal(await button(spectator, "Event Full").isDisabled(), true);
       assert.equal(await button(spectator, "Leave Event").count(), 0);
       const response = await api(observer.context, "POST", rsvp, 409, observer.user.id);
@@ -311,7 +311,7 @@ async function main() {
       assert.equal(await joined.locator("a").count(), 1);
       assert.equal(await joined.locator("a").getAttribute("href"), route + "?from=joined");
       assert.equal(await words(joined, "Attending").count(), 0);
-      await words(joined, "10:30 AM – 12:00 PM ET").waitFor();
+      await words(joined, "10:30 AM–12 PM").waitFor();
       measurements.myJoined = await measure(attendee);
       await capture(attendee, "my-events-joined");
       await link(joined, fixture.title).click();
@@ -359,7 +359,7 @@ async function main() {
       await capture(attendee, "dialog-leave");
       const result = await responseTo(attendee, "DELETE", rsvp, 200, () => button(prompt, "Confirm Leave").click());
       assert.deepEqual(result.attendeeIds, ["user-alex"]);
-      await words(attendee, "1 spot remaining").waitFor();
+      await words(attendee, "1 guest spot left").waitFor();
       await hasFocus(button(attendee, "Join Event"));
       await clearToast(attendee, "You left the event.");
       await visit(attendee, "/my-events", "My Events");
@@ -402,7 +402,7 @@ async function main() {
       const confirmation = dialog(host, "Cancel this event?");
       const result = await responseTo(host, "DELETE", route, 200, () => button(confirmation, "Cancel Event").click());
       assert.equal(result.status, "cancelled");
-      await heading(host, "Discover events").waitFor();
+      await heading(host, "Discover Events").waitFor();
       await clearToast(host, "Event canceled.");
       await refresh(attendee, "/users/" + guest.user.id + "/events");
       await words(attendee, "You haven't joined any events yet.").waitFor();
@@ -449,7 +449,7 @@ async function main() {
         for (const size of [sizes.edit, sizes.cancel]) hasTouchTarget(size);
         const titleLines = await wraps(heading(host, long.title), long.title);
         const descriptionLines = await wraps(host.locator(".event-description"), long.description);
-        const locationLines = await wraps(host.locator(".event-location span"), long.location);
+        const locationLines = await wraps(host.locator(".event-info .event-location"), long.location);
         await visit(host, "/my-events", "My Events");
         await host.getByRole("button", { name: /^Hosting/ }).click();
         const card = myCard(host, long.title);

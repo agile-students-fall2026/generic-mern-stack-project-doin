@@ -1,67 +1,102 @@
-.create-event-page .doin-page-title {
-  margin-bottom: var(--doin-gutter);
-}
+.create-event-page:not(.doin-page--app) .doin-page-title { margin-bottom: var(--doin-gutter); }
 
 .create-event-form,
-.event-form-section,
 .create-event-field {
   display: grid;
   min-inline-size: 0;
 }
 
-.create-event-form {
-  gap: var(--doin-gutter);
-}
-
-.event-form-section {
-  gap: var(--doin-space-sm);
-  padding: 0 0 var(--doin-space-md);
-  border: 0;
-  border-bottom: 1px solid var(--doin-border);
-}
-
-.event-form-section legend {
-  padding: 0;
-  margin-bottom: var(--doin-space-sm);
-  font-size: 1.0625rem;
-  font-weight: 600;
-}
+.create-event-form { gap: 9px; }
 
 .create-event-field {
   align-content: start;
-  gap: var(--doin-space-xs);
+  gap: 4px;
+}
+
+.create-event-field .doin-label {
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.create-event-field .doin-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--doin-brand-ink);
 }
 
 .create-event-field .doin-input {
   width: 100%;
+  padding: 7px 9px;
+  border-radius: 8px;
+  font-weight: 400;
 }
 
+.create-event-field .doin-label::after { content: none; }
+.create-event-field .doin-input::placeholder { font-size: .875rem; font-weight: 400; }
+
 .create-event-form textarea {
-  min-block-size: 72px;
+  min-block-size: 48px;
   max-block-size: 14rem;
   field-sizing: content;
 }
 
-.create-event-times {
+.create-event-times,
+.event-form-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
-  gap: var(--doin-space-sm);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .event-form-hint {
-  font-size: var(--doin-small-text);
   color: var(--doin-muted);
+  font-size: .8125rem;
   overflow-wrap: anywhere;
 }
 
-.event-form-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--doin-space-sm);
+.event-date-display { position: relative; }
+.event-readable-date { display: none; }
+
+@supports selector(input::-webkit-datetime-edit) {
+  .event-date-display:not(:focus-within) .event-readable-date {
+    position: absolute;
+    inset: 0 34px 0 10px;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    font-weight: 400;
+    line-height: 1.1;
+  }
+
+  .event-date-display:not(:focus-within) input::-webkit-datetime-edit { color: transparent; }
 }
 
-.event-form-actions > * {
-  flex: 1 1 104px;
+.event-duration {
+  justify-self: start;
+  padding: 4px 8px;
+  border-radius: 7px;
+  color: var(--doin-brand-ink);
+  background: var(--doin-lavender);
+  font-size: .8125rem;
+}
+
+.event-image-editor input[type="file"] {
+  padding: 0;
+  border: 0;
+  font-size: .8125rem;
+}
+
+.event-image-editor input::file-selector-button {
+  min-height: 40px;
+  margin-inline-end: 8px;
+  padding-inline: 8px;
+  border: 1px solid var(--doin-control-border);
+  border-radius: 6px;
+  color: var(--doin-brand-ink);
+  background: var(--doin-surface);
+}
+
+@media (max-width: 350px) {
+  .create-event-times .doin-input { padding-inline: 6px; }
 }
 
 .timezone-picker {

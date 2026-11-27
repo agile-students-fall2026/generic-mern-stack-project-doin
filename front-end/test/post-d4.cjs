@@ -166,29 +166,29 @@ async function main() {
     });
 
     await check("Both My Events tabs and organizer public profile return to the originating URL", async () => {
-      await visit(guest.page, "/my-events", "My Events");
+      await visit(guest.page, "/my-events?tab=joined", "My Events");
       await guest.page.getByRole("link", { name: title, exact: true }).click();
       await heading(guest.page, title).waitFor();
       assert.equal(new URL(guest.page.url()).search, "?from=joined");
       const organizer = guest.page.getByRole("link", { name: "Organized by Maya Rivera" });
       await organizer.locator("img").waitFor();
       await organizer.click();
-      await heading(guest.page, "Profile").waitFor();
+      await heading(guest.page, "Maya Rivera").waitFor();
       await text(guest.page, "Hosted").waitFor();
-      await button(guest.page, "Back to event").click();
+      await button(guest.page, "Back to Event Details").click();
       await heading(guest.page, title).waitFor();
-      await button(guest.page, "Back to My Events").click();
+      await button(guest.page, "Back to Joined").click();
       await heading(guest.page, "My Events").waitFor();
       assert.equal(new URL(guest.page.url()).search, "?tab=joined");
       await visit(host.page, "/my-events?tab=hosting", "My Events");
       await host.page.getByRole("link", { name: title, exact: true }).click();
       await heading(host.page, title).waitFor();
-      await button(host.page, "Back to My Events").click();
+      await button(host.page, "Back to Hosting").click();
       await host.page.getByRole("button", { name: /^Hosting/ }).waitFor();
       assert.equal(new URL(host.page.url()).search, "?tab=hosting");
       await visit(guest.page, eventRoute, title);
-      await button(guest.page, "Back to events").click();
-      await heading(guest.page, "Discover events").waitFor();
+      await button(guest.page, "Back to Discover Events").click();
+      await heading(guest.page, "Discover Events").waitFor();
     });
 
     await check("Edit preserves the selected zone and supports new image, image removal, and capacity changes", async () => {
@@ -222,8 +222,8 @@ async function main() {
       await api(guest.context, "PATCH", "/connections/requests/" + request.id, 200, guest.id, { status: "accepted" });
       const hostedProfile = "/users/" + host.id;
       const guestProfile = "/users/" + guest.id;
-      await visit(guest.page, "/discover/" + host.id, "Profile");
-      await visit(host.page, "/connections/" + guest.id, "Profile");
+      await visit(guest.page, "/discover/" + host.id, "Maya Rivera");
+      await visit(host.page, "/connections/" + guest.id, "Robin Patel");
       await text(host.page, "Connected").waitFor();
       await text(guest.page, "Connected").waitFor();
       assert.deepEqual((await api(host.context, "GET", hostedProfile, 200)).stats,

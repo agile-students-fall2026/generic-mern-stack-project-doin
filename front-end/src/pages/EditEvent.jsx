@@ -4,15 +4,23 @@ import EventForm from "../Components/EventForm";
 import { getEvent, updateEvent } from "../api";
 import useApiData from "../useApiData";
 import useToast from "../useToast";
+import { useReturnTo } from "../viewHistory";
 
 export default function EditEvent({ userId }) {
   const { eventId } = useParams();
   const navigate = useNavigate();
-  const { search } = useLocation();
+  const { search, state } = useLocation();
   const showSuccess = useToast();
   const { data: event, loading, error, invalidate, invalidated } = useApiData(eventId, getEvent);
   const [blocked, setBlocked] = useState(false);
   const detailsPath = `/events/${encodeURIComponent(eventId)}${search}`;
+  const backToDetails = useReturnTo(detailsPath);
+  const editOrigin = state?.origin === "/my-events?tab=hosting" ? state.origin : undefined;
+
+  function returnToEvent() {
+    if (editOrigin) navigate(detailsPath, { replace: true, state: { origin: editOrigin } });
+    else backToDetails();
+  }
 
   if (loading) return <p className="doin-page" role="status">Loading event...</p>;
 
@@ -55,9 +63,10 @@ export default function EditEvent({ userId }) {
       onSave={saveChanges}
       onSuccess={() => {
         showSuccess("Event changes saved.");
-        navigate(detailsPath, { replace: true });
+        returnToEvent();
       }}
-      cancelTo={detailsPath}
+      onCancel={returnToEvent}
+      backLabel="Event Details"
     />
   );
 }

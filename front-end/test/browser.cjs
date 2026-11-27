@@ -188,12 +188,13 @@ async function main() {
 
   try {
     browser = await chromium.launch({ headless: true });
-    const contexts = await Promise.all([
-      browser.newContext({ viewport, isMobile: true, hasTouch: true }),
-      browser.newContext({ viewport, isMobile: true, hasTouch: true }),
-    ]);
-    const [alice, bob] = await Promise.all(contexts.map((context) => context.newPage()));
-    for (const [index, page] of [alice, bob].entries()) {
+    const contexts = await Promise.all([0, 1, 2].map(() =>
+      browser.newContext({ viewport, isMobile: true, hasTouch: true })));
+    const [alice, bob, visitor] = await Promise.all(contexts.map((context) => context.newPage()));
+    await visitor.addInitScript((appOrigin) => {
+      if (location.origin === appOrigin) sessionStorage.setItem("doin.currentUserId", "user-sam");
+    }, origin);
+    for (const [index, page] of [alice, bob, visitor].entries()) {
       page.setDefaultTimeout(6500);
       await contexts[index].route("**/*", (route) =>
         new URL(route.request().url()).origin === origin ? route.continue() : route.abort("blockedbyclient"));
@@ -269,7 +270,7 @@ async function main() {
       const response = await browserRequest(alice, "POST", "/api/profiles", 200, () => submit(alice).click());
       measureImage("298 KB setup", source, encoded, response, 800 / 600);
       assert.equal((await response.json()).imageUrl, encoded.url);
-      await heading(alice, "My profile");
+      await heading(alice, "My Profile");
       assert.equal((await preview(alice, ".user-profile-photo")).url, encoded.url);
       savedPhoto = encoded.url;
 
@@ -277,11 +278,11 @@ async function main() {
       await button(bob, "Skip").click();
       await fillSetup(bob, credentials[1].username);
       await submit(bob).click();
-      await heading(bob, "My profile");
+      await heading(bob, "My Profile");
     });
 
     await scenario("large replacement persists and invalid, corrupt, and oversized selections preserve it", async () => {
-      await link(alice, "Edit profile").click();
+      await link(alice, "Edit Profile").click();
       const picker = alice.locator("input[type=file]");
       await preview(alice, ".edit-profile-avatar");
       const source = await jpeg(alice, 1920, 1440, 0.96);
@@ -304,13 +305,13 @@ async function main() {
       const result = await browserRequest(alice, "PATCH", `/api/users/${aliceId}`, 200, () => submit(alice).click());
       measureImage("large replacement", source, encoded, result, 1920 / 1440);
       assert.equal((await result.json()).imageUrl, encoded.url);
-      await heading(alice, "My profile");
+      await heading(alice, "My Profile");
       assert.equal((await preview(alice, ".user-profile-photo")).url, encoded.url);
       savedPhoto = encoded.url;
     });
 
     await scenario("encoded accounting includes UTF-8 profile fields on submit", async () => {
-      await link(alice, "Edit profile").click();
+      await link(alice, "Edit Profile").click();
       await preview(alice, ".edit-profile-avatar");
       let saves = 0;
       function countSave(request) {
@@ -327,32 +328,33 @@ async function main() {
         alice.off("request", countSave);
       }
       await link(alice, "Back to profile").click();
-      await heading(alice, "My profile");
+      await heading(alice, "My Profile");
     });
 
     await scenario("profile editing and People expose all existing interests and recover their catalogs", async () => {
-      await retryCatalog(alice, "/api/interests", "Interests", () => link(alice, "Edit profile").click(),
+      await retryCatalog(alice, "/api/interests", "Interests", () => link(alice, "Edit Profile").click(),
         () => message(alice, "Games"));
       await alice.locator(".edit-profile-interests button").first().waitFor();
       assert.deepEqual(await alice.locator(".edit-profile-interests button").allTextContents(), interests);
       assert.equal(await button(alice, "Games").getAttribute("aria-pressed"), "true");
       await retryCatalog(alice, "/api/interests", "Interests", () => nav(alice, "People"), async () => {
         await heading(alice, credentials[1].name);
-        assert(await alice.locator("#interest-filter").isDisabled());
+        assert.equal(await alice.getByRole("checkbox", { name: "Games", exact: true }).count(), 0);
       });
-      await alice.locator("#interest-filter option").nth(interests.length).waitFor({ state: "attached" });
-      assert.deepEqual((await alice.locator("#interest-filter option").allTextContents()).slice(1), interests);
+      await alice.locator(".browse-filters summary").click();
+      await alice.getByRole("checkbox", { name: "Games", exact: true }).waitFor();
+      assert.deepEqual(await alice.locator(".browse-filter-choice span").allTextContents(), interests);
       assert.equal(await alice.getByLabel("Search by name or username").count(), 1);
-      await alice.locator("#interest-filter").selectOption("Games");
+      await alice.getByRole("checkbox", { name: "Games", exact: true }).check();
       await heading(alice, "Taylor Brooks");
     });
 
     await scenario("connection request and acceptance revalidate across independent sessions", async () => {
       await nav(bob, "Connect");
-      await heading(bob, "Pending requests");
-      await alice.locator("#interest-filter").selectOption("All");
+      await heading(bob, "Incoming requests");
+      await alice.getByRole("button", { name: "Clear filters", exact: true }).click();
       const card = alice.locator(".person-card").filter({ hasText: credentials[1].name });
-      await card.getByRole("button", { name: "View profile" }).click();
+      await card.click();
       await button(alice, "Send connection request").click();
       await button(alice, "Cancel request").waitFor();
       await focus(bob);
@@ -366,8 +368,8 @@ async function main() {
     await scenario("canonical categories in Discover, Create, and Edit with form retry", async () => {
       await nav(alice, "Events");
       await alice.locator(".event-filters summary").click();
-      await alice.locator("#event-category-filter option").nth(categories.length).waitFor({ state: "attached" });
-      assert.deepEqual((await alice.locator("#event-category-filter option").allTextContents()).slice(1), categories);
+      await alice.getByRole("radio", { name: "Games", exact: true }).waitFor();
+      assert.deepEqual((await alice.locator(".browse-filter-choice span").allTextContents()).slice(1), categories);
       await retryCatalog(alice, "/api/events/categories", "Categories",
         () => link(alice, "Create event").click(), async () => {
           assert(await submit(alice).isDisabled());
@@ -419,18 +421,20 @@ async function main() {
         await link(bob, title).click();
         await assertTextFits(bob, ".event-details-content h1", title);
         await assertTextFits(bob, ".event-description", description);
-        await assertTextFits(bob, ".event-location span", location);
+        await assertTextFits(bob, ".event-info .event-location", location);
         await nav(bob, "Events");
-        await link(bob, "My events").click();
+        await link(bob, "My Events").click();
         await assertTextFits(bob, ".my-event-card h2", title);
         await assertTextFits(bob, ".my-event-card .event-card-location span", location);
-        await nav(bob, "People");
-        await assertTextFits(bob, ".person-info h3", name);
-        await bob.locator(".person-card").filter({ hasText: name }).getByRole("button", { name: "View profile" }).click();
-        await assertTextFits(bob, ".user-profile-name", name);
-        await assertTextFits(bob, ".user-profile-username", username);
-        await assertTextFits(bob, ".user-profile-location", location);
-        await assertTextFits(bob, ".user-profile-section p", bio);
+        // Bob and Alice are connected. Check discovery layout as an unconnected visitor.
+        await visitor.setViewportSize({ width, height: 852 });
+        await visitor.goto(origin + "/discover");
+        await assertTextFits(visitor, ".person-info h2", name);
+        await visitor.locator(".person-card").filter({ hasText: name }).click();
+        await assertTextFits(visitor, ".user-profile-name", name);
+        await assertTextFits(visitor, ".user-profile-username", username);
+        await assertTextFits(visitor, ".user-profile-location", location);
+        await assertTextFits(visitor, ".user-profile-section p", bio);
         await nav(bob, "Connect");
         await assertTextFits(bob, ".connection-profile-link span", name);
       });
@@ -440,14 +444,14 @@ async function main() {
       await bob.goto(origin + "/missing-signed-in");
       await heading(bob, "Page not found");
       await link(bob, "Go to Discover People").click();
-      await heading(bob, "Discover people");
+      await heading(bob, "Discover People");
       await bob.goto(origin + `/events/${event.id}`);
       await heading(bob, title);
       await api(alice, "DELETE", `/api/events/${event.id}`, 200);
       await focus(bob);
       await message(bob, "This event was canceled.");
       await nav(bob, "Profile");
-      await button(bob, "Logout").click();
+      await button(bob, "Log Out").click();
       await heading(bob, "Meet people. Do things together.");
       await bob.goBack();
       await heading(bob, "Meet people. Do things together.");

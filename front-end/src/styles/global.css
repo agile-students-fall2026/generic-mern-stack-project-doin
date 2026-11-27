@@ -8,6 +8,8 @@
   --doin-canvas: #f5f6fb;
   --doin-surface: #fff;
   --doin-lavender: #eeedff;
+  --doin-line: #dedfea;
+  --doin-action: #5047e5;
   --doin-border: #d3d3d3;
   --doin-control-border: #858fa0;
   --doin-danger: #a42531;
@@ -33,12 +35,13 @@
   --doin-page-width: 440px;
   --doin-focus-width: 2px;
   --doin-focus-color: var(--doin-brand-ink);
+  --doin-nav-height: 68px;
   --doin-nav-layer: 10;
   --doin-toast-layer: 20;
 }
 
 :root:has(.navbar) {
-  scroll-padding-block-end: calc(var(--doin-control-size) + 3 * var(--doin-space-sm) + 1px + env(safe-area-inset-bottom));
+  scroll-padding-block-end: calc(var(--doin-nav-height) + 12px + env(safe-area-inset-bottom));
 }
 
 body {

@@ -56,13 +56,13 @@ async function signedInPage(context, name, username) {
   await page.locator("#login-email").fill(email);
   await page.locator("#login-password").fill(password);
   await page.getByRole("button", { name: "Log in", exact: true }).click();
-  await heading(page, "Discover people").waitFor();
+  await heading(page, "Discover People").waitFor();
   return { user, page };
 }
 
 async function visitDiscovery(page) {
   await page.goto(origin + "/events");
-  await heading(page, "Discover events").waitFor();
+  await heading(page, "Discover Events").waitFor();
 }
 
 async function filterResponse(page, expected, action) {
@@ -156,7 +156,7 @@ async function main() {
       });
       await context.route("https://picsum.photos/**", (route) => route.abort());
     }
-    const { user: host, page: organizer } = await signedInPage(hostContext, "Maya Rivera", "mayarivera");
+    const { user: host } = await signedInPage(hostContext, "Maya Rivera", "mayarivera");
     const { page: guest } = await signedInPage(guestContext, "Noah Bennett", "noahbennett");
     const sample = await api(hostContext, "POST", "/events", 201, baselineEvent, host.id);
     await api(hostContext, "POST", "/events/" + sample.id + "/rsvp", 200, undefined, "user-alex");
@@ -167,12 +167,12 @@ async function main() {
       assert.equal(await card(guest, "Tennis Meetup").locator("a[href]").count(), 1);
       assert.equal(await card(guest, "Tennis Meetup").locator("button, input, select").count(), 0);
       assert.equal(await link(guest, "Tennis Meetup").getAttribute("href"), "/events/event-1");
-      assert.equal(await guest.getByLabel("Category", { exact: true }).isVisible(), false);
+      assert.equal(await guest.getByRole("radio", { name: "All categories", exact: true }).isVisible(), false);
       assert.equal(await guest.locator(".event-card").count(), 3);
-      await card(guest, baselineEvent.title).getByText("1 of 2 attending", { exact: true }).waitFor();
+      await card(guest, baselineEvent.title).getByText("1/2 attending", { exact: true }).waitFor();
       assert.match(await card(guest, baselineEvent.title).locator("time").textContent(), /^Sat, Nov 28/);
       assert.equal(await card(guest, baselineEvent.title).locator("time").getAttribute("datetime"), baselineEvent.date);
-      await card(guest, "Tennis Meetup").getByText("3:00 PM – 5:00 PM ET", { exact: true }).waitFor();
+      await card(guest, "Tennis Meetup").getByText("3–5 PM", { exact: true }).waitFor();
       const layout = measurements.collapsed = await measure(guest);
       assert(layout.card.bottom <= layout.navbar.top);
       assert.equal(layout.documentWidth, width);
@@ -187,11 +187,11 @@ async function main() {
       assert.equal(await summary.evaluate((node) => document.activeElement === node), true);
       assert.equal(await summary.evaluate((node) => getComputedStyle(node).outlineWidth), "2px");
       await guest.keyboard.press("Enter");
-      const category = guest.getByLabel("Category", { exact: true });
+      const category = guest.getByRole("radio", { name: "All categories", exact: true });
       await category.waitFor();
       await guest.keyboard.press("Tab");
       assert.equal(await category.evaluate((node) => document.activeElement === node), true);
-      assert.deepEqual((await category.locator("option").allTextContents()).slice(1), categories);
+      assert.deepEqual((await guest.locator(".browse-filter-choice span").allTextContents()).slice(1), categories);
       assert.equal(await guest.getByLabel("Date", { exact: true }).getAttribute("type"), "date");
       measurements.expanded = await measure(guest);
       await capture(guest, "discover-expanded");
@@ -213,20 +213,21 @@ async function main() {
       await filterResponse(guest, query, () => guest.locator("#event-search").fill(query.search));
       await toggle(guest).click();
       for (const [key, value, selector, method] of [
-        ["category", "Games", "#event-category-filter", "selectOption"],
+        ["category", "Games", 'input[name="event-category"][value="Games"]', "check"],
         ["location", "Brooklyn", "#event-location-filter", "selectOption"],
         ["date", "2026-11-27", "#event-date-filter", "fill"],
       ]) {
         query[key] = value;
-        const found = await filterResponse(guest, query, () => guest.locator(selector)[method](value));
+        const found = await filterResponse(guest, query, () => method === "check" ? guest.locator(selector).check() : guest.locator(selector)[method](value));
         assert.deepEqual(found.map((event) => event.id), ["event-2"]);
       }
       await toggle(guest).click();
-      assert.match(await toggle(guest).innerText(), /Filters \(3\)/);
+      assert.match(await toggle(guest).innerText(), /Filters\s*3/);
       const chips = guest.getByRole("list", { name: "Active filters" });
       assert.match((await chips.getByRole("listitem").allTextContents()).join("|"), /^Games\|Brooklyn\|Fri, Nov 27/);
       await heading(guest, "Board Game Night").waitFor();
       await capture(guest, "discover-active-filters");
+      await toggle(guest).click();
       const cleared = await filterResponse(guest, { search: "Board" }, () =>
         guest.getByRole("button", { name: "Clear filters", exact: true }).click());
       assert.deepEqual(cleared.map((event) => event.id), ["event-2"]);
@@ -234,8 +235,8 @@ async function main() {
       assert.equal(await chips.count(), 0);
       assert.equal(await toggle(guest).evaluate((node) => document.activeElement === node), true);
       assert.match(await toggle(guest).innerText(), /^Filters\s*$/);
-      await toggle(guest).click();
-      for (const selector of ["#event-category-filter", "#event-location-filter", "#event-date-filter"]) {
+      assert(await guest.getByRole("radio", { name: "All categories", exact: true }).isChecked());
+      for (const selector of ["#event-location-filter", "#event-date-filter"]) {
         assert.equal(await guest.locator(selector).inputValue(), "");
       }
     });
@@ -244,7 +245,7 @@ async function main() {
       await visitDiscovery(guest);
       await toggle(guest).click();
       const sport = await filterResponse(guest, { category: "Sports" }, () =>
-        guest.getByLabel("Category", { exact: true }).selectOption("Sports"));
+        guest.getByRole("radio", { name: "Sports", exact: true }).check());
       assert.deepEqual(sport.map((event) => event.id), ["event-1"]);
       await visitDiscovery(guest);
       await toggle(guest).click();
@@ -279,9 +280,9 @@ async function main() {
       assert.deepEqual(await response.json(), categories);
       assert.equal(await toggle(guest).evaluate((node) => document.activeElement === node), true);
       await toggle(guest).click();
-      const select = guest.getByLabel("Category", { exact: true });
+      const select = guest.getByRole("radio", { name: "All categories", exact: true });
       assert.equal(await select.isEnabled(), true);
-      assert.deepEqual((await select.locator("option").allTextContents()).slice(1), categories);
+      assert.deepEqual((await guest.locator(".browse-filter-choice span").allTextContents()).slice(1), categories);
     });
 
     await check("loading, result errors, retry, and empty searches are distinct", async () => {
@@ -364,7 +365,7 @@ async function main() {
         ...baselineEvent, title: "Freshness check", startTime: "00:00", endTime: "12:00", location: "All",
       }, host.id);
       await filterResponse(guest, { search: "Freshness" }, () => guest.evaluate(() => window.dispatchEvent(new Event("focus"))));
-      await card(guest, "Freshness check").getByText("12:00 AM – 12:00 PM ET", { exact: true }).waitFor();
+      await card(guest, "Freshness check").getByText("12 AM–12 PM", { exact: true }).waitFor();
       await toggle(guest).click();
       const all = await filterResponse(guest, { search: "Freshness", location: "All" }, () =>
         guest.getByLabel("Location", { exact: true }).selectOption("All"));
@@ -387,27 +388,27 @@ async function main() {
     measurements.screenWidths = [];
     for (const screenWidth of [320, 375, 393, 430, 1280]) {
       await check("complete first card, adequate targets, and untruncated long text at " + screenWidth + " px", async () => {
-        await organizer.setViewportSize({ width: screenWidth, height });
-        await visitDiscovery(organizer);
-        await heading(organizer, "Tennis Meetup").waitFor();
-        const layout = await measure(organizer);
+        await guest.setViewportSize({ width: screenWidth, height });
+        await visitDiscovery(guest);
+        await heading(guest, "Tennis Meetup").waitFor();
+        const layout = await measure(guest);
         assert.equal(layout.documentWidth, screenWidth);
         assert(layout.card.bottom <= layout.navbar.top);
         for (const control of [layout.cardLink, layout.search, layout.create, layout.filterToggle]) assertTouchTarget(control);
-        await filterResponse(organizer, { search: longTitle }, () => organizer.locator("#event-search").fill(longTitle));
-        const long = card(organizer, longTitle);
+        await filterResponse(guest, { search: longTitle }, () => guest.locator("#event-search").fill(longTitle));
+        const long = card(guest, longTitle);
         await long.waitFor();
         const titleLines = await assertTextWraps(long.locator("h2"), longTitle);
         const locationLines = await assertTextWraps(long.locator(".event-card-location span"), longLocation);
         measurements.screenWidths.push({ ...layout, titleLines, locationLines });
-        await toggle(organizer).click();
-        const locationFilter = organizer.getByLabel("Location", { exact: true });
+        await toggle(guest).click();
+        const locationFilter = guest.getByLabel("Location", { exact: true });
         await locationFilter.locator("option").filter({ hasText: longLocation }).waitFor({ state: "attached" });
-        await filterResponse(organizer, { search: longTitle, location: longLocation }, () =>
+        await filterResponse(guest, { search: longTitle, location: longLocation }, () =>
           locationFilter.selectOption(longLocation));
-        await toggle(organizer).click();
-        assert.equal(await organizer.evaluate(() => document.documentElement.scrollWidth), screenWidth);
-        if (screenWidth === width) await capture(organizer, "discover-long-content");
+        await toggle(guest).click();
+        assert.equal(await guest.evaluate(() => document.documentElement.scrollWidth), screenWidth);
+        if (screenWidth === width) await capture(guest, "discover-long-content");
       });
     }
 

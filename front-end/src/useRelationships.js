@@ -63,6 +63,7 @@ export default function useRelationships(userId, refreshKey, routeKey) {
     error,
     loading,
     refreshing,
+    retry: invalidate,
     busy,
     pendingAction,
     actionError: actionError && actionError.userId === userId && actionError.routeKey === routeKey
