@@ -137,6 +137,40 @@ Individual coverage reports are saved in `coverage/individual/`.
 The individual report measures code executed by the selected tests against the back-end source files. Coverage percentages may overlap between developers and do not automatically add up to 100%.
 
 Each developer should commit their own tests so contributions are visible in Git history.
+
+Mocha rejects a run that executes zero tests. The aggregate and individual
+coverage commands use the same Mocha configuration and accept the same filters.
+
+## Browser integration
+
+The browser harness runs a production build against an isolated Express server on
+an ephemeral loopback port. It exercises independent sessions, cross-user
+relationships and events, profile uploads, catalog recovery, guarded routes,
+and long content at mobile and desktop widths.
+
+Build the frontend and run the harness from the repository root:
+
+```bash
+npm --prefix front-end run build
+node front-end/test/browser.cjs
+```
+
+The harness requires an existing Playwright installation with Chromium. Playwright
+is optional and is outside the project dependencies. Use the installed module by
+setting `PLAYWRIGHT_MODULE` to its absolute package path, and set
+`PLAYWRIGHT_BROWSERS_PATH` if your installation uses a separate browser cache:
+
+```bash
+PLAYWRIGHT_MODULE=/path/to/node_modules/playwright \
+PLAYWRIGHT_BROWSERS_PATH=/path/to/playwright-browsers \
+node front-end/test/browser.cjs
+```
+
+If you need to acquire Playwright or Chromium, get approval through the team’s
+normal dependency process first. Set `DOIN_CLIENT_DIR` to test a build stored
+outside `front-end/dist`. The harness prints scenario outcomes and measured upload
+sizes and exits nonzero on a failed assertion or unexpected local HTTP failure.
+
 ## Team Conventions
 
 - Store test files in back-end/test/.
