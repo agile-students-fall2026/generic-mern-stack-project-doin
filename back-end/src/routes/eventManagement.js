@@ -3,7 +3,7 @@ import { Router } from "express";
 import { store } from "../data/store.js";
 import { requireMockUser } from "../middleware/mockIdentity.js";
 
-import { normalizeEventImage } from "../shared/eventFields.js";
+import { guestIds, normalizeEventImage, serializeEvent } from "../shared/eventFields.js";
 import { normalizeTimeZone } from "../shared/timeZones.js";
 
 const router = Router();
@@ -91,6 +91,7 @@ router.patch("/events/:eventId", requireMockUser, (req, res) => {
     "timezone",
     "location",
     "category",
+    "capacity",
     "imageUrl",
   ];
 
@@ -104,7 +105,7 @@ router.patch("/events/:eventId", requireMockUser, (req, res) => {
       );
     }
 
-    if (field !== "imageUrl" && (
+    if (field !== "capacity" && field !== "imageUrl" && (
       typeof changes[field] !== "string" ||
       !changes[field].trim()
     )) {
@@ -146,6 +147,15 @@ router.patch("/events/:eventId", requireMockUser, (req, res) => {
     );
   }
 
+  if ("capacity" in changes) {
+    if (!Number.isInteger(updated.capacity) || updated.capacity < 1) {
+      return sendError(res, 400, "VALIDATION_ERROR", "Capacity must be a positive integer.");
+    }
+    if (updated.capacity < guestIds(event).length) {
+      return sendError(res, 409, "CAPACITY_BELOW_GUEST_COUNT", "Capacity cannot be below the current guest count.");
+    }
+  }
+
   if ("imageUrl" in changes) {
     updated.imageUrl = normalizeEventImage(changes.imageUrl);
     if (updated.imageUrl === null) return sendError(res, 400, "VALIDATION_ERROR", "Invalid image URL.");
@@ -177,7 +187,7 @@ router.patch("/events/:eventId", requireMockUser, (req, res) => {
   // Update the shared event object only after all validation passes.
   Object.assign(event, updated);
 
-  return res.status(200).json(event);
+  return res.status(200).json(serializeEvent(event));
 });
 
 // DELETE /api/events/:eventId
@@ -197,7 +207,7 @@ router.delete("/events/:eventId", requireMockUser, (req, res) => {
   // Keep the event record, but remove it from active listings.
   event.status = "cancelled";
 
-  return res.status(200).json(event);
+  return res.status(200).json(serializeEvent(event));
 });
 
 export default router;

@@ -3,6 +3,8 @@ import { Router } from "express";
 import { store } from "../data/store.js";
 import { requireMockUser } from "../middleware/mockIdentity.js";
 
+import { guestIds, serializeEvent } from "../shared/eventFields.js";
+
 const router = Router();
 
 // RSVP, Leave Event, and My Events routes will go here.
@@ -32,6 +34,12 @@ router.post("/events/:eventId/rsvp", requireMockUser, (req, res) => {
     });
   }
 
+  if (event.organizerId === userId) {
+    return res.status(403).json({
+      error: { code: "ORGANIZER_CANNOT_RSVP", message: "Hosts are separate from guests and cannot RSVP to their own events." }
+    });
+  }
+
   // Prevent duplicate RSVPs
   if (event.attendeeIds.includes(userId)) {
     return res.status(409).json({
@@ -43,7 +51,7 @@ router.post("/events/:eventId/rsvp", requireMockUser, (req, res) => {
   }
 
   // Check event capacity
-  if (event.attendeeIds.length >= event.capacity) {
+  if (guestIds(event).length >= event.capacity) {
     return res.status(409).json({
       error: {
         code: "EVENT_FULL",
@@ -55,7 +63,7 @@ router.post("/events/:eventId/rsvp", requireMockUser, (req, res) => {
   // Add the user to the attendee list
   event.attendeeIds.push(userId);
 
-  return res.status(200).json(event);
+  return res.status(200).json(serializeEvent(event));
 });
 
 
@@ -75,6 +83,12 @@ router.delete("/events/:eventId/rsvp", requireMockUser, (req, res) => {
     });
   }
 
+  if (event.organizerId === userId) {
+    return res.status(403).json({
+      error: { code: "ORGANIZER_CANNOT_RSVP", message: "Hosts are separate from guests and cannot RSVP to their own events." }
+    });
+  }
+
   // Check if the user joined the event
   if (!event.attendeeIds.includes(userId)) {
     return res.status(409).json({
@@ -90,7 +104,7 @@ router.delete("/events/:eventId/rsvp", requireMockUser, (req, res) => {
     (id) => id !== userId
   );
 
-  return res.status(200).json(event);
+  return res.status(200).json(serializeEvent(event));
 });
 
 
@@ -134,7 +148,7 @@ router.get("/users/:userId/events", requireMockUser, (req, res) => {
   const events = store.events.filter((event) => {
   if (event.status !== "active") return false;
 
-  const joined = event.attendeeIds.includes(userId);
+  const joined = guestIds(event).includes(userId);
   const hosting = event.organizerId === userId;
 
   if (type === "joined") return joined;
@@ -144,7 +158,7 @@ router.get("/users/:userId/events", requireMockUser, (req, res) => {
 
 });
 
-return res.status(200).json(events);
+return res.status(200).json(events.map(serializeEvent));
 });
 
 export default router;

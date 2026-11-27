@@ -1,100 +1,38 @@
-
-/* My Events Page */
-
-.my-events-page {
-  min-height: 100vh;
+.my-events-page .events-tabs,
+.my-events-page .doin-page-title {
+  margin-bottom: var(--doin-space-md);
 }
-
-.my-events-container {
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-.my-events-container > p {
-  color: #666;
-  margin-bottom: 24px;
-}
-
-/* Joined and Hosting Tabs */
 
 .my-events-tabs {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--doin-space-sm);
+  margin-bottom: var(--doin-gutter);
 }
-
-.my-events-tabs .doin-button {
-  flex: 1;
-}
-
-/* Event Cards */
 
 .my-events-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.my-event-card {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.my-event-image {
-  width: 160px;
-  height: 140px;
-  object-fit: cover;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.my-event-info {
-  flex: 1;
+  display: grid;
+  gap: var(--doin-space-sm);
   min-width: 0;
 }
 
-.my-event-info h2 {
-  font-size: 20px;
-  margin: 8px 0 12px;
+.my-event-edit-link {
+  font-size: var(--doin-small-text);
 }
 
-.my-event-info p {
-  margin: 6px 0;
-  font-size: 14px;
+.my-events-message {
+  padding: var(--doin-space-md);
+  border-radius: var(--doin-radius);
+  background: var(--doin-canvas);
+  overflow-wrap: anywhere;
 }
 
-.my-event-category {
-  color: #635bff;
-  font-weight: 600;
-  font-size: 13px;
+.my-events-message[role="status"] {
+  color: var(--doin-muted);
 }
 
-/* Empty State */
-
-.my-events-empty {
-  text-align: center;
-  padding: 32px 20px;
-}
-
-.my-events-empty p {
-  color: #666;
-}
-
-/* Mobile Styling */
-
-@media (max-width: 600px) {
-  .my-event-card {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .my-event-image {
-    width: 100%;
-    height: 180px;
-  }
-
-  .my-event-info h2 {
-    font-size: 18px;
-  }
+.my-events-list .event-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--doin-space-sm);
 }

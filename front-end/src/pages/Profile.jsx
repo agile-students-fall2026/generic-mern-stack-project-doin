@@ -1,38 +1,20 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { getUserById } from "../api";
 import UserProfile from "../Components/UserProfile";
-import { currentUserId, getPerson } from "../api";
+import useApiData from "../useApiData";
 
-export default function Profile({ stats = [] }) {
-  const [profile, setProfile] = useState(null);
-  const [error, setError] = useState("");
-
-  // My Profile reads the signed in user from the back end (#101), using
-  // the shared profile endpoint from #98.
-  useEffect(() => {
-    const userId = currentUserId();
-    if (!userId) {
-      setError("Please log in to see your profile.");
-      return;
-    }
-    getPerson(userId)
-      .then((data) => setProfile(data))
-      .catch(() => setError("Your profile could not be loaded. Please try again."));
-  }, []);
-
-  if (error) {
+export default function Profile({ userId, refreshKey, onLogout }) {
+  const { data: profile, loading, error } = useApiData(userId, getUserById, refreshKey);
+  if (loading || error) {
     return (
       <main className="doin-page">
         <h1 className="doin-page-title">My profile</h1>
-        <p>{error}</p>
-      </main>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <main className="doin-page">
-        <p>Loading your profile...</p>
+        {loading
+          ? <p role="status">Loading your profile...</p>
+          : <p role="alert">{error}</p>}
+        <button type="button" className="doin-button doin-button--secondary" onClick={onLogout}>
+          Logout
+        </button>
       </main>
     );
   }
@@ -46,11 +28,14 @@ export default function Profile({ stats = [] }) {
       bio={profile.bio}
       interests={profile.interests ?? []}
       imageUrl={profile.imageUrl}
-      stats={stats}
+      stats={profile.stats}
     >
       <Link to="/edit-profile" className="doin-button doin-button--primary">
         Edit profile
       </Link>
+      <button type="button" className="doin-button doin-button--secondary" onClick={onLogout}>
+        Logout
+      </button>
     </UserProfile>
   );
 }

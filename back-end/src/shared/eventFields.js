@@ -10,3 +10,11 @@ export function normalizeEventImage(value) {
   )) return null;
   return image;
 }
+
+export function guestIds(event) {
+  return event.attendeeIds.filter((id) => id !== event.organizerId);
+}
+
+export function serializeEvent(event) {
+  return { ...event, attendeeIds: guestIds(event) };
+}

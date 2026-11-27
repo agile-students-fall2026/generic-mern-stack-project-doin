@@ -49,21 +49,13 @@
 .interest-option {
   min-height: 52px;
   text-align: left;
-  background-color: white;
-  color: #202638;
-  border-color: #b4bfca;
+  border-color: var(--doin-control-border);
 }
 
-.interest-option--selected {
-  background-color: #d7dce1;
-}
-
-.interest-option:hover {
-  background-color: #f2f3fa;
-}
-
-.interest-option--selected:hover {
-  background-color: #cbd1d8;
+.interest-option--selected:not(:disabled) {
+  background-color: var(--doin-lavender);
+  border-color: var(--doin-brand-ink);
+  color: var(--doin-brand-ink);
 }
 
 /* Bottom section */
@@ -80,8 +72,6 @@
   min-height: 52px;
   text-align: left;
   font-weight: bold;
-  background-color: #d7dce1;
-  color: #202638;
 }
 
 .interests-actions p {

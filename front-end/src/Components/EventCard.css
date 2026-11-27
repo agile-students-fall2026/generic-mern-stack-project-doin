@@ -1,0 +1,112 @@
+.event-card.doin-card {
+  padding: 0;
+}
+
+.event-card-link {
+  display: grid;
+  grid-template-columns: clamp(60px, 22%, 84px) minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: var(--doin-space-md);
+  min-block-size: var(--doin-control-size);
+  padding: var(--doin-space-md);
+  border-radius: var(--doin-radius);
+  color: var(--doin-text);
+  text-decoration: none;
+}
+
+.event-card-link:focus-visible {
+  outline: var(--doin-focus-width) solid var(--doin-focus-color);
+  outline-offset: var(--doin-focus-width);
+}
+
+@media (hover: hover) {
+  .event-card-link:hover { background: var(--doin-canvas); }
+  .event-card-link:hover h2 { text-decoration: underline; }
+}
+
+.event-card-link:active {
+  background: var(--doin-lavender);
+}
+
+.event-card-artwork {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--doin-radius);
+  background: var(--doin-lavender);
+  object-fit: cover;
+}
+
+.event-card-content {
+  display: grid;
+  justify-items: start;
+  gap: var(--doin-space-xs);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-card-content h2 {
+  font-size: 1.0625rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.event-card-category {
+  max-width: 100%;
+  padding: 1px var(--doin-space-sm);
+  border-radius: var(--doin-radius-field);
+  background: var(--doin-lavender);
+  color: var(--doin-brand-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.event-card-schedule,
+.event-card-location,
+.event-card-attendance {
+  font-size: var(--doin-small-text);
+  line-height: 1.35;
+}
+
+.event-card-schedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--doin-space-sm);
+}
+
+.event-card-location {
+  display: flex;
+  gap: var(--doin-space-xs);
+  align-items: baseline;
+}
+
+.event-card-location span {
+  min-width: 0;
+}
+
+.event-card-location svg {
+  align-self: flex-start;
+  width: 1em;
+  height: 1em;
+  margin-top: 0.15em;
+  flex: none;
+}
+
+.event-card-location,
+.event-card-attendance {
+  color: var(--doin-muted);
+}
+
+.event-card-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--doin-brand-ink);
+}
+
+.event-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--doin-space-sm);
+  padding: var(--doin-space-sm) var(--doin-space-md);
+  border-top: 1px solid var(--doin-border);
+}

@@ -2,16 +2,11 @@
 /* Search Bar */
 .discover label {
   display: block;
-  font-weight: bold;
   margin-bottom: 10px;
 }
 
 .discover input {
   width: 100%;
-  padding: 12px;
-  box-sizing: border-box;
-  border: 1px solid lightgray;
-  border-radius: 8px;
 }
 
 /* Filters */
@@ -37,6 +32,7 @@
 .person-card img {
   width: 85px;
   height: 100px;
+  flex-shrink: 0;
   object-fit: cover;
   border-radius: 8px;
 }
@@ -44,6 +40,7 @@
 .person-info {
   flex: 1;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .person-info h3 {
@@ -57,17 +54,8 @@
 
 /* View Profile Button */
 .person-info button {
-  background-color: #635bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
   padding: 10px;
   width: 100%;
-  cursor: pointer;
-}
-
-.person-info button:hover {
-  background-color: #5148e8;
 }
 
 .discover-connections-link {

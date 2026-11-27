@@ -95,7 +95,7 @@ export function setupProfile(fields, signal) {
 //
 
 // Discover people (#99), with search and interest filtering (#100).
-export function getPeople(search, interest) {
+export function getPeople(search, interest, signal) {
   const parts = [];
   if (search.trim()) {
     parts.push(`search=${encodeURIComponent(search.trim())}`);
@@ -104,20 +104,15 @@ export function getPeople(search, interest) {
     parts.push(`interest=${encodeURIComponent(interest)}`);
   }
   const query = parts.length > 0 ? `?${parts.join("&")}` : "";
-  return request(`/users${query}`);
-}
-
-// One profile (#98), shared by My Profile, Edit Profile, and Person
-// Details (#99).
-export function getPerson(userId) {
-  return request(`/users/${userId}`);
+  return request(`/users${query}`, { signal });
 }
 
 // Profile update (#98). Only the owner can update their own profile.
-export function updateProfile(userId, fields) {
+export function updateProfile(userId, fields, signal) {
   return request(`/users/${userId}`, {
     method: "PATCH",
     body: JSON.stringify(fields),
+    signal,
   });
 }
 
@@ -147,17 +142,17 @@ export function getEventCategories(signal) {
   return request("/events/categories", { signal });
 }
 
+export function getTimeZones(signal) {
+  return request("/events/timezones", { signal });
+}
+
 export function searchEvents(filters = {}, signal) {
   const params = new URLSearchParams();
 
   for (const key of ["search", "category", "location", "date"]) {
     const value = filters[key];
 
-    if (
-      typeof value === "string" &&
-      value.trim() &&
-      value !== "All"
-    ) {
+    if (typeof value === "string" && value.trim()) {
       params.set(key, value.trim());
     }
   }

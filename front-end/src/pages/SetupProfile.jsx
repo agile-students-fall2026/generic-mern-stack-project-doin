@@ -1,62 +1,52 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { setupProfile } from "../api";
+import Avatar from "../Components/Avatar";
+import { profileBodyError, profileBodyFits, profilePhotoTypes } from "../profilePhoto";
+import useProfilePhoto from "../useProfilePhoto";
 import useSubmission from "../useSubmission";
+import useToast from "../useToast";
 import "./Auth.css";
 import "./SetupProfile.css";
 
-export default function SetupProfile({ onUserChange }) {
+export default function SetupProfile({ user, onUserChange }) {
+  const [name, setName] = useState(user.name ?? "");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
-  const [photoPreview, setPhotoPreview] = useState("");
+  const photo = useProfilePhoto();
   const { pending, error, setError, submit } = useSubmission();
-  const navigate = useNavigate();
+  const showSuccess = useToast();
+
+  const profileFields = () => ({
+    name: name.trim(),
+    username: username.trim(),
+    bio: bio.trim(),
+    location: location.trim(),
+  });
 
   function handlePhotoChange(event) {
     const file = event.target.files[0];
-
-    if (!file) {
-      return;
-    }
-
-    // Leave room for base64 encoding and profile fields in Express's JSON body limit.
-    if (file.size > 70_000) {
-      setError("That photo is too large. Please choose a smaller photo.");
-      return;
-    }
-    setError("");
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      setPhotoPreview(reader.result);
-    };
-
-    reader.readAsDataURL(file);
+    event.target.value = "";
+    if (file && !pending) photo.choosePhoto(file, profileFields());
   }
 
   function handleFinish(event) {
     event.preventDefault();
-
-    if (!username.trim()) {
+    if (photo.processing || pending) return;
+    if (!name.trim() || !username.trim()) {
+      setError("Enter your name and choose a username.");
       return;
     }
 
-    // Interests are already on the registered user's record.
-    const fields = {
-      username: username.trim(),
-      bio: bio.trim(),
-      location: location.trim(),
-      imageUrl: photoPreview,
-    };
-    submit(
-      (signal) => setupProfile(fields, signal),
-      (user) => {
-        onUserChange(user);
-        navigate("/profile");
-      },
-    );
+    const fields = { ...profileFields(), imageUrl: photo.imageUrl };
+    if (!profileBodyFits(fields)) {
+      setError(profileBodyError);
+      return;
+    }
+    submit((signal) => setupProfile(fields, signal), (profile) => {
+      onUserChange(profile);
+      showSuccess("Profile saved.");
+    });
   }
 
   return (
@@ -73,33 +63,41 @@ export default function SetupProfile({ onUserChange }) {
           className="setup-profile-form"
         >
           <div className="setup-profile-photo">
-            {photoPreview ? (
-              <img
-                src={photoPreview}
-                alt="Your profile preview"
-                className="setup-profile-avatar"
-              />
-            ) : (
-              <div className="setup-profile-avatar" />
-            )}
+            <Avatar src={photo.imageUrl} alt="Your profile preview" className="setup-profile-avatar" />
 
-            <label htmlFor="profile-photo">Add photo</label>
+            <label className="doin-label" htmlFor="profile-photo">Add photo</label>
 
             <input
               id="profile-photo"
               name="photo"
               type="file"
-              accept="image/*"
+              accept={profilePhotoTypes}
+              disabled={pending}
               onChange={handlePhotoChange}
             />
           </div>
 
           <div className="setup-profile-field">
-            <label htmlFor="username">Username</label>
+            <label className="doin-label" htmlFor="profile-name">Name</label>
+            <input
+              id="profile-name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              className="doin-input setup-profile-input"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              required
+            />
+          </div>
+
+          <div className="setup-profile-field">
+            <label className="doin-label" htmlFor="username">Username</label>
             <input
               id="username"
               name="username"
               type="text"
+              autoComplete="username"
               className="doin-input setup-profile-input"
               placeholder="Choose a username"
               value={username}
@@ -109,7 +107,7 @@ export default function SetupProfile({ onUserChange }) {
           </div>
 
           <div className="setup-profile-field">
-            <label htmlFor="bio">Short bio</label>
+            <label className="doin-label" htmlFor="bio">Short bio</label>
             <textarea
               id="bio"
               name="bio"
@@ -122,7 +120,7 @@ export default function SetupProfile({ onUserChange }) {
           </div>
 
           <div className="setup-profile-field">
-            <label htmlFor="location">Location</label>
+            <label className="doin-label" htmlFor="location">Location</label>
             <input
               id="location"
               name="location"
@@ -134,12 +132,15 @@ export default function SetupProfile({ onUserChange }) {
             />
           </div>
 
-          {error && <p className="auth-error" role="alert">{error}</p>}
+          {photo.processing && <p role="status">Processing photo…</p>}
+          {photo.error && <p className="doin-field-error" role="alert">{photo.error}</p>}
+          {error && <p className="doin-field-error" role="alert">{error}</p>}
 
           <button
             type="submit"
             className="doin-button doin-button--primary setup-profile-finish"
-            disabled={pending}
+            aria-busy={pending}
+            disabled={pending || photo.processing}
           >
             {pending ? "Saving profile…" : "Finish setup"}
           </button>

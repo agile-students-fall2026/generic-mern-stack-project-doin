@@ -1,82 +1,105 @@
-/* Page layout */
-.connections-page {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-}
-
-.connections-container {
-  width: 100%;
-  max-width: 520px;
-}
-
-/* Sections */
 .connections-section {
-  margin-bottom: 28px;
+  display: grid;
+  gap: var(--doin-space-sm);
+}
+
+.connections-section + .connections-section {
+  margin-top: var(--doin-space-lg);
 }
 
 .connections-section h2 {
-  font-size: 18px;
-  margin: 0 0 14px;
+  font-size: 1.0625rem;
+  font-weight: 600;
 }
 
-/* User cards */
 .connection-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  display: grid;
+  gap: var(--doin-space-sm);
+  padding: var(--doin-space-md);
 }
 
-.connection-request-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.connection-request-actions button {
-  padding: 6px 8px;
-  font-size: 12px;
-}
-
-.connection-profile-link span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.connection-accept {
-  padding: 8px 12px;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.connection-user img {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
+.connection-request,
+.connection-outgoing {
+  background: var(--doin-canvas);
 }
 
 .connection-profile-link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
+  min-inline-size: 0;
+  min-block-size: var(--doin-control-size);
+  gap: var(--doin-space-md);
   color: inherit;
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: var(--doin-radius-field);
 }
 
-.connection-profile-link:hover span {
-  color: #635bff;
-  text-decoration: underline;
+.connection-avatar {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.connection-identity {
+  display: grid;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.connection-name {
+  font-weight: 600;
+}
+
+.connection-username,
+.connection-empty {
+  color: var(--doin-muted);
+  font-size: var(--doin-small-text);
+}
+
+@media (hover: hover) {
+  .connection-profile-link:hover .connection-name {
+    color: var(--doin-brand-ink);
+    text-decoration: underline;
+  }
 }
 
 .connection-profile-link:focus-visible {
-  outline: 2px solid #635bff;
-  outline-offset: 4px;
+  outline: var(--doin-focus-width) solid var(--doin-focus-color);
+  outline-offset: var(--doin-focus-width);
+}
+
+.connection-request-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--doin-space-sm);
+}
+
+.connection-request-actions .doin-button {
+  padding-inline: var(--doin-space-md);
+  font-size: var(--doin-small-text);
+}
+
+.connection-request .connection-request-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.connection-suggested {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+@media (min-width: 375px) {
+  .connection-outgoing {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+.connection-message {
+  margin-bottom: var(--doin-space-md);
+  overflow-wrap: anywhere;
 }

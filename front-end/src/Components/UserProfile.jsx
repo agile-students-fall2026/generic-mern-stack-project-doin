@@ -1,5 +1,6 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import "./UserProfile.css";
+import Avatar from "./Avatar";
 import BackButton from "./BackButton";
 
 export default function UserProfile({
@@ -10,38 +11,33 @@ export default function UserProfile({
   bio,
   interests = [],
   imageUrl,
-  stats = [],
+  stats,
+  headingRef,
   sharedInterests = [],
   children,
   onBack,
   backAriaLabel = "Go back",
 }) {
   const photoDialog = useRef(null);
+  const [unavailablePhoto, setUnavailablePhoto] = useState(null);
+  const photo = imageUrl?.trim();
+  const hasPhoto = Boolean(photo && photo !== unavailablePhoto);
 
   return (
     <main className="user-profile-page doin-page">
       {onBack && <BackButton onClick={onBack} ariaLabel={backAriaLabel} />}
 
-      <h1 className="doin-page-title">{title}</h1>
+      <h1 className="doin-page-title" ref={headingRef} tabIndex={headingRef ? -1 : undefined}>{title}</h1>
 
       <div className="user-profile-header">
         <button
           type="button"
           className="user-profile-photo-button"
           onClick={() => photoDialog.current?.showModal()}
-          disabled={!imageUrl}
+          disabled={!hasPhoto}
           aria-label={`View ${name}'s profile picture`}
         >
-          {imageUrl ? (
-            <img src={imageUrl} alt={name} className="user-profile-photo" />
-          ) : (
-            <span className="user-profile-photo user-profile-photo-empty">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21c0-5 3-8 8-8s8 3 8 8" />
-              </svg>
-            </span>
-          )}
+          <Avatar src={photo} className="user-profile-photo" onUnavailable={setUnavailablePhoto} />
         </button>
 
         <div className="user-profile-identity">
@@ -74,12 +70,12 @@ export default function UserProfile({
         </div>
       </div>
 
-      {stats.length > 0 && (
+      {stats && (
         <div className="user-profile-stats">
-          {stats.map((stat) => (
-            <div className="user-profile-stat" key={stat.label}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
+          {[["Connections", stats.connections], ["Hosted", stats.hosted], ["Attended", stats.attended]].map(([label, value]) => (
+            <div className="user-profile-stat" key={label}>
+              <strong>{value}</strong>
+              <span>{label}</span>
             </div>
           ))}
         </div>
@@ -136,7 +132,7 @@ export default function UserProfile({
             ×
           </button>
 
-          {imageUrl && <img src={imageUrl} alt={`${name}'s profile picture`} />}
+          {hasPhoto && <Avatar src={photo} alt={`${name}'s profile picture`} />}
         </div>
       </dialog>
     </main>

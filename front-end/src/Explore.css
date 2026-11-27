@@ -1,104 +1,122 @@
-.explore {
-  min-height: 100vh;
-  color: #303640;
-  font-family: Arial, sans-serif;
+.explore .events-tabs {
+  margin-bottom: var(--doin-space-md);
 }
 
-.explore label {
-  display: block;
-  font-weight: bold;
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-
-.explore input {
-  width: 100%;
-  padding: 12px;
-  box-sizing: border-box;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-}
-
-.explore .event-filters {
-  background-color: #f0f1f3;
-  padding: 12px;
-  margin-top: 20px;
-  margin-bottom: 22px;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-}
-
-.explore .event-card {
+.explore-title-row {
   display: flex;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid lightgray;
-  border-radius: 10px;
-  margin-bottom: 18px;
-  background-color: white;
-  align-items: stretch;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--doin-space-sm);
+  margin-bottom: var(--doin-space-md);
 }
 
-.explore .event-card img {
-  width: 105px;
-  height: 120px;
-  flex-shrink: 0;
-  object-fit: cover;
-  border-radius: 8px;
+.explore-title-row .doin-page-title {
+  margin: 0;
+  font-size: clamp(1.25rem, 6vw, 1.5rem);
 }
 
-.explore .event-info {
-  flex: 1;
+.explore-create {
+  padding-inline: var(--doin-space-md);
+  font-size: var(--doin-small-text);
+}
+
+.event-browse-controls,
+.event-results {
+  display: grid;
+  gap: var(--doin-space-sm);
   min-width: 0;
-  background-color: transparent;
-  padding: 0;
+}
+
+.event-browse-controls {
+  margin-bottom: var(--doin-space-md);
+}
+
+.event-browse-controls > input {
+  width: 100%;
+}
+
+.event-filter-toggle {
+  width: fit-content;
+  padding-inline: var(--doin-space-md);
+  font-size: var(--doin-small-text);
+}
+
+.event-filter-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.event-filter-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.event-filters[open] .event-filter-toggle svg {
+  transform: rotate(180deg);
+}
+
+.event-filter-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--doin-space-md);
+  margin-top: var(--doin-space-sm);
+  padding: var(--doin-space-md);
+  background: var(--doin-canvas);
+  border: 1px solid var(--doin-border);
+  border-radius: var(--doin-radius);
+}
+
+.event-filter-field {
+  display: grid;
+  gap: var(--doin-space-xs);
+  min-width: 0;
+}
+
+.event-filter-field .doin-input {
+  width: 100%;
+}
+
+.event-filter-date,
+.event-filter-fields > [role="status"] {
+  grid-column: 1 / -1;
+}
+
+.event-active-filters {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--doin-space-sm);
 }
 
-.explore .event-info h3 {
-  font-size: 18px;
-  margin: 0 0 8px;
+.event-active-filters ul {
+  display: flex;
+  flex: 1 1 12ch;
+  flex-wrap: wrap;
+  gap: var(--doin-space-xs);
+  min-width: 0;
 }
 
-.explore .event-info p {
-  font-size: 13px;
-  margin: 0 0 12px;
+.event-active-filters li {
+  max-width: 100%;
+  padding: var(--doin-space-xs) var(--doin-space-sm);
+  border-radius: var(--doin-radius-field);
+  background: var(--doin-lavender);
+  color: var(--doin-brand-ink);
+  font-size: var(--doin-small-text);
+  overflow-wrap: anywhere;
 }
 
-.explore .event-info button {
-  width: 100%;
-  background-color: #635bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 9px;
-  cursor: pointer;
+.event-active-filters .doin-button {
+  padding-inline: var(--doin-space-md);
+  font-size: var(--doin-small-text);
 }
 
-.explore .create-event {
-  display: block;
-  width: 100%;
-  margin: 0 0 18px;
-  padding: 12px 18px;
-  border-radius: 8px;
-}
-
-.explore .event-filters select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-  background-color: white;
-  color: #202638;
-  font-size: 16px;
-}
-
-.explore .event-filters select {
-  margin-bottom: 12px;
-}
-
-.explore .event-filters select:last-child {
-  margin-bottom: 0;
+.event-results-message {
+  display: grid;
+  justify-items: start;
+  gap: var(--doin-space-sm);
+  padding: var(--doin-space-md);
+  background: var(--doin-canvas);
+  border-radius: var(--doin-radius);
+  overflow-wrap: anywhere;
 }

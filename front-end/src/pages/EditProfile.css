@@ -59,19 +59,6 @@
 
 /* Profile picture editing */
 
-.edit-profile-avatar-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f0f1f3;
-  color: #687386;
-}
-
-.edit-profile-avatar-empty svg {
-  width: 60px;
-  height: 60px;
-}
-
 .edit-profile-photo-edit {
   min-width: 150px;
 }
@@ -112,6 +99,8 @@
 }
 
 .edit-profile-interest {
+  min-inline-size: var(--doin-control-size);
+  min-block-size: var(--doin-control-size);
   padding: 8px 12px;
   border-radius: 12px;
   font-size: 14px;
@@ -121,15 +110,15 @@
   border: 1px solid #e8eaf1;
 }
 
+.edit-profile-interest:focus-visible {
+  outline: var(--doin-focus-width) solid var(--doin-focus-color);
+  outline-offset: var(--doin-focus-width);
+}
+
 .edit-profile-interest-on {
   background-color: #635bff;
   color: white;
   border-color: transparent;
-}
-
-.edit-profile-saved {
-  color: #635bff;
-  font-weight: 600;
 }
 
 /* Save and back buttons (their styles are .doin-button) */

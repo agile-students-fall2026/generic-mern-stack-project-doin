@@ -1,34 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
-import { getInterests, saveInterests } from "../api";
+import { saveInterests } from "../api";
+import CatalogStatus from "../Components/CatalogStatus";
+import { useInterestCatalog } from "../useCatalog";
 import useSubmission from "../useSubmission";
 import "./Auth.css";
 import "./SelectInterests.css";
 
 export default function SelectInterests({ user, onUserChange }) {
   const [selectedInterests, setSelectedInterests] = useState(user.interests);
-  const [catalog, setCatalog] = useState(null);
-  const [catalogError, setCatalogError] = useState("");
-  const [catalogAttempt, setCatalogAttempt] = useState(0);
+  const catalog = useInterestCatalog();
   const { pending, error, setError, submit } = useSubmission();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getInterests(controller.signal)
-      .then((interests) => {
-        if (!controller.signal.aborted) setCatalog(interests);
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) setCatalogError(error.message);
-      });
-    return () => controller.abort();
-  }, [catalogAttempt]);
-
-  function retryCatalog() {
-    setCatalogError("");
-    setCatalogAttempt((previous) => previous + 1);
-  }
 
   function toggleInterest(interest) {
     setError("");
@@ -58,23 +41,10 @@ export default function SelectInterests({ user, onUserChange }) {
 
         <p className="interests-description">Select activities you enjoy</p>
 
-        {catalogError ? (
-          <div>
-            <p className="auth-error" role="alert">{catalogError}</p>
-            <button
-              type="button"
-              className="doin-button doin-button--secondary"
-              onClick={retryCatalog}
-            >
-              Retry
-            </button>
-          </div>
-        ) : catalog === null && (
-          <p role="status">Loading interests…</p>
-        )}
+        <CatalogStatus catalog={catalog} label="Interests" />
 
         <div className="interests-grid">
-          {catalog?.map((interest) => (
+          {catalog.data?.map((interest) => (
             <button
               key={interest}
               type="button"
@@ -95,13 +65,14 @@ export default function SelectInterests({ user, onUserChange }) {
         </div>
 
         <div className="interests-actions">
-          {error && <p className="auth-error" role="alert">{error}</p>}
+          {error && <p className="doin-field-error" role="alert">{error}</p>}
 
           <button
             type="button"
-            className="doin-button interests-next"
+            className="doin-button doin-button--primary interests-next"
+            aria-busy={pending}
             onClick={handleNext}
-            disabled={catalog === null || pending}
+            disabled={!catalog.data || pending}
           >
             {pending ? "Saving…" : selectedInterests.length === 0 ? "Skip" : "Next"}
           </button>

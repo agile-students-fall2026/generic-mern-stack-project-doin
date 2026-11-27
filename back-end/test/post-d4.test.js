@@ -35,6 +35,42 @@ describe("[Alpartun] Post-D4 functional completion", () => {
     await api("patch", `/api/events/${body.id}`).send({ timezone: "+02:00" }).expect(400);
   });
 
+  it("blocks host RSVP and leave while legacy host entries never occupy a guest place", async () => {
+    const stored = store.events[0];
+    stored.attendeeIds = [stored.organizerId];
+    stored.capacity = 1;
+    for (const method of ["post", "delete"]) {
+      const { body } = await api(method, existingEvent + "/rsvp", stored.organizerId).expect(403);
+      expect(body.error.code).to.equal("ORGANIZER_CANNOT_RSVP");
+    }
+    expect((await request(app).get(existingEvent)).body.attendeeIds).to.deep.equal([]);
+    expect((await request(app).get("/api/events")).body[0].attendeeIds).to.deep.equal([]);
+    expect((await api("get", `/api/users/${stored.organizerId}/events?type=joined`, stored.organizerId)).body).to.deep.equal([]);
+    const joined = await api("post", existingEvent + "/rsvp", firstGuest).expect(200);
+    expect(joined.body.attendeeIds).to.deep.equal([firstGuest]);
+  });
+
+  it("allows capacity increases and reductions down to the current guest count", async () => {
+    const stored = store.events[0];
+    stored.attendeeIds = [stored.organizerId, firstGuest];
+    const increased = await api("patch", existingEvent, stored.organizerId).send({ capacity: 30 }).expect(200);
+    expect(increased.body.capacity).to.equal(30);
+    const lowered = await api("patch", existingEvent, stored.organizerId).send({ capacity: 1 }).expect(200);
+    expect(lowered.body.capacity).to.equal(1);
+  });
+
+  it("atomically rejects capacity below current guests and invalid capacity values", async () => {
+    const stored = store.events[0];
+    stored.attendeeIds = [stored.organizerId, firstGuest, "user-sam"];
+    const before = structuredClone(stored);
+    const { body } = await api("patch", existingEvent, stored.organizerId).send({ title: "Discard", capacity: 1 }).expect(409);
+    expect(body.error.code).to.equal("CAPACITY_BELOW_GUEST_COUNT");
+    for (const capacity of [0, 1.5, "4", null]) {
+      await api("patch", existingEvent, stored.organizerId).send({ capacity }).expect(400);
+    }
+    expect(stored).to.deep.equal(before);
+  });
+
   it("accepts, replaces, and clears event images with an existing default URL", async () => {
     const created = await api("post", "/api/events").send({ ...fixture, imageUrl: photo }).expect(201);
     const path = `/api/events/${created.body.id}`;
@@ -51,9 +87,22 @@ describe("[Alpartun] Post-D4 functional completion", () => {
     for (const imageUrl of [null, "data:image/png;base64,ZHVtbXk=", "/static/images/../secret.png", "https://example.com/" + "a".repeat(98_304)]) {
       await api("patch", existingEvent).send({ imageUrl, title: "Discard" }).expect(400);
     }
-    await api("patch", existingEvent, firstGuest).send({ imageUrl: photo }).expect(403);
+    await api("patch", existingEvent, firstGuest).send({ imageUrl: photo, capacity: 3 }).expect(403);
     await api("post", "/api/events").send({ ...fixture, imageUrl: "data:image/png;base64,d29yZA==" }).expect(400);
     expect(store.events[0]).to.deep.equal(before);
+  });
+
+  it("reports public aggregate stats without exposing other users' relationship lists", async () => {
+    const event = store.events[0];
+    event.attendeeIds = [event.organizerId, firstGuest];
+    const hostProfile = await request(app).get(`/api/users/${event.organizerId}`).expect(200);
+    expect(hostProfile.body.stats).to.include({ hosted: 1, attended: 0 });
+    const guest = await request(app).get(`/api/users/${firstGuest}`).expect(200);
+    expect(guest.body.stats).to.include({ attended: 1 });
+    expect(guest.body).not.to.have.any.keys("connectionRequests", "connectedUsers", "email");
+    await api("get", `/api/users/${firstGuest}/connections`).expect(403);
+    await api("delete", existingEvent, event.organizerId).expect(200);
+    expect((await request(app).get(`/api/users/${firstGuest}`)).body.stats.attended).to.equal(0);
   });
 
 });
