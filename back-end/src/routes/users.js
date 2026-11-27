@@ -2,6 +2,7 @@ import { Router } from "express";
 import { store } from "../data/store.js";
 import { requireMockUser } from "../middleware/mockIdentity.js";
 import { serializePublicUser } from "../shared/serializers.js";
+import { normalizeProfileImage } from "../shared/profileImage.js";
 import { normalizeInterests } from "../shared/validation.js";
 
 const router = Router();
@@ -77,7 +78,12 @@ function readProfileFields(req, res, { usernameRequired }) {
       invalidInput(res, "Profile fields must be text.");
       return null;
     }
-    fields.imageUrl = imageUrl.trim();
+    const image = normalizeProfileImage(imageUrl);
+    if (image === null) {
+      invalidInput(res, "Choose a valid profile image or use an HTTP(S) or local image URL.");
+      return null;
+    }
+    fields.imageUrl = image;
   }
   if (interests !== undefined) {
     // The shared helper from #94 checks the value against the shared
