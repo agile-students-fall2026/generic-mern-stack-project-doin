@@ -2,7 +2,10 @@ import { Router } from "express";
 import { store } from "../data/store.js";
 import { requireMockUser } from "../middleware/mockIdentity.js";
 import { serializePublicUser } from "../shared/serializers.js";
+import { normalizeProfileImage } from "../shared/profileImage.js";
 import { normalizeInterests } from "../shared/validation.js";
+
+import { guestIds } from "../shared/eventFields.js";
 
 const router = Router();
 
@@ -77,7 +80,12 @@ function readProfileFields(req, res, { usernameRequired }) {
       invalidInput(res, "Profile fields must be text.");
       return null;
     }
-    fields.imageUrl = imageUrl.trim();
+    const image = normalizeProfileImage(imageUrl);
+    if (image === null) {
+      invalidInput(res, "Choose a valid profile image or use an HTTP(S) or local image URL.");
+      return null;
+    }
+    fields.imageUrl = image;
   }
   if (interests !== undefined) {
     // The shared helper from #94 checks the value against the shared
@@ -144,11 +152,29 @@ router.get("/", (req, res) => {
   return res.json(people);
 });
 
+function profileStats(userId) {
+  const connections = new Set();
+  for (const request of store.connectionRequests) {
+    if (request.status !== "accepted") continue;
+    if (request.senderId === userId) connections.add(request.recipientId);
+    else if (request.recipientId === userId) connections.add(request.senderId);
+  }
+
+  const activeEvents = store.events.filter((event) => event.status === "active");
+  return {
+    connections: connections.size,
+    hosted: activeEvents.filter((event) => event.organizerId === userId).length,
+    attended: activeEvents.filter((event) => guestIds(event).includes(userId)).length,
+  };
+}
+
 // Profile retrieval (#98), shared with person details (#99).
 router.get("/:userId", (req, res) => {
   const user = findUser(req.params.userId);
   if (!user) return userNotFound(res);
-  return res.json(serializePublicUser(user));
+  const profile = serializePublicUser(user);
+  if (user.profileComplete) profile.stats = profileStats(user.id);
+  return res.json(profile);
 });
 
 // Update a profile (#98). The acting user comes from the header, so a

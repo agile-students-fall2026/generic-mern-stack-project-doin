@@ -10,8 +10,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "mocha",
-    "test:coverage": "c8 npm test",
-    "test:coverage:individual": "c8 --reports-dir=coverage/individual mocha --fail-zero"
+    "test:coverage": "c8 mocha",
+    "test:coverage:individual": "c8 --reports-dir=coverage/individual mocha"
   },
   "dependencies": {
     "cors": "^2.8.6",

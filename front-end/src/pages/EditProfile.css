@@ -1,141 +1,75 @@
-/* Edit Profile page styles. The card surface, the inputs, and the
-   buttons come from the shared styles (styles/components.css) -
-   this file only holds the layout and the parts the shared styles
-   do not cover. */
-
-.edit-profile-page {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.edit-profile-card {
-  width: 100%;
-  max-width: 440px;
-  box-sizing: border-box;
-}
-
-.edit-profile-title {
-  font-size: 28px;
-  margin: 0 0 24px;
-}
-
-/* One field per row: a label above a full-width input */
-
+.edit-profile-form,
 .edit-profile-field {
-  margin-bottom: 16px;
+  display: grid;
+  gap: 9px;
+  min-width: 0;
 }
 
-.edit-profile-field label,
-.edit-profile-label {
-  display: block;
-  font-weight: 600;
-  margin: 0 0 8px;
-}
+.edit-profile-field { gap: 4px; }
+.edit-profile-field .doin-label { font-weight: 500; line-height: 1.2; }
+.edit-profile-field .doin-label::after { content: none; }
 
-/* Layout only - the input look comes from .doin-input */
-.edit-profile-input {
+.edit-profile-field .doin-input {
   width: 100%;
-  box-sizing: border-box;
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-weight: 400;
 }
 
-/* Profile pic */
+.edit-profile-field textarea { line-height: 1.2; }
+
 .edit-profile-photo {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.edit-profile-avatar {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-/* Profile picture editing */
-
-.edit-profile-avatar-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f0f1f3;
-  color: #687386;
-}
-
-.edit-profile-avatar-empty svg {
-  width: 60px;
-  height: 60px;
-}
-
-.edit-profile-photo-edit {
-  min-width: 150px;
-}
-
-.edit-profile-photo-menu {
-  width: 100%;
-  max-width: 300px;
-  display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.edit-profile-photo-menu .doin-button {
+.edit-profile-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--doin-lavender);
+  padding: 4px;
+  object-fit: cover;
+}
+
+.edit-profile-photo-menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   width: 100%;
-  box-sizing: border-box;
+  gap: 8px;
 }
-
-.edit-profile-photo-menu .doin-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.edit-profile-photo label {
-  font-weight: 600;
-}
-
-.edit-profile-photo input {
-  max-width: 100%;
-}
-
-/* Interest toggle buttons */
 
 .edit-profile-interests {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 24px;
+  gap: 6px;
 }
 
 .edit-profile-interest {
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 14px;
-  cursor: pointer;
-  background-color: white;
-  color: #202638;
-  border: 1px solid #e8eaf1;
+  min-inline-size: var(--doin-control-size);
+  min-block-size: var(--doin-control-size);
+  padding: 5px 11px;
+  border: 1px solid var(--doin-line);
+  border-radius: 9px;
+  color: var(--doin-muted);
+  background: var(--doin-surface);
+  font-size: .875rem;
+}
+
+.edit-profile-interest:focus-visible {
+  outline: var(--doin-focus-width) solid var(--doin-focus-color);
+  outline-offset: 2px;
 }
 
 .edit-profile-interest-on {
-  background-color: #635bff;
-  color: white;
-  border-color: transparent;
+  border-color: var(--doin-brand-ink);
+  background: var(--doin-lavender);
+  color: var(--doin-brand-ink);
+  font-weight: 700;
 }
 
-.edit-profile-saved {
-  color: #635bff;
-  font-weight: 600;
-}
+.edit-profile-interest-on::before { content: "✓" / ""; margin-inline-end: 5px; }
 
-/* Save and back buttons (their styles are .doin-button) */
-
-.edit-profile-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.edit-profile-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }

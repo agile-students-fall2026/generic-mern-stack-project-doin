@@ -1,11 +1,13 @@
 .app-layout {
   width: 100%;
-  max-width: 440px;
+  max-width: var(--doin-page-width);
   min-height: 100vh;
-  margin: 0 auto;
+  min-height: 100dvh;
+  padding-block-start: env(safe-area-inset-top);
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
-  background-color: white;
+  background: var(--doin-canvas);
 }
 
 .page-content {
@@ -14,23 +16,57 @@
 }
 
 .navbar {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   width: 100%;
-  padding: 15px 10px;
+  min-height: calc(var(--doin-nav-height) + env(safe-area-inset-bottom));
+  padding: 5px 8px calc(5px + env(safe-area-inset-bottom));
   box-sizing: border-box;
-  border-top: 1px solid lightgray;
-  background-color: white;
+  border-top: 1px solid var(--doin-line);
+  background: var(--doin-surface);
   position: sticky;
   bottom: 0;
-  z-index: 10;
+  z-index: var(--doin-nav-layer);
 }
 
 .navbar a {
-  color: #687386;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 3px;
+  min-block-size: 55px;
+  color: var(--doin-muted);
   text-decoration: none;
-  font-size: 13px;
+  font-size: .75rem;
+  line-height: normal;
   text-align: center;
-  padding: 5px;
+}
+
+.navbar-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.navbar-icon .doin-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.navbar a[aria-current="page"] {
+  color: var(--doin-brand-ink);
+  font-weight: 700;
+}
+
+.navbar a[aria-current="page"] .navbar-icon {
+  background: var(--doin-lavender);
+  box-shadow: inset 0 -2px 0 var(--doin-brand);
+}
+
+.navbar a:focus-visible {
+  outline: var(--doin-focus-width) solid var(--doin-focus-color);
+  outline-offset: -2px;
+  border-radius: var(--doin-radius-field);
 }

@@ -1,79 +1,44 @@
-/* Discover People Page */
-/* Search Bar */
-.discover label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.discover input {
-  width: 100%;
-  padding: 12px;
+.discover .person-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
   box-sizing: border-box;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-}
-
-/* Filters */
-.filters {
-  background-color: #f0f1f3;
-  padding: 15px;
-  margin-top: 20px;
-  margin-bottom: 25px;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-}
-
-/* Person Cards */
-.person-card {
-  display: flex;
-  padding: 12px;
-  border: 1px solid lightgray;
-  border-radius: 10px;
-  margin-bottom: 18px;
-  gap: 15px;
-}
-
-.person-card img {
-  width: 85px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.person-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.person-info h3 {
-  margin: 5px 0;
-  font-size: 17px;
-}
-
-.person-info p {
-  font-size: 13px;
-}
-
-/* View Profile Button */
-.person-info button {
-  background-color: #635bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
   padding: 10px;
-  width: 100%;
-  cursor: pointer;
+  border: 1px solid var(--doin-line);
+  border-radius: 12px;
+  background: var(--doin-surface);
+  color: var(--doin-text);
+  text-decoration: none;
 }
 
-.person-info button:hover {
-  background-color: #5148e8;
-}
-
-.discover-connections-link {
-  display: block;
-  width: 100%;
+.discover .person-card img {
+  width: 42px;
+  height: 42px;
   box-sizing: border-box;
-  text-align: center;
-  margin-bottom: 20px;
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--doin-lavender);
+  object-fit: cover;
 }
+
+.discover .person-info small {
+  display: block;
+  margin-top: 3px;
+  color: var(--doin-muted);
+  font-size: .8125rem;
+}
+
+.discover .person-card .doin-icon { color: var(--doin-brand-ink); }
+
+.discover .person-card:focus-visible {
+  outline: var(--doin-focus-width) solid var(--doin-focus-color);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .discover .person-card:hover { box-shadow: inset 0 0 0 1px var(--doin-brand-ink); }
+}
+
+.discover .person-info h2 { font-size: 1rem; font-weight: 700; }

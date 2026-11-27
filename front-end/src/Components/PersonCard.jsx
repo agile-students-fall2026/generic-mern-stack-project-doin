@@ -1,19 +1,20 @@
-
 import { Link } from "react-router";
-import "./Cards.css";
+import { useOrigin } from "../viewHistory";
+import Avatar from "./Avatar";
+import Icon from "./Icon";
 
-function PersonCard({ id, name, interests, image }) {
+export default function PersonCard({ person }) {
+  const origin = useOrigin();
+
   return (
-    <div className="person-card">
-      <img src={image} alt={name} />
-
-      <div className="person-info">
-        <h3>{name}</h3>
-        <p>{interests}</p>
-        <Link to={`/people/${id}`}>View profile</Link>
-      </div>
-    </div>
+    <Link className="person-card" to={`/discover/${encodeURIComponent(person.id)}`}
+      state={origin} aria-label={`View ${person.name}'s profile`}>
+      <Avatar src={person.imageUrl} />
+      <span className="person-info">
+        <h2>{person.name}</h2>
+        {person.interests?.length > 0 && <small>{person.interests.join(" · ")}</small>}
+      </span>
+      <Icon name="next" />
+    </Link>
   );
 }
-
-export default PersonCard;

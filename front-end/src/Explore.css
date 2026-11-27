@@ -1,104 +1,24 @@
-.explore {
-  min-height: 100vh;
-  color: #303640;
-  font-family: Arial, sans-serif;
+.event-filter-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--doin-space-sm);
 }
 
-.explore label {
-  display: block;
-  font-weight: bold;
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-
-.explore input {
-  width: 100%;
-  padding: 12px;
-  box-sizing: border-box;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-}
-
-.explore .event-filters {
-  background-color: #f0f1f3;
-  padding: 12px;
-  margin-top: 20px;
-  margin-bottom: 22px;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-}
-
-.explore .event-card {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid lightgray;
-  border-radius: 10px;
-  margin-bottom: 18px;
-  background-color: white;
-  align-items: stretch;
-}
-
-.explore .event-card img {
-  width: 105px;
-  height: 120px;
-  flex-shrink: 0;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.explore .event-info {
-  flex: 1;
+.event-filter-fields > div {
+  display: grid;
+  gap: var(--doin-space-xs);
   min-width: 0;
-  background-color: transparent;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  font-size: .875rem;
+  line-height: 1.25;
 }
 
-.explore .event-info h3 {
-  font-size: 18px;
-  margin: 0 0 8px;
-}
-
-.explore .event-info p {
-  font-size: 13px;
-  margin: 0 0 12px;
-}
-
-.explore .event-info button {
+.event-filter-fields .doin-input {
   width: 100%;
-  background-color: #635bff;
-  color: white;
-  border: none;
   border-radius: 8px;
-  padding: 9px;
-  cursor: pointer;
+  padding-inline: 9px;
+  font-size: .875rem;
 }
 
-.explore .create-event {
-  display: block;
-  width: 100%;
-  margin: 0 0 18px;
-  padding: 12px 18px;
-  border-radius: 8px;
-}
-
-.explore .event-filters select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-  background-color: white;
-  color: #202638;
-  font-size: 16px;
-}
-
-.explore .event-filters select {
-  margin-bottom: 12px;
-}
-
-.explore .event-filters select:last-child {
-  margin-bottom: 0;
+@media (max-width: 350px) {
+  .event-filter-fields { grid-template-columns: 1fr; }
 }

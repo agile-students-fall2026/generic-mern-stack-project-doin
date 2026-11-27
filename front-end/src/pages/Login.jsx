@@ -85,7 +85,7 @@ export default function Login({ onUserChange }) {
           noValidate
         >
           <div className="auth-field">
-            <label htmlFor="login-email">Email</label>
+            <label className="doin-label" htmlFor="login-email">Email</label>
             <input
               className="doin-input"
               id="login-email"
@@ -100,14 +100,14 @@ export default function Login({ onUserChange }) {
             />
 
             {errors.email && (
-              <p id="login-email-error" className="auth-error" role="alert">
+              <p id="login-email-error" className="doin-field-error" role="alert">
                 {errors.email}
               </p>
             )}
           </div>
 
           <div className="auth-field">
-            <label htmlFor="login-password">Password</label>
+            <label className="doin-label" htmlFor="login-password">Password</label>
             <input
               className="doin-input"
               id="login-password"
@@ -122,7 +122,7 @@ export default function Login({ onUserChange }) {
             />
 
             {errors.password && (
-              <p id="login-password-error" className="auth-error" role="alert">
+              <p id="login-password-error" className="doin-field-error" role="alert">
                 {errors.password}
               </p>
             )}
@@ -140,12 +140,13 @@ export default function Login({ onUserChange }) {
             </p>
           )}
 
-          {error && <p className="auth-error" role="alert">{error}</p>}
+          {error && <p className="doin-field-error" role="alert">{error}</p>}
 
           <div className="auth-actions">
             <button
               type="submit"
               className="doin-button doin-button--primary auth-primary-button"
+              aria-busy={pending}
               disabled={pending}
             >
               {pending ? "Logging in…" : "Log in"}

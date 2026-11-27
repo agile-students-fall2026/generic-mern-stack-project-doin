@@ -1,6 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import "./UserProfile.css";
+import Avatar from "./Avatar";
 import BackButton from "./BackButton";
+import Icon from "./Icon";
 
 export default function UserProfile({
   title,
@@ -10,42 +12,40 @@ export default function UserProfile({
   bio,
   interests = [],
   imageUrl,
-  stats = [],
+  stats,
+  headingRef,
   sharedInterests = [],
   children,
   onBack,
   backAriaLabel = "Go back",
+  backLabel,
 }) {
   const photoDialog = useRef(null);
+  const [unavailablePhoto, setUnavailablePhoto] = useState(null);
+  const photo = imageUrl?.trim();
+  const hasPhoto = Boolean(photo && photo !== unavailablePhoto);
 
   return (
-    <main className="user-profile-page doin-page">
-      {onBack && <BackButton onClick={onBack} ariaLabel={backAriaLabel} />}
+    <main className="user-profile-page doin-page doin-page--app">
+      {onBack && <BackButton onClick={onBack} ariaLabel={backAriaLabel} label={backLabel} />}
 
-      <h1 className="doin-page-title">{title}</h1>
+      {title && <h1 className="doin-page-title">{title}</h1>}
 
       <div className="user-profile-header">
         <button
           type="button"
           className="user-profile-photo-button"
           onClick={() => photoDialog.current?.showModal()}
-          disabled={!imageUrl}
+          disabled={!hasPhoto}
           aria-label={`View ${name}'s profile picture`}
         >
-          {imageUrl ? (
-            <img src={imageUrl} alt={name} className="user-profile-photo" />
-          ) : (
-            <span className="user-profile-photo user-profile-photo-empty">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21c0-5 3-8 8-8s8 3 8 8" />
-              </svg>
-            </span>
-          )}
+          <Avatar src={photo} className="user-profile-photo" onUnavailable={setUnavailablePhoto} />
         </button>
 
         <div className="user-profile-identity">
-          <h2 className="user-profile-name">{name}</h2>
+          {title
+            ? <h2 className="user-profile-name">{name}</h2>
+            : <h1 className="doin-page-title user-profile-name" ref={headingRef} tabIndex={-1}>{name}</h1>}
 
           {username && (
             <p className="user-profile-username">
@@ -55,43 +55,31 @@ export default function UserProfile({
 
           {location && (
             <p className="user-profile-location">
-              <svg
-                className="user-profile-location-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-                <circle cx="12" cy="10" r="2.5" />
-              </svg>
+              <Icon name="pin" />
               {location}
             </p>
           )}
         </div>
       </div>
 
-      {stats.length > 0 && (
-        <div className="user-profile-stats">
-          {stats.map((stat) => (
-            <div className="user-profile-stat" key={stat.label}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
+      {stats && (
+        <dl className="user-profile-stats">
+          {[["Connections", stats.connections], ["Hosted", stats.hosted], ["Attended", stats.attended]].map(([label, value]) => (
+            <div className="user-profile-stat" key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
             </div>
           ))}
-        </div>
+        </dl>
       )}
 
       <section className="user-profile-section">
-        <h3>About</h3>
+        <h2>About</h2>
         <p>{bio || "No bio added yet."}</p>
       </section>
 
       <section className="user-profile-section">
-        <h3>Interests</h3>
+        <h2>Interests</h2>
 
         <div className="user-profile-interests">
           {interests.length > 0 ? (
@@ -108,7 +96,7 @@ export default function UserProfile({
 
       {sharedInterests.length > 0 && (
         <section className="user-profile-section">
-          <h3>Shared interests</h3>
+          <h2>Shared interests</h2>
           <div className="user-profile-interests">
             {sharedInterests.map((interest) => (
               <span className="user-profile-interest" key={interest}>
@@ -136,7 +124,7 @@ export default function UserProfile({
             ×
           </button>
 
-          {imageUrl && <img src={imageUrl} alt={`${name}'s profile picture`} />}
+          {hasPhoto && <Avatar src={photo} alt={`${name}'s profile picture`} />}
         </div>
       </dialog>
     </main>

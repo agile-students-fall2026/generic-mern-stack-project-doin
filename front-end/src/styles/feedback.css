@@ -1,0 +1,105 @@
+.doin-confirmation {
+  position: fixed;
+  inset: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  margin: auto;
+  width: min(calc(100% - 2 * var(--doin-gutter) - env(safe-area-inset-left) - env(safe-area-inset-right)), 360px);
+  max-block-size: calc(100% - 2 * var(--doin-gutter) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  padding: var(--doin-space-lg);
+  border: 1px solid var(--doin-border);
+  border-radius: var(--doin-radius);
+  background: var(--doin-surface);
+  color: var(--doin-text);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
+
+.doin-confirmation::backdrop {
+  background: var(--doin-backdrop);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.doin-confirmation h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: var(--doin-space-sm);
+}
+
+.doin-confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--doin-space-sm);
+  margin-top: var(--doin-gutter);
+}
+
+.doin-confirmation-actions .doin-button {
+  flex: 1 1 108px;
+  padding-inline: var(--doin-space-md);
+}
+
+.doin-confirmation .doin-field-error {
+  margin-top: var(--doin-space-md);
+}
+
+.doin-toast {
+  position: fixed;
+  inset: calc(var(--doin-space-sm) + env(safe-area-inset-top)) env(safe-area-inset-right) auto env(safe-area-inset-left);
+  z-index: var(--doin-toast-layer);
+  margin: 0 auto;
+  width: min(calc(100% - 2 * var(--doin-gutter) - env(safe-area-inset-left) - env(safe-area-inset-right)), calc(var(--doin-page-width) - 2 * var(--doin-gutter)));
+  align-items: center;
+  gap: var(--doin-space-sm);
+  padding: var(--doin-space-xs) var(--doin-space-xs) var(--doin-space-xs) var(--doin-space-md);
+  border: 1px solid var(--doin-success);
+  border-radius: var(--doin-radius);
+  background: var(--doin-success-surface);
+  color: var(--doin-success);
+  overflow-wrap: anywhere;
+}
+
+.doin-toast:is(:not([popover]), :popover-open) {
+  display: flex;
+}
+
+.doin-toast svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.doin-toast p {
+  flex: 1;
+  min-inline-size: 0;
+  font-size: var(--doin-small-text);
+  font-weight: 600;
+}
+
+.doin-toast-close.doin-button {
+  flex: none;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: inherit;
+  font-size: 1.5rem;
+}
+
+@media (hover: hover) {
+  .doin-toast-close.doin-button:hover {
+    background: var(--doin-surface);
+  }
+}
+
+.doin-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The text is announced separately, leaving page controls operable in a tight viewport. */
+.doin-toast[data-overlap] { pointer-events: none; }
+.doin-toast[data-overlap] .doin-toast-close { pointer-events: auto; }

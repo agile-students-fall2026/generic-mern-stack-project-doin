@@ -74,10 +74,20 @@
 }
 
 .setup-profile-photo label {
-  color: #635bff;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--doin-control-size);
+  padding-inline: var(--doin-space-sm);
+  color: var(--doin-brand-ink);
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
+}
+
+.setup-profile-photo:has(input:focus-visible) label {
+  outline: var(--doin-focus-width) solid var(--doin-focus-color);
+  outline-offset: var(--doin-focus-width);
+  border-radius: var(--doin-radius-field);
 }
 
 .setup-profile-photo input {

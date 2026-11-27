@@ -2,12 +2,12 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 36px;
+  min-height: var(--doin-control-size);
   padding: 4px 0;
   margin: 0 0 16px;
   border: none;
   background: transparent;
-  color: #202638;
+  color: var(--doin-text);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -20,11 +20,18 @@
 }
 
 .doin-back-button:hover {
-  color: #635bff;
+  color: var(--doin-brand-ink);
 }
 
 .doin-back-button:focus-visible {
-  outline: 2px solid #635bff;
-  outline-offset: 4px;
-  border-radius: 4px;
+  border-radius: var(--doin-radius-field);
+}
+
+.doin-page--app .doin-back-button {
+  justify-self: start;
+  margin: -7px 0 -7px -6px;
+  padding-inline: 6px;
+  color: var(--doin-brand-ink);
+  font-size: .875rem;
+  font-weight: 700;
 }

@@ -1,61 +1,220 @@
-/* ========================================
-   DOIN SHARED COMPONENT STYLES
-   ======================================== */
+/* Page and component styles can override these defaults without extra specificity. */
+@layer doin-shared {
+  .doin-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--doin-space-sm);
+    min-inline-size: var(--doin-control-size);
+    min-block-size: var(--doin-control-size);
+    padding: var(--doin-space-sm) var(--doin-space-lg);
+    border: 1px solid var(--doin-control-border);
+    border-radius: var(--doin-radius);
+    background: var(--doin-surface);
+    color: var(--doin-text);
+    font-size: var(--doin-text-size);
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+  }
 
-/* Buttons */
-.doin-button {
-  padding: 12px 20px;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-  font-size: 16px;
-  text-decoration: none;
-  cursor: pointer;
+  .doin-button--primary {
+    border-color: var(--doin-brand);
+    background: var(--doin-brand);
+    color: var(--doin-surface);
+  }
+
+  .doin-button--danger {
+    border-color: var(--doin-danger);
+    background: var(--doin-danger);
+    color: var(--doin-surface);
+  }
+
+  .doin-button--danger-outline {
+    border-color: var(--doin-danger);
+    color: var(--doin-danger);
+  }
+
+  @media (hover: hover) {
+    .doin-button:where(:not(:disabled)):hover { background: var(--doin-canvas); }
+    .doin-button--primary:where(:not(:disabled)):hover { background: var(--doin-brand-hover); }
+    .doin-button--danger:where(:not(:disabled)):hover { background: var(--doin-danger-hover); }
+    .doin-button--danger-outline:where(:not(:disabled)):hover { background: var(--doin-danger-surface); }
+  }
+
+  .doin-button:where(:not(:disabled)):active { background: var(--doin-lavender); }
+  .doin-button--primary:where(:not(:disabled)):active { background: var(--doin-brand-ink); }
+  .doin-button--danger:where(:not(:disabled)):active { background: var(--doin-danger-hover); }
+  .doin-button--danger-outline:where(:not(:disabled)):active { background: var(--doin-danger-surface); }
+
+  .doin-button:disabled,
+  .doin-input:disabled {
+    background: var(--doin-canvas);
+    color: var(--doin-muted);
+    border-color: var(--doin-border);
+    cursor: not-allowed;
+  }
+
+  .doin-button[aria-busy="true"] {
+    background: var(--doin-lavender);
+    color: var(--doin-brand-ink);
+    cursor: progress;
+  }
+
+  .doin-card {
+    background: var(--doin-surface);
+    border: 1px solid var(--doin-border);
+    border-radius: var(--doin-radius);
+    padding: 15px;
+  }
+
+  .doin-input {
+    box-sizing: border-box;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    min-block-size: var(--doin-control-size);
+    padding: var(--doin-space-sm) var(--doin-space-md);
+    border: 1px solid var(--doin-control-border);
+    border-radius: var(--doin-radius-field);
+    background: var(--doin-surface);
+    color: var(--doin-text);
+    font: inherit;
+    font-size: var(--doin-text-size);
+  }
+
+  .doin-input::placeholder { color: var(--doin-muted); }
+  textarea.doin-input { resize: vertical; }
+  .doin-input[readonly] { background: var(--doin-canvas); }
+
+  .doin-label {
+    font-size: var(--doin-small-text);
+    font-weight: 600;
+  }
+
+  .doin-label:has(+ :is(input, select, textarea)[required])::after {
+    content: " *" / "";
+    color: var(--doin-danger);
+  }
+
+  .doin-input:is([aria-invalid="true"], :user-invalid) { border-color: var(--doin-danger); }
+
+  .doin-field-error {
+    color: var(--doin-danger);
+    font-size: var(--doin-small-text);
+    overflow-wrap: anywhere;
+  }
+
+  :is(.doin-button, .doin-input, .doin-back-button):focus-visible {
+    outline: var(--doin-focus-width) solid var(--doin-focus-color);
+    outline-offset: var(--doin-focus-width);
+  }
+
+  .doin-page {
+    width: 100%;
+    max-width: var(--doin-page-width);
+    margin: 0 auto;
+    padding: var(--doin-space-lg) var(--doin-gutter) 32px;
+    box-sizing: border-box;
+    background: var(--doin-surface);
+  }
+
+  .doin-page-title {
+    font-size: var(--doin-title-size);
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 var(--doin-space-lg);
+  }
 }
 
-/* Primary Button */
-.doin-button--primary {
-  background-color: #635bff;
-  color: white;
+.doin-icon {
+  display: inline-block;
+  width: 19px;
+  height: 19px;
+  flex: none;
+  vertical-align: middle;
 }
 
-/* Secondary Button */
-.doin-button--secondary {
-  background-color: white;
-  color: #202638;
+.doin-page.doin-page--app {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  padding-block-end: 16px;
+  background: var(--doin-canvas);
+  overflow-wrap: anywhere;
 }
 
-/* Cards */
-.doin-card {
-  background-color: white;
-  border: 1px solid lightgray;
-  border-radius: 8px;
-  padding: 15px;
+.doin-page--app :where(h1, h2, h3, p, dl, dd, ul) { margin: 0; }
+
+.doin-page--app .doin-page-title {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -.035em;
 }
 
-/* Input Fields */
-.doin-input {
-  padding: 10px;
-  border: 1px solid lightgray;
-  border-radius: 5px;
-  font-size: 16px;
+.doin-page--app :where(h2) {
+  font-size: 1.125rem;
+  line-height: 1.26;
+  letter-spacing: -.015em;
 }
 
-/* Shared page layout */
-
-.doin-page {
-  width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
-  padding: 20px 16px 32px;
-  box-sizing: border-box;
-  background-color: white;
+.doin-page--app .doin-button {
+  font-size: .875rem;
+  font-weight: 700;
+  line-height: 1.22;
+  padding-inline: 13px;
+  border-radius: 9px;
 }
 
-/* Shared page heading */
+.doin-page--app .doin-button--danger-outline { border-color: #cc8790; }
 
-.doin-page-title {
-  font-size: 28px;
-  font-weight: 600;
+.doin-page--app .doin-button--secondary { color: var(--doin-brand-ink); }
+
+.doin-page--app .doin-button--primary:where(:not(:disabled, [aria-busy="true"])) {
+  background-color: var(--doin-action);
+  border-color: var(--doin-action);
+}
+
+@media (hover: hover) {
+  .doin-page--app .doin-button--primary:where(:not(:disabled, [aria-busy="true"])):hover {
+    background-color: var(--doin-brand-hover);
+  }
+}
+
+.doin-page--app .doin-button .doin-icon { width: 17px; height: 17px; }
+
+.doin-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--doin-space-md);
+}
+
+@media (max-width: 350px) {
+  .doin-title-row .doin-page-title { font-size: 1.55rem; }
+}
+
+.doin-form-card {
+  padding: 13px 12px 12px;
+  border: 1px solid var(--doin-line);
+  border-radius: 12px;
+  background: var(--doin-surface);
+}
+
+.doin-form-group {
+  display: grid;
+  min-width: 0;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.doin-form-group legend {
+  padding: 0;
+  margin-bottom: 10px;
+  font-size: 1.0625rem;
+  font-weight: 700;
   line-height: 1.2;
-  margin: 0 0 20px;
 }

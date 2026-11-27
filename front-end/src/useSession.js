@@ -10,7 +10,15 @@ export function useSession() {
   const [session, setSession] = useState(() => ({
     status: currentUserId() ? "loading" : "signed-out",
   }));
+  const [logoutVersion, setLogoutVersion] = useState(0);
   const restoreController = useRef(null);
+
+  const clearSession = useCallback(() => {
+    restoreController.current?.abort();
+    setCurrentUserId(null);
+    setSession({ status: "signed-out", afterLogout: true });
+    setLogoutVersion((version) => version + 1);
+  }, []);
 
   const checkSavedSession = useCallback(() => {
     restoreController.current?.abort();
@@ -42,6 +50,14 @@ export function useSession() {
     return () => restoreController.current?.abort();
   }, [checkSavedSession]);
 
+  useEffect(() => {
+    function checkRestoredPage(event) {
+      if (event.persisted && session.status !== "signed-out" && !currentUserId()) clearSession();
+    }
+    window.addEventListener("pageshow", checkRestoredPage);
+    return () => window.removeEventListener("pageshow", checkRestoredPage);
+  }, [session.status, clearSession]);
+
   function restoreSession() {
     if (!currentUserId()) {
       setSession({ status: "signed-out" });
@@ -58,5 +74,9 @@ export function useSession() {
     setSession({ status: "signed-in", user });
   }
 
-  return { session, restoreSession, saveSession };
+  function updateSessionUser(user) {
+    if (currentUserId() === user.id) saveSession(user);
+  }
+
+  return { session, restoreSession, saveSession, updateSessionUser, clearSession, logoutVersion };
 }

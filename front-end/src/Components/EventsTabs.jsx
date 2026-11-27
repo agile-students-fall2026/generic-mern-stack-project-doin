@@ -3,29 +3,9 @@ import "./EventsTabs.css";
 
 export default function EventsTabs() {
   return (
-    <nav className="events-tabs" aria-label="Event navigation">
-      <NavLink
-        to="/events"
-        end
-        className={({ isActive }) =>
-          `doin-button events-tabs-link ${
-            isActive ? "doin-button--primary" : "doin-button--secondary"
-          }`
-        }
-      >
-        Discover events
-      </NavLink>
-
-      <NavLink
-        to="/my-events"
-        className={({ isActive }) =>
-          `doin-button events-tabs-link ${
-            isActive ? "doin-button--primary" : "doin-button--secondary"
-          }`
-        }
-      >
-        My events
-      </NavLink>
+    <nav className="events-tabs doin-segments" aria-label="Event navigation">
+      <NavLink to="/events" end>Discover Events</NavLink>
+      <NavLink to="/my-events?tab=joined">My Events</NavLink>
     </nav>
   );
 }

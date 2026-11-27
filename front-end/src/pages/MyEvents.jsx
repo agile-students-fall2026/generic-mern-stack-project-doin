@@ -1,113 +1,109 @@
-import React, { useState } from "react";
-import "../styles/MyEvents.css";
+import { useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router";
+import ConfirmationDialog from "../Components/ConfirmationDialog";
+import { cancelEventAction } from "../eventActions";
+import useSubmission from "../useSubmission";
+import useToast from "../useToast";
+import Icon from "../Components/Icon";
+import { useOrigin } from "../viewHistory";
+import EventCard from "../Components/EventCard";
 import EventsTabs from "../Components/EventsTabs";
+import "../styles/MyEvents.css";
 
+export default function MyEvents({ events, currentUser, loading, refreshing, error, onChange }) {
+  const origin = useOrigin();
+  const [params, setParams] = useSearchParams();
+  const activeTab = params.get("tab") === "hosting" ? "hosting" : "joined";
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const headingRef = useRef(null);
+  const showSuccess = useToast();
+  const cancellation = useSubmission();
+  const action = cancelTarget ? cancelEventAction(cancelTarget.title) : null;
+  const stillHosting = events?.some((event) => event.id === cancelTarget?.id);
 
-const MyEvents = (props) => {
-  const events = props.events || [];
-  const currentUser = props.currentUser;
-  const loading = props.loading;
-  const error = props.error;
-
-  const [activeTab, setActiveTab] = useState("joined");
-
-  // Find events the current user has joined
-  const joinedEvents = currentUser
-    ? events.filter((event) =>
-        (event.attendeeIds ?? []).includes(currentUser.id),
-      )
-    : [];
-
-  // Find events the current user created
-  const hostingEvents = currentUser
-    ? events.filter((event) => event.organizerId === currentUser.id)
-    : [];
-
-  // Choose which events to display
-  const displayedEvents = activeTab === "joined" ? joinedEvents : hostingEvents;
+  function confirmCancellation() {
+    cancellation.submit(async (signal) => {
+      try {
+        return await action.send(cancelTarget.id, signal);
+      } catch (error) {
+        if (!signal.aborted && [404, 409].includes(error.status)) onChange();
+        throw error;
+      }
+    }, () => {
+      setCancelTarget(null);
+      onChange();
+      showSuccess(action.success);
+    });
+  }
+  const userId = currentUser?.id;
+  const joinedEvents = events?.filter((event) => userId && event.organizerId !== userId && event.attendeeIds?.includes(userId)) ?? [];
+  const hostingEvents = events?.filter((event) => userId && event.organizerId === userId) ?? [];
+  const hosting = activeTab === "hosting";
+  const displayedEvents = hosting ? hostingEvents : joinedEvents;
+  const waiting = loading || (refreshing && displayedEvents.length === 0);
 
   return (
-    <main className="my-events-page doin-page">
-      <div className="my-events-container">
-        <EventsTabs />
-        <h1 className="doin-page-title">My Events</h1>
-        <p>View the events you're attending or hosting.</p>
+    <main className="my-events-page doin-page doin-page--app">
+      <header className="doin-title-row">
+        <h1 className="doin-page-title" ref={headingRef} tabIndex={-1}>My Events</h1>
+        <Link to="/create-event" state={origin} className="doin-button doin-button--primary" aria-label="Create event">
+          <Icon name="plus" /> Create
+        </Link>
+      </header>
+      <EventsTabs />
 
-        {/* Joined and Hosting Tabs */}
-        <div className="my-events-tabs">
+      <div className="my-events-tabs doin-segments" role="group" aria-label="My event lists">
+        {[["joined", "Joined", joinedEvents], ["hosting", "Hosting", hostingEvents]].map(([type, label, list]) => (
           <button
-            className={`doin-button ${
-              activeTab === "joined"
-                ? "doin-button--primary"
-                : "doin-button--secondary"
-            }`}
-            onClick={() => setActiveTab("joined")}
+            type="button"
+            key={type}
+            aria-pressed={activeTab === type}
+            aria-controls="my-events-results"
+            onClick={() => setParams({ tab: type }, { replace: true })}
           >
-            Joined ({joinedEvents.length})
+            {label}{!loading && !error && ` (${list.length})`}
           </button>
-
-          <button
-            className={`doin-button ${
-              activeTab === "hosting"
-                ? "doin-button--primary"
-                : "doin-button--secondary"
-            }`}
-            onClick={() => setActiveTab("hosting")}
-          >
-            Hosting ({hostingEvents.length})
-          </button>
-        </div>
-
-        {/* Event List */}
-        {loading && <p role="status">Loading your events...</p>}
-        {error && <p role="alert">{error}</p>}
-        <div className="my-events-list">
-          {displayedEvents.length > 0 ? (
-            displayedEvents.map((event) => (
-              <div className="doin-card my-event-card" key={event.id}>
-                <img
-                  className="my-event-image"
-                  src={event.imageUrl}
-                  alt={event.title}
-                />
-
-                <div className="my-event-info">
-                  <span className="my-event-category">{event.category}</span>
-
-                  <h2>{event.title}</h2>
-
-                  <p>
-                    <strong>Date:</strong> {event.date}
-                  </p>
-
-                  <p>
-                    <strong>Time:</strong> {event.startTime}
-                  </p>
-
-                  <p>
-                    <strong>Location:</strong> {event.location}
-                  </p>
-
-                  <p>
-                    <strong>Status:</strong>{" "}
-                    {activeTab === "joined" ? "Attending" : "Hosting"}
-                  </p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="doin-card my-events-empty">
-              <p>
-                {activeTab === "joined"
-                  ? "You haven't joined any events yet."
-                  : "You haven't created any events yet."}
-              </p>
-            </div>
-          )}
-        </div>
+        ))}
       </div>
+
+      <section id="my-events-results" className="my-events-list" aria-label={hosting ? "Hosting events" : "Joined events"}>
+        {!error && waiting && <p role="status">Loading your events...</p>}
+        {error && <p role="alert" className="doin-field-error my-events-message">{error}</p>}
+        {!waiting && !error && (
+          displayedEvents.length > 0
+            ? displayedEvents.map((event) => (
+                <EventCard key={event.id} event={event} className="my-event-card" from={activeTab}>
+                  {hosting && (
+                    <>
+                      <Link
+                        className="doin-button doin-button--secondary my-event-edit-link"
+                        to={`/events/${encodeURIComponent(event.id)}/edit?from=hosting`}
+                        state={origin}
+                        aria-label={`Edit Event: ${event.title}`}
+                      >
+                        Edit Event
+                      </Link>
+                      <button type="button" className="doin-button doin-button--danger-outline"
+                        aria-label={`Cancel Event: ${event.title}`}
+                        onClick={(click) => {
+                          click.currentTarget.focus({ preventScroll: true });
+                          cancellation.setError("");
+                          setCancelTarget(event);
+                        }}>
+                        Cancel Event
+                      </button>
+                    </>
+                  )}
+                </EventCard>
+              ))
+            : <p className="my-events-message" role="status">
+                {hosting ? "You haven't created any events yet." : "You haven't joined any events yet."}
+              </p>
+        )}
+      </section>
+      <ConfirmationDialog action={action} pending={cancellation.pending} disabled={!stillHosting}
+        error={cancellation.error || (action && !stillHosting ? "This event is no longer available." : "")}
+        onConfirm={confirmCancellation} onDismiss={() => setCancelTarget(null)} fallbackFocusRef={headingRef} />
     </main>
   );
-};
-
-export default MyEvents;
+}

@@ -1,6 +1,9 @@
 
 import { Router } from "express";
 import { store } from "../data/store.js";
+import { serializeEvent } from "../shared/eventFields.js";
+import { timeZoneCatalog } from "../shared/timeZones.js";
+
 const router = Router();
 
 
@@ -88,7 +91,7 @@ router.get("/", (req, res) => {
         );
     }
 
-    return res.status(200).json(events);
+    return res.status(200).json(events.map(serializeEvent));
 });
 
 
@@ -97,6 +100,8 @@ router.get("/", (req, res) => {
 router.get("/categories", (_req, res) => {
     res.json(store.categories);
 });
+router.get("/timezones", (_req, res) => res.json(timeZoneCatalog));
+
 router.get("/:eventId", (req, res) => {
     const event = store.events.find(
         (item) => item.id === req.params.eventId,
@@ -111,7 +116,7 @@ router.get("/:eventId", (req, res) => {
         });
     }
 
-    res.json(event);
+    res.json(serializeEvent(event));
 });
 
 export default router;

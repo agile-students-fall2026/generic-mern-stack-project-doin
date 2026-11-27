@@ -6,7 +6,7 @@ import "./SearchBar.css";
 export default function SearchBar({ label, value, onChange }) {
   return (
     <div className="search-bar">
-      <label className="search-bar-label" htmlFor="search_input">
+      <label className="doin-label search-bar-label" htmlFor="search_input">
         {label}
       </label>
       <input
