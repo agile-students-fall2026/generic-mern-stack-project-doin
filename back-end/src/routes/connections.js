@@ -134,6 +134,22 @@ router.patch("/connections/requests/:requestId", requireMockUser, (req, res) => 
 
 });
 
+// DELETE /api/users/:userId/connections/:personId
+router.delete("/users/:userId/connections/:personId", requireMockUser, (req, res) => {
+  const { userId, personId } = req.params;
+  if (req.currentUser.id !== userId) {
+    return sendError(res, 403, "FORBIDDEN", "You can only remove your own connections.");
+  }
+
+  const connection = store.connectionRequests.find((request) =>
+    request.status === "accepted" && isBetween(request, userId, personId));
+  if (!connection) {
+    return sendError(res, 404, "NOT_FOUND", "This connection no longer exists.");
+  }
+  connection.status = "disconnected";
+  return res.status(204).end();
+});
+
 // GET /api/users/:userId/connections
 // Retrieve the user's accepted connections.
 router.get("/users/:userId/connections", requireMockUser, (req, res) => {

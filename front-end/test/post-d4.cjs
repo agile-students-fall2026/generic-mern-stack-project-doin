@@ -217,6 +217,34 @@ async function main() {
       await api(guest.context, "PATCH", eventRoute, 403, guest.id, { capacity: 10 });
     });
 
+    await check("Public counts update for both contexts after disconnect, and reconnection is possible", async () => {
+      const request = await api(host.context, "POST", "/connections/requests", 201, host.id, { recipientId: guest.id });
+      await api(guest.context, "PATCH", "/connections/requests/" + request.id, 200, guest.id, { status: "accepted" });
+      const hostedProfile = "/users/" + host.id;
+      const guestProfile = "/users/" + guest.id;
+      await visit(guest.page, "/discover/" + host.id, "Profile");
+      await visit(host.page, "/connections/" + guest.id, "Profile");
+      await text(host.page, "Connected").waitFor();
+      await text(guest.page, "Connected").waitFor();
+      assert.deepEqual((await api(host.context, "GET", hostedProfile, 200)).stats,
+        { connections: 1, hosted: 1, attended: 0 });
+      assert.deepEqual((await api(guest.context, "GET", guestProfile, 200)).stats,
+        { connections: 1, hosted: 0, attended: 1 });
+      await button(guest.page, "Disconnect").click();
+      const dialog = guest.page.getByRole("dialog", { name: "Disconnect from this person?" });
+      await button(dialog, "Keep connection").waitFor();
+      await action(guest.page, "DELETE", guestProfile + "/connections/" + host.id, 204,
+        () => button(dialog, "Disconnect").click());
+      await dismissToast(guest.page, "Connection removed.");
+      await button(guest.page, "Send connection request").waitFor();
+      await reenter(host.page);
+      await button(host.page, "Send connection request").waitFor();
+      for (const profile of [hostedProfile, guestProfile]) {
+        assert.equal((await api(host.context, "GET", profile, 200)).stats.connections, 0);
+      }
+      await action(host.page, "POST", "/connections/requests", 201, () => button(host.page, "Send connection request").click());
+    });
+
     await check("Hosting card cancellation updates the second session and retains the canceled detail", async () => {
       await visit(guest.page, eventRoute, title);
       await visit(host.page, "/my-events?tab=hosting", "My Events");

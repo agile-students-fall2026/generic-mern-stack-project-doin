@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  disconnectUser,
   getConnections,
   getConnectionRequests,
   sendConnectionRequest,
@@ -67,6 +68,7 @@ export default function useRelationships(userId, refreshKey, routeKey) {
     actionError: actionError && actionError.userId === userId && actionError.routeKey === routeKey
       ? actionError.message
       : "",
+    disconnect: (personId) => change({ id: personId, type: "disconnect" }, (signal) => disconnectUser(userId, personId, signal)),
     send: (personId) => change({ id: personId, type: "send" }, (signal) => sendConnectionRequest(personId, signal)),
     respond: (requestId, status) => change({ id: requestId, type: status }, (signal) =>
       updateConnectionRequest(requestId, status, signal)),

@@ -32,6 +32,7 @@ async function request(path, { useMockUser = true, ...options } = {}) {
     });
   }
 
+  if (response.status === 204) return null;
   const data = await response.json().catch(() => null);
   if (!response.ok || data === null) {
     const error = new Error(
@@ -249,4 +250,12 @@ export function getConnections(userId, signal) {
     `/users/${encodeURIComponent(userId)}/connections`,
     { signal },
   );
+}
+
+
+export function disconnectUser(userId, personId, signal) {
+  return request(`/users/${encodeURIComponent(userId)}/connections/${encodeURIComponent(personId)}`, {
+    method: "DELETE",
+    signal,
+  });
 }

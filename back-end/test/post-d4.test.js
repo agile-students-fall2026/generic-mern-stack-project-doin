@@ -105,4 +105,22 @@ describe("[Alpartun] Post-D4 functional completion", () => {
     expect((await request(app).get(`/api/users/${firstGuest}`)).body.stats.attended).to.equal(0);
   });
 
+  for (const disconnecting of [host, firstGuest]) {
+    it(`allows ${disconnecting} to disconnect, updates both counts, and permits a new request`, async () => {
+      const sent = await api("post", "/api/connections/requests").send({ recipientId: firstGuest }).expect(201);
+      await api("patch", `/api/connections/requests/${sent.body.id}`, firstGuest).send({ status: "accepted" }).expect(200);
+      const other = disconnecting === host ? firstGuest : host;
+      const path = `/api/users/${disconnecting}/connections/${other}`;
+      const outsider = store.users.find((user) => ![host, firstGuest].includes(user.id)).id;
+      await request(app).delete(path).expect(401);
+      await api("delete", path, outsider).expect(403);
+      await api("delete", path, disconnecting).expect(204);
+      await api("delete", path, disconnecting).expect(404);
+      for (const id of [host, firstGuest]) {
+        expect((await api("get", `/api/users/${id}/connections`, id)).body).to.deep.equal([]);
+        expect((await request(app).get(`/api/users/${id}`)).body.stats.connections).to.equal(0);
+      }
+      await api("post", "/api/connections/requests", other).send({ recipientId: disconnecting }).expect(201);
+    });
+  }
 });
