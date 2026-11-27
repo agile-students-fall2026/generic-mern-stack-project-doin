@@ -4,6 +4,9 @@ import { randomUUID } from "node:crypto";
 import { store } from "../data/store.js";
 import { requireMockUser } from "../middleware/mockIdentity.js";
 
+import { normalizeEventImage } from "../shared/eventFields.js";
+import { normalizeTimeZone } from "../shared/timeZones.js";
+
 const router = Router();
 
 function sendError(res, message) {
@@ -28,15 +31,6 @@ function validDate(date) {
 
 function validTime(time) {
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
-}
-
-function validTimezone(timezone) {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: timezone });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 router.post("/events", requireMockUser, (req, res) => {
@@ -81,12 +75,8 @@ router.post("/events", requireMockUser, (req, res) => {
     return sendError(res, "Invalid event time.");
   }
 
-  if (
-    typeof timezone !== "string" ||
-    !validTimezone(timezone)
-  ) {
-    return sendError(res, "Invalid timezone.");
-  }
+  const timeZone = normalizeTimeZone(timezone);
+  if (!timeZone) return sendError(res, "Invalid timezone.");
 
   const aliases = {
     gaming: "Games",
@@ -95,7 +85,7 @@ router.post("/events", requireMockUser, (req, res) => {
 
   const categoryInput = category.trim().toLowerCase();
 
-const categories = store.categories;
+  const categories = store.categories;
 
   const normalizedCategory =
     aliases[categoryInput] ??
@@ -117,39 +107,8 @@ const categories = store.categories;
     );
   }
 
-  if (typeof imageUrl !== "string" || !imageUrl.trim()) {
-    return sendError(res, "Invalid image URL.");
-  }
-
-  const image = imageUrl.trim();
-
-  // Accept local images under /static/images/.
-  // Reject parent-directory paths such as /static/images/..
-  const validLocalImage =
-    /^\/static\/images\/[a-zA-Z0-9_-][a-zA-Z0-9_.-]*$/.test(image) &&
-    !image.includes("..");
-
-  // Accept properly formed HTTP or HTTPS URLs.
-  // Reject malformed URLs such as https:fixture.example/photo.png.
-  let validWebImage = false;
-
-  if (/^https?:\/\//i.test(image)) {
-    try {
-      const parsed = new URL(image);
-
-      validWebImage =
-        ["http:", "https:"].includes(parsed.protocol) &&
-        Boolean(parsed.hostname) &&
-        !parsed.username &&
-        !parsed.password;
-    } catch {
-      validWebImage = false;
-    }
-  }
-
-  if (!validLocalImage && !validWebImage) {
-    return sendError(res, "Invalid image URL.");
-  }
+  const image = normalizeEventImage(imageUrl);
+  if (image === null) return sendError(res, "Invalid image URL.");
 
   const newEvent = {
     id: `event-${randomUUID()}`,
@@ -158,7 +117,7 @@ const categories = store.categories;
     date,
     startTime,
     endTime,
-    timezone: timezone.trim(),
+    timezone: timeZone,
     location: location.trim(),
     category: normalizedCategory,
     imageUrl: image,

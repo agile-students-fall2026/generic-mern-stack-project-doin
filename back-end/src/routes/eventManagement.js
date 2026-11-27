@@ -3,6 +3,9 @@ import { Router } from "express";
 import { store } from "../data/store.js";
 import { requireMockUser } from "../middleware/mockIdentity.js";
 
+import { normalizeEventImage } from "../shared/eventFields.js";
+import { normalizeTimeZone } from "../shared/timeZones.js";
+
 const router = Router();
 
 function sendError(res, status, code, message) {
@@ -24,15 +27,6 @@ function validDate(date) {
 
 function validTime(time) {
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
-}
-
-function validTimezone(timezone) {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: timezone });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function findEvent(req, res) {
@@ -97,6 +91,7 @@ router.patch("/events/:eventId", requireMockUser, (req, res) => {
     "timezone",
     "location",
     "category",
+    "imageUrl",
   ];
 
   for (const field of Object.keys(changes)) {
@@ -109,10 +104,10 @@ router.patch("/events/:eventId", requireMockUser, (req, res) => {
       );
     }
 
-    if (
+    if (field !== "imageUrl" && (
       typeof changes[field] !== "string" ||
       !changes[field].trim()
-    ) {
+    )) {
       return sendError(
         res,
         400,
@@ -125,7 +120,7 @@ router.patch("/events/:eventId", requireMockUser, (req, res) => {
   const updated = { ...event };
 
   for (const [field, value] of Object.entries(changes)) {
-    updated[field] = value.trim();
+    updated[field] = typeof value === "string" ? value.trim() : value;
   }
 
   if (!validDate(updated.date)) {
@@ -144,10 +139,16 @@ router.patch("/events/:eventId", requireMockUser, (req, res) => {
     );
   }
 
-  if (!validTimezone(updated.timezone)) {
+  const timeZone = normalizeTimeZone(updated.timezone);
+  if (!timeZone) {
     return sendError(
       res, 400, "VALIDATION_ERROR", "Invalid timezone."
     );
+  }
+
+  if ("imageUrl" in changes) {
+    updated.imageUrl = normalizeEventImage(changes.imageUrl);
+    if (updated.imageUrl === null) return sendError(res, 400, "VALIDATION_ERROR", "Invalid image URL.");
   }
 
   const aliases = {
@@ -171,6 +172,7 @@ router.patch("/events/:eventId", requireMockUser, (req, res) => {
   }
 
   updated.category = normalizedCategory;
+  updated.timezone = timeZone;
 
   // Update the shared event object only after all validation passes.
   Object.assign(event, updated);
